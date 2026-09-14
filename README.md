@@ -2,6 +2,15 @@
 
 Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sistemas para Dispositivos Móveis.
 
+## 👥 Equipe
+* **Nome da Equipe:** Team Solidar.io
+* **Coorte:** DIM0524 - DESENVOLVIMENTO DE SISTEMAS PARA DISPOSITIVOS MÓVEIS
+
+### Integrantes
+* Antonio Henrique Barbosa Lima - Matrícula: 20230048844
+* Joao Batista Da Fonseca Neto - Matrícula: 20220077154
+* Moab Fred Dos Santos Varela - Matrícula: 20260072967
+
 ## Visão geral
 
 Este projeto combina:
