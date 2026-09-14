@@ -12,28 +12,11 @@ Que facilita o cadastro, a gestão e a participação em campanhas de doação, 
 Diferente de divulgações fragmentadas em redes sociais, grupos de mensagens ou controle em planilhas manuais
 Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento completo das campanhas e a interação direta dos usuários na palma da mão.
 
-## Estrutura do projeto
+## Definição do MVP:
 
-```text
-donation-app/
-├── app/                 # Aplicativo Kotlin Multiplatform
-│   ├── androidApp/      # App Android
-│   ├── iosApp/          # App iOS
-│   ├── shared/          # Código compartilhado entre Android e iOS
-│   ├── build.gradle.kts
-│   ├── settings.gradle.kts
-│   └── gradlew
-├── backend/             # API em Spring Boot
-│   ├── src/
-│   ├── pom.xml
-│   └── mvnw
-├── README.md            # Documentação principal do projeto
-└── LICENSE              # se existir no futuro
-├── docs/
-│   └── proposta.md      # visão, MVP, link do backlog, plataforma-alvo, backend, equipe, coorte/integração
-```
+## Link para backlog inicial:
 
-## Tecnologias utilizadas
+## Tecnologias utilizadas (Plataforma-alvo escolhida):
 
 ### Mobile
 - Kotlin Multiplatform
@@ -118,21 +101,7 @@ cd app
 - O banco de dados é configurado via `application.properties`.
 - O código compartilhado da aplicação mobile fica em `app/shared`.
 
-## Contribuição
-
-Este projeto foi desenvolvido como atividade acadêmica. Qualquer melhoria ou correção é bem-vinda.
-
-## Autor
-
-Projeto desenvolvido na UFRN como parte da disciplina de Dispositivos Móveis.
-
-
-Definição do MVP: dentro e fora do escopo
-Link para backlog inicial, com as histórias priorizadas (pode ser para o próprio repositório caso o backlog esteja registrado nele — o GitHub Projects mora dentro do repositório do GitHub)
-Plataforma-alvo escolhida — Android ou iOS — e justificativa
-Estratégia de backend escolhida e justificativa — ver STACK.md
-Equipe: nome, matrícula e papel de cada integrante
-Coorte de apresentação e, se houver, integração com outra disciplina
-Máximo 5 páginas. A justificativa das escolhas técnicas deve partir das características do produto.
-
-As opções de plataforma-alvo, interface e backend, com seus limites, estão em STACK.md.
+### Integrantes
+* Antonio Henrique Barbosa Lima - Matrícula: 20230048844
+* Joao Batista Da Fonseca Neto - Matrícula: 20220077154
+* Moab Fred Dos Santos Varela - Matrícula: 20260072967
