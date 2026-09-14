@@ -18,8 +18,10 @@ kotlin {
         }
     }
     
+    jvm()
+    
     android {
-       namespace = "org.donation.app.shared"
+       namespace = "io.solidar.donation.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     

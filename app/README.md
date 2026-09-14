@@ -1,4 +1,4 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+This is a Kotlin Multiplatform project targeting Android, iOS, Desktop (JVM).
 
 * [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
@@ -17,6 +17,9 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
 Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
 
 - Android app: `./gradlew :androidApp:assembleDebug`
+- Desktop app:
+  - Hot reload: `./gradlew :desktopApp:hotRun --auto`
+  - Standard run: `./gradlew :desktopApp:run`
 - iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
 
 ### Running tests
@@ -24,6 +27,7 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
 - Android tests: `./gradlew :shared:testAndroidHostTest`
+- Desktop tests: `./gradlew :shared:jvmTest`
 - iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
 
 ---

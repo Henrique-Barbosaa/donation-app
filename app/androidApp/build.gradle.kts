@@ -20,11 +20,11 @@ dependencies {
 }
 
 android {
-    namespace = "org.donation.app"
+    namespace = "io.solidar.donation"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "org.donation.app"
+        applicationId = "io.solidar.donation"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

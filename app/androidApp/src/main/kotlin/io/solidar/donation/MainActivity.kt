@@ -1,4 +1,4 @@
-package org.donation.app
+package io.solidar.donation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
