@@ -1,4 +1,4 @@
-# Donation App
+# Solidar.io
 
 Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sistemas para Dispositivos Móveis.
 
