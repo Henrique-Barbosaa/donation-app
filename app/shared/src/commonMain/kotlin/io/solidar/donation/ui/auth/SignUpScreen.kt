@@ -1,4 +1,4 @@
-package org.donation.app.ui.auth
+package io.solidar.donation.ui.auth
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
@@ -13,7 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -21,7 +21,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import org.donation.app.ui.components.AppIcons
+import io.solidar.donation.ui.components.AppIcons
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -32,13 +32,13 @@ enum class SignUpStep {
     CHOOSE_PROFILE, FORM_PF, FORM_PJ
 }
 
-class CpfVisualTransformation : VisualTransformation {
+private class CpfVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val trimmed = if (text.text.length >= 11) text.text.substring(0..10) else text.text
         var out = ""
         for (i in trimmed.indices) {
             out += trimmed[i]
-            if (i == 2 || i == 5) out += "."
+            if ((i == 2) || (i == 5)) out += "."
             if (i == 8) out += "-"
         }
         val offsetMapping = object : OffsetMapping {
@@ -61,13 +61,13 @@ class CpfVisualTransformation : VisualTransformation {
     }
 }
 
-class CnpjVisualTransformation : VisualTransformation {
+private class CnpjVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val trimmed = if (text.text.length >= 14) text.text.substring(0..13) else text.text
         var out = ""
         for (i in trimmed.indices) {
             out += trimmed[i]
-            if (i == 1 || i == 4) out += "."
+            if ((i == 1) || (i == 4)) out += "."
             if (i == 7) out += "/"
             if (i == 11) out += "-"
         }
@@ -98,7 +98,7 @@ class CnpjVisualTransformation : VisualTransformation {
 fun SignUpScreen(
     onNavigateBack: () -> Unit,
     onSignUpSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel { AuthViewModel() }
+    viewModel: AuthViewModel = viewModel { AuthViewModel() },
 ) {
     val signUpState by viewModel.signUpState.collectAsState()
     var currentStep by remember { mutableStateOf(SignUpStep.CHOOSE_PROFILE) }
@@ -273,8 +273,8 @@ fun SignUpForm(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         
@@ -361,7 +361,7 @@ fun SignUpForm(
                 Text("⚠️", fontSize = 18.sp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = (signUpState as AuthState.Error).message,
+                    text = signUpState.message,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium

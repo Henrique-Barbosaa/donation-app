@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import io.solidar.donation.App
 import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {

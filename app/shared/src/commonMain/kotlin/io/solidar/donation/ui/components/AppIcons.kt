@@ -1,4 +1,4 @@
-package org.donation.app.ui.components
+package io.solidar.donation.ui.components
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType

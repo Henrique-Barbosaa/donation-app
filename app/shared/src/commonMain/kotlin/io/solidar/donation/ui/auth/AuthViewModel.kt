@@ -1,4 +1,4 @@
-package org.donation.app.ui.auth
+package io.solidar.donation.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

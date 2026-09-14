@@ -1,4 +1,4 @@
-package org.donation.app.theme
+package io.solidar.donation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
