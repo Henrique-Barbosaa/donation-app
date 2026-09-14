@@ -1,2 +1,2 @@
-# donation-app
-App para a disciplina de Desenvolvimento para Dispositivos Móveis
+# Donation-app
+App para a disciplina de DESENVOLVIMENTO DE SISTEMAS PARA DISPOSITIVOS MÓVEIS
