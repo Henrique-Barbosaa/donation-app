@@ -4,7 +4,7 @@ Projeto Kotlin Multiplatform (KMP) focado na gestão de campanhas de doação.
 
 ## 👥 Equipe
 * **Nome da Equipe:** Team Solidar.io
-* **Coorte:**DIM0524 - DESENVOLVIMENTO DE SISTEMAS PARA DISPOSITIVOS MÓVEIS
+* **Coorte:** DIM0524 - DESENVOLVIMENTO DE SISTEMAS PARA DISPOSITIVOS MÓVEIS
 
 
 
