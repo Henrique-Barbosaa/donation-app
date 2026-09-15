@@ -14,4 +14,11 @@ plugins {
 allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    ktlint {
+        filter {
+            exclude("**/build/**")
+            exclude("**/generated/**")
+        }
+    }
 }
