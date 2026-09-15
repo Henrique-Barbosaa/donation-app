@@ -30,7 +30,7 @@ Acreditamos que pessoas comuns e instituições de caridade vão publicar e busc
 
 O backlog com as histórias de usuário estimadas e priorizadas (no mínimo 5 histórias formatadas, 3 estimadas) está disponível no link abaixo:
 
-[INSERIR LINK DO GITHUB PROJECTS AQUI]
+https://github.com/users/Henrique-Barbosaa/projects/4
 
 ## 4. Plataforma-alvo escolhida e justificativa
 
