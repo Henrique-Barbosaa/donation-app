@@ -1,4 +1,3 @@
-(Definir os pontos abaixo)
 # Solidar.io - Proposta
 
 Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sistemas para Dispositivos Móveis.
@@ -12,11 +11,11 @@ Que facilita o cadastro, a gestão e a participação em campanhas de doação, 
 Diferente de divulgações fragmentadas em redes sociais, grupos de mensagens ou controle em planilhas manuais
 Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento completo das campanhas e a interação direta dos usuários na palma da mão.
 
-## Definição do MVP:
+## Definição do MVP
 
-## Link para backlog inicial:
+## Link para backlog inicial
 
-## Tecnologias utilizadas (Plataforma-alvo escolhida):
+## Tecnologias utilizadas (Plataforma-alvo escolhida)
 
 ### Mobile
 - Kotlin Multiplatform
