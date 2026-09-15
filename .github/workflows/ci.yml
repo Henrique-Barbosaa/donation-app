@@ -1,0 +1,38 @@
+name: CI Solidar.io
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./app
+
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+        cache: 'gradle'
+
+    - name: Dar permissão de execução para o Gradle
+      run: chmod +x gradlew
+
+    - name: Verificar padronização de código (ktlint)
+      run: ./gradlew ktlintCheck
+
+    - name: Procurar bugs e checar qualidade (detekt)
+      run: ./gradlew detekt
+
+    - name: Compilar o aplicativo Android
+      run: ./gradlew assembleDebug
