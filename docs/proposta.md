@@ -13,6 +13,18 @@ Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento 
 
 ## Definição do MVP
 
+O MVP focará no fluxo crítico de doações (criação, descoberta e efetivação), assegurando viabilidade no prazo de quatro sprints estabelecido.
+
+| No MVP | Fora do MVP |
+| :--- | :--- |
+| Autenticação e roteamento de interface diferenciados para Pessoa Física e Instituição. | Módulo de Gestão de Vagas e Voluntariado em campanhas. |
+| Criação de anúncios de doação com suporte a upload de imagens. | Sistema de Avaliações pós-doação. |
+| Feed principal paginado para exploração de itens disponíveis. | Edição e remoção de locais de coleta das campanhas. |
+| Funcionalidade de "demonstrar interesse" e efetivação da doação pelo doador original. | Recuperação e redefinição de senha complexa. |
+| Notificações em tempo real (via Server-Sent Events - SSE) para respostas ágeis às intenções de doação na interface mobile. | |
+
+**Hipótese de Valor:**
+Acreditamos que pessoas comuns e instituições de caridade vão publicar e buscar itens regularmente no app porque a interface mobile responsiva e o feedback em tempo real reduzem drasticamente o esforço logístico de encontrar interessados próximos.
 ## Link para backlog inicial
 
 ## Tecnologias utilizadas (Plataforma-alvo escolhida)
