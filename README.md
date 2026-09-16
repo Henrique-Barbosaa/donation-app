@@ -1,7 +1,7 @@
 # Solidar.io
-[![CI Pipeline](https://github.com/Henrique-Barbosaa/donation-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Henrique-Barbosaa/donation-app/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/Henrique-Barbosaa/donation-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Henrique-Barbosaa/donation-app/actions/workflows/ci.yml)  
 
-> Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sistemas para Dispositivos Móveis. 
+> Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sistemas para Dispositivos Móveis.   
 > **Vídeo de Apresentação (Sprint 0):** *(Link do vídeo de 5 minutos)*
 
 ## 👥 Equipe
