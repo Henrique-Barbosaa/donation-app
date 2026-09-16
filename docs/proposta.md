@@ -4,12 +4,12 @@ Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sis
 
 ## 1. Visão do produto
 
-Para organizadores de campanhas solidárias, ONGs e doadores
-Que enfrentam dificuldades para centralizar, divulgar e gerenciar iniciativas de arrecadação de forma segura e organizada
-O Solidar.io é um aplicativo móvel multiplataforma
-Que facilita o cadastro, a gestão e a participação em campanhas de doação, conectando quem precisa com quem deseja ajudar
-Diferente de divulgações fragmentadas em redes sociais, grupos de mensagens ou controle em planilhas manuais
-Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento completo das campanhas e a interação direta dos usuários na palma da mão.
+Para organizadores de campanhas solidárias, ONGs e doadores  
+Que enfrentam dificuldades para centralizar, divulgar e gerenciar iniciativas de arrecadação de forma segura e organizada  
+O Solidar.io é um aplicativo móvel multiplataforma  
+Que facilita o cadastro, a gestão e a participação em campanhas de doação, conectando quem precisa com quem deseja ajudar  
+Diferente de divulgações fragmentadas em redes sociais, grupos de mensagens ou controle em planilhas manuais  
+Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento completo das campanhas e a interação direta dos usuários na palma da mão.  
 
 ## 2. Definição do MVP (Produto Mínimo Viável)
 
