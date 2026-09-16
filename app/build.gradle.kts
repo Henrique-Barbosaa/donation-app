@@ -15,10 +15,11 @@ allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
-    ktlint {
+    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         filter {
-            exclude("**/build/**")
-            exclude("**/generated/**")
+            exclude { element ->
+                element.file.path.contains("/build/generated/")
+            }
         }
     }
 }

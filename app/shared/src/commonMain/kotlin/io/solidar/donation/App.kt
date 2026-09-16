@@ -7,7 +7,9 @@ import io.solidar.donation.ui.auth.LoginScreen
 import io.solidar.donation.ui.auth.SignUpScreen
 
 enum class Screen {
-    LOGIN, SIGN_UP, HOME
+    LOGIN,
+    SIGN_UP,
+    HOME,
 }
 
 @Composable
@@ -20,13 +22,13 @@ fun App() {
             Screen.LOGIN -> {
                 LoginScreen(
                     onNavigateToSignUp = { currentScreen = Screen.SIGN_UP },
-                    onLoginSuccess = { currentScreen = Screen.HOME }
+                    onLoginSuccess = { currentScreen = Screen.HOME },
                 )
             }
             Screen.SIGN_UP -> {
                 SignUpScreen(
                     onNavigateBack = { currentScreen = Screen.LOGIN },
-                    onSignUpSuccess = { currentScreen = Screen.HOME }
+                    onSignUpSuccess = { currentScreen = Screen.HOME },
                 )
             }
             Screen.HOME -> {
