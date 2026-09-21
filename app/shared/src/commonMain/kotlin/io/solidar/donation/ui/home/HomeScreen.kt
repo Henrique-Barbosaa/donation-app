@@ -33,14 +33,14 @@ import io.solidar.donation.ui.components.CampaignCard
 fun HomeScreen(
     campaigns: List<Campaign>,
     onCampaignClick: (Campaign) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Text(
             text = "Campanhas abertas",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
         )
 
         if (campaigns.isEmpty()) {
@@ -49,12 +49,12 @@ fun HomeScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(items = campaigns, key = { it.id }) { campaign ->
                     CampaignCard(
                         campaign = campaign,
-                        onClick = onCampaignClick
+                        onClick = onCampaignClick,
                     )
                 }
             }
@@ -66,13 +66,13 @@ fun HomeScreen(
 private fun EmptyCampaignsMessage(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.padding(32.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = "Nenhuma campanha por aqui ainda.\nAssim que alguém criar uma, ela aparece nesta lista.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -83,7 +83,7 @@ private fun HomeScreenFilledPreview() {
     DonationTheme {
         HomeScreen(
             campaigns = sampleCampaigns,
-            onCampaignClick = {}
+            onCampaignClick = {},
         )
     }
 }
@@ -94,7 +94,7 @@ private fun HomeScreenEmptyPreview() {
     DonationTheme {
         HomeScreen(
             campaigns = emptyList(),
-            onCampaignClick = {}
+            onCampaignClick = {},
         )
     }
 }

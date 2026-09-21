@@ -31,26 +31,26 @@ import io.solidar.donation.theme.DonationTheme
 @Composable
 fun DoacaoCard(
     doacao: Doacao,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = doacao.itemTitle,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 StatusBadge(status = doacao.status)
             }
@@ -58,40 +58,47 @@ fun DoacaoCard(
             Text(
                 text = counterpartLabel(doacao.direction, doacao.counterpartName),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Text(
                 text = doacao.dateLabel,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
-private fun counterpartLabel(direction: DoacaoDirecao, counterpartName: String): String =
+private fun counterpartLabel(
+    direction: DoacaoDirecao,
+    counterpartName: String,
+): String =
     when (direction) {
         DoacaoDirecao.FEITA -> "Para: $counterpartName"
         DoacaoDirecao.RECEBIDA -> "De: $counterpartName"
     }
 
 @Composable
-private fun StatusBadge(status: DoacaoStatus, modifier: Modifier = Modifier) {
-    val (label, containerColor) = when (status) {
-        DoacaoStatus.CONCLUIDA -> "Concluída" to MaterialTheme.colorScheme.primaryContainer
-        DoacaoStatus.PENDENTE -> "Pendente" to MaterialTheme.colorScheme.secondaryContainer
-        DoacaoStatus.CANCELADA -> "Cancelada" to MaterialTheme.colorScheme.errorContainer
-    }
+private fun StatusBadge(
+    status: DoacaoStatus,
+    modifier: Modifier = Modifier,
+) {
+    val (label, containerColor) =
+        when (status) {
+            DoacaoStatus.CONCLUIDA -> "Concluída" to MaterialTheme.colorScheme.primaryContainer
+            DoacaoStatus.PENDENTE -> "Pendente" to MaterialTheme.colorScheme.secondaryContainer
+            DoacaoStatus.CANCELADA -> "Cancelada" to MaterialTheme.colorScheme.errorContainer
+        }
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(50),
-        color = containerColor
+        color = containerColor,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }
@@ -101,15 +108,16 @@ private fun StatusBadge(status: DoacaoStatus, modifier: Modifier = Modifier) {
 private fun DoacaoCardFeitaPreview() {
     DonationTheme {
         DoacaoCard(
-            doacao = Doacao(
-                id = "1",
-                itemTitle = "Cesta básica",
-                counterpartName = "Instituto Mãos Solidárias",
-                direction = DoacaoDirecao.FEITA,
-                status = DoacaoStatus.CONCLUIDA,
-                dateLabel = "12 de setembro de 2026"
-            ),
-            modifier = Modifier.padding(16.dp)
+            doacao =
+                Doacao(
+                    id = "1",
+                    itemTitle = "Cesta básica",
+                    counterpartName = "Instituto Mãos Solidárias",
+                    direction = DoacaoDirecao.FEITA,
+                    status = DoacaoStatus.CONCLUIDA,
+                    dateLabel = "12 de setembro de 2026",
+                ),
+            modifier = Modifier.padding(16.dp),
         )
     }
 }
@@ -119,15 +127,16 @@ private fun DoacaoCardFeitaPreview() {
 private fun DoacaoCardRecebidaPendentePreview() {
     DonationTheme {
         DoacaoCard(
-            doacao = Doacao(
-                id = "2",
-                itemTitle = "Material escolar",
-                counterpartName = "Maria da Silva",
-                direction = DoacaoDirecao.RECEBIDA,
-                status = DoacaoStatus.PENDENTE,
-                dateLabel = "18 de setembro de 2026"
-            ),
-            modifier = Modifier.padding(16.dp)
+            doacao =
+                Doacao(
+                    id = "2",
+                    itemTitle = "Material escolar",
+                    counterpartName = "Maria da Silva",
+                    direction = DoacaoDirecao.RECEBIDA,
+                    status = DoacaoStatus.PENDENTE,
+                    dateLabel = "18 de setembro de 2026",
+                ),
+            modifier = Modifier.padding(16.dp),
         )
     }
 }

@@ -33,52 +33,52 @@ import io.solidar.donation.util.formatBrl
 fun CampaignCard(
     campaign: Campaign,
     onClick: (Campaign) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         onClick = { onClick(campaign) },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = campaign.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = campaign.organizer,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             LinearProgressIndicator(
                 progress = { campaign.progress },
-                modifier = Modifier.fillMaxWidth().height(6.dp)
+                modifier = Modifier.fillMaxWidth().height(6.dp),
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = formatBrl(campaign.raisedInCents),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
                     text = "meta ${formatBrl(campaign.goalInCents)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -90,15 +90,16 @@ fun CampaignCard(
 private fun CampaignCardPreview() {
     DonationTheme {
         CampaignCard(
-            campaign = Campaign(
-                id = "1",
-                title = "Cestas básicas para o bairro das Rocas",
-                organizer = "Instituto Mãos Solidárias",
-                goalInCents = 500_000L,
-                raisedInCents = 312_500L
-            ),
+            campaign =
+                Campaign(
+                    id = "1",
+                    title = "Cestas básicas para o bairro das Rocas",
+                    organizer = "Instituto Mãos Solidárias",
+                    goalInCents = 500_000L,
+                    raisedInCents = 312_500L,
+                ),
             onClick = {},
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         )
     }
 }

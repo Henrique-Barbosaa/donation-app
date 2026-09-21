@@ -2,13 +2,13 @@ package io.solidar.donation.model
 
 enum class DoacaoDirecao {
     FEITA,
-    RECEBIDA
+    RECEBIDA,
 }
 
 enum class DoacaoStatus {
     CONCLUIDA,
     PENDENTE,
-    CANCELADA
+    CANCELADA,
 }
 
 data class Doacao(
@@ -17,5 +17,5 @@ data class Doacao(
     val counterpartName: String,
     val direction: DoacaoDirecao,
     val status: DoacaoStatus,
-    val dateLabel: String
+    val dateLabel: String,
 )

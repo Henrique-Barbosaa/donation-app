@@ -49,13 +49,14 @@ fun App() {
                     // TODO: trocar por um componente de navegação de verdade quando existir.
                     Text(
                         text = "Ver histórico",
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .clickable { currentScreen = Screen.HISTORICO }
+                        modifier =
+                            Modifier
+                                .padding(16.dp)
+                                .clickable { currentScreen = Screen.HISTORICO },
                     )
                     HomeScreen(
                         campaigns = sampleCampaigns,
-                        onCampaignClick = { /* TODO: navegar para o detalhe da campanha */ }
+                        onCampaignClick = { /* TODO: navegar para o detalhe da campanha */ },
                     )
                 }
             }
@@ -63,7 +64,7 @@ fun App() {
                 HistoricoScreen(
                     doacoes = sampleDoacoes,
                     selectedTab = historicoTab,
-                    onTabSelected = { historicoTab = it }
+                    onTabSelected = { historicoTab = it },
                 )
             }
         }

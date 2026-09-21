@@ -27,7 +27,7 @@ import io.solidar.donation.ui.components.DoacaoCard
 /** As duas abas do histórico, pedidas na issue #11. */
 enum class HistoricoAba {
     FEITAS,
-    RECEBIDAS
+    RECEBIDAS,
 }
 
 /**
@@ -44,31 +44,32 @@ fun HistoricoScreen(
     doacoes: List<Doacao>,
     selectedTab: HistoricoAba,
     onTabSelected: (HistoricoAba) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val direcaoDaAba = when (selectedTab) {
-        HistoricoAba.FEITAS -> DoacaoDirecao.FEITA
-        HistoricoAba.RECEBIDAS -> DoacaoDirecao.RECEBIDA
-    }
+    val direcaoDaAba =
+        when (selectedTab) {
+            HistoricoAba.FEITAS -> DoacaoDirecao.FEITA
+            HistoricoAba.RECEBIDAS -> DoacaoDirecao.RECEBIDA
+        }
     val doacoesFiltradas = doacoes.filter { it.direction == direcaoDaAba }
 
     Column(modifier = modifier.fillMaxSize()) {
         Text(
             text = "Histórico de doações",
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp)
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp),
         )
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
             Tab(
                 selected = selectedTab == HistoricoAba.FEITAS,
                 onClick = { onTabSelected(HistoricoAba.FEITAS) },
-                text = { Text("Feitas") }
+                text = { Text("Feitas") },
             )
             Tab(
                 selected = selectedTab == HistoricoAba.RECEBIDAS,
                 onClick = { onTabSelected(HistoricoAba.RECEBIDAS) },
-                text = { Text("Recebidas") }
+                text = { Text("Recebidas") },
             )
         }
 
@@ -78,7 +79,7 @@ fun HistoricoScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(items = doacoesFiltradas, key = { it.id }) { doacao ->
                     DoacaoCard(doacao = doacao)
@@ -89,20 +90,24 @@ fun HistoricoScreen(
 }
 
 @Composable
-private fun EmptyHistoricoMessage(selectedTab: HistoricoAba, modifier: Modifier = Modifier) {
-    val message = when (selectedTab) {
-        HistoricoAba.FEITAS -> "Você ainda não fez nenhuma doação.\nQuando fizer, ela aparece aqui."
-        HistoricoAba.RECEBIDAS -> "Você ainda não recebeu nenhuma doação.\nQuando receber, ela aparece aqui."
-    }
+private fun EmptyHistoricoMessage(
+    selectedTab: HistoricoAba,
+    modifier: Modifier = Modifier,
+) {
+    val message =
+        when (selectedTab) {
+            HistoricoAba.FEITAS -> "Você ainda não fez nenhuma doação.\nQuando fizer, ela aparece aqui."
+            HistoricoAba.RECEBIDAS -> "Você ainda não recebeu nenhuma doação.\nQuando receber, ela aparece aqui."
+        }
     Box(
         modifier = modifier.padding(32.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -114,7 +119,7 @@ private fun HistoricoScreenFilledPreview() {
         HistoricoScreen(
             doacoes = sampleDoacoes,
             selectedTab = HistoricoAba.FEITAS,
-            onTabSelected = {}
+            onTabSelected = {},
         )
     }
 }
@@ -126,7 +131,7 @@ private fun HistoricoScreenEmptyPreview() {
         HistoricoScreen(
             doacoes = emptyList(),
             selectedTab = HistoricoAba.RECEBIDAS,
-            onTabSelected = {}
+            onTabSelected = {},
         )
     }
 }
