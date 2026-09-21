@@ -1,5 +1,3 @@
-import org.jlleitschuh.gradle.ktlint.KtlintExtension
-
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -17,10 +15,11 @@ allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
-    configure<KtlintExtension> {
+    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         filter {
-            exclude("**/build/**")
-            exclude("**/generated/**")
+            exclude { element ->
+                element.file.path.contains("/build/generated/")
+            }
         }
     }
 }

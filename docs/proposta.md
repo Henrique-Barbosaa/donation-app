@@ -4,12 +4,12 @@ Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sis
 
 ## 1. Visão do produto
 
-Para organizadores de campanhas solidárias, ONGs e doadores
-Que enfrentam dificuldades para centralizar, divulgar e gerenciar iniciativas de arrecadação de forma segura e organizada
-O Solidar.io é um aplicativo móvel multiplataforma
-Que facilita o cadastro, a gestão e a participação em campanhas de doação, conectando quem precisa com quem deseja ajudar
-Diferente de divulgações fragmentadas em redes sociais, grupos de mensagens ou controle em planilhas manuais
-Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento completo das campanhas e a interação direta dos usuários na palma da mão.
+Para organizadores de campanhas solidárias, ONGs e doadores  
+Que enfrentam dificuldades para centralizar, divulgar e gerenciar iniciativas de arrecadação de forma segura e organizada  
+O Solidar.io é um aplicativo móvel multiplataforma  
+Que facilita o cadastro, a gestão e a participação em campanhas de doação, conectando quem precisa com quem deseja ajudar  
+Diferente de divulgações fragmentadas em redes sociais, grupos de mensagens ou controle em planilhas manuais  
+Nosso produto oferece um ambiente dedicado e seguro, permitindo o gerenciamento completo das campanhas e a interação direta dos usuários na palma da mão.  
 
 ## 2. Definição do MVP (Produto Mínimo Viável)
 
@@ -26,25 +26,31 @@ O MVP focará no fluxo crítico de doações (criação, descoberta e efetivaç�
 **Hipótese de Valor:**
 Acreditamos que pessoas comuns e instituições de caridade vão publicar e buscar itens regularmente no app porque a interface mobile responsiva e o feedback em tempo real reduzem drasticamente o esforço logístico de encontrar interessados próximos.
 
-## 3. Link para backlog inicial
+## 3. Vídeo de Apresentação do Projeto
+
+Abaixo temos o link para o vídeo onde explicamos detalhadamente as nossas decisões do projeto e também mostramos o backlog:
+
+https://drive.google.com/file/d/1XYmtlHjPJ0udTKIbNDiesJBjIHMar3O8/view?usp=sharing
+
+## 4. Link para backlog inicial
 
 O backlog com as histórias de usuário estimadas e priorizadas (no mínimo 5 histórias formatadas, 3 estimadas) está disponível no link abaixo:
 
 https://github.com/users/Henrique-Barbosaa/projects/4
 
-## 4. Plataforma-alvo escolhida e justificativa
+## 5. Plataforma-alvo escolhida e justificativa
 
 A plataforma-alvo inicial escolhida é o Android (construída via Kotlin Multiplatform - KMP e Compose Multiplatform).
 
 **Justificativa:** A predominância de dispositivos Android no Brasil, especialmente no contexto de ONGs e caridade, torna essa plataforma ideal para testes de campo rápidos e validação do fluxo do usuário. O uso do Compose Multiplatform permite a construção de uma interface nativa de alta performance, essencial para lidar com recursos como o carregamento do Feed principal (Infinite Scroll) e o consumo da rota SSE sem gargalos na UI-Thread. Embora o KMP permita múltiplos alvos, focaremos estritamente no Android durante as 4 sprints para proteger o escopo e garantir excelência em usabilidade e performance da primeira tela.
 
-## 5. Estratégia de backend escolhida e justificativa
+## 6. Estratégia de backend escolhida e justificativa
 
 A API RESTful existente, construída com Java 21 e Spring Boot, servirá como base do sistema, conectando-se a um banco de dados MySQL e gerindo sessões com Spring Security via tokens JWT em Cookies.
 
 **Justificativa:** Esta infraestrutura já atende os domínios mapeados do produto (Gestão de Usuários, Campanhas e Doações). A comunicação em tempo real via Server-Sent Events (/api/notificacoes/stream) será integrada para criar microinterações ágeis no aplicativo, elevando a experiência UX do usuário em dispositivos móveis. Para assegurar que o aplicativo mobile não sofra com latência ou consumo excessivo de memória ao processar grandes volumes de dados, o desenvolvimento e manutenção das querys no Spring Data JPA seguirão critérios rigorosos de desempenho (com a resolução do problema N+1 utilizando recursos adequados, como JOIN FETCH), garantindo payloads JSON leves e otimizados nas rotas paginadas de listagem, como /api/doacoes/disponiveis.
 
-## 6. Equipe
+## 7. Equipe
 
 | Nome | Matrícula | Papel Principal |
 | :--- | :--- | :--- |
@@ -52,7 +58,7 @@ A API RESTful existente, construída com Java 21 e Spring Boot, servirá como ba
 | Joao Batista Da Fonseca Neto | 20220077154 | Desenvolvedor Integrante |
 | Moab Fred Dos Santos Varela | 20260072967 | Desenvolvedor Integrante |
 
-## 7. Coorte e Integração
+## 8. Coorte e Integração
 
 * **Instituição:** UFRN / IMD (Instituto Metrópole Digital)
 * **Disciplina:** DIM0524

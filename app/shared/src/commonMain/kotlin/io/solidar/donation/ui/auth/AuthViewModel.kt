@@ -9,31 +9,36 @@ import kotlinx.coroutines.launch
 
 sealed class AuthState {
     object Idle : AuthState()
+
     object Loading : AuthState()
+
     data class Success(val message: String) : AuthState()
+
     data class Error(val message: String) : AuthState()
 }
 
 class AuthViewModel : ViewModel() {
-
     private val _loginState = MutableStateFlow<AuthState>(AuthState.Idle)
     val loginState: StateFlow<AuthState> = _loginState.asStateFlow()
 
     private val _signUpState = MutableStateFlow<AuthState>(AuthState.Idle)
     val signUpState: StateFlow<AuthState> = _signUpState.asStateFlow()
 
-    fun login(email: String, senha: String) {
+    fun login(
+        email: String,
+        senha: String,
+    ) {
         viewModelScope.launch {
             _loginState.value = AuthState.Loading
             try {
                 // TODO: Chamada real ao backend: POST /api/auth/login
                 kotlinx.coroutines.delay(1000)
-                
+
                 if (email.isBlank() || senha.isBlank()) {
                     _loginState.value = AuthState.Error("Por favor, preencha o e-mail e a senha.")
                     return@launch
                 }
-                
+
                 // Simulação de erro de rede se o usuário digitar "erro"
                 if (email.contains("erro", ignoreCase = true)) {
                     throw Exception("Servidor offline")
@@ -46,18 +51,23 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun signUpPessoaFisica(nome: String, email: String, senha: String, cpf: String) {
+    fun signUpPessoaFisica(
+        nome: String,
+        email: String,
+        senha: String,
+        cpf: String,
+    ) {
         viewModelScope.launch {
             _signUpState.value = AuthState.Loading
             try {
                 // TODO: Chamada real ao backend: POST /api/auth/registro/pessoa-fisica
                 kotlinx.coroutines.delay(1000)
-                
+
                 if (nome.isBlank() || email.isBlank() || senha.isBlank() || cpf.isBlank()) {
                     _signUpState.value = AuthState.Error("Por favor, preencha todos os campos corretamente.")
                     return@launch
                 }
-                
+
                 if (email.contains("erro", ignoreCase = true)) {
                     throw Exception("Servidor offline")
                 }
@@ -69,13 +79,18 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun signUpInstituicao(nome: String, email: String, senha: String, cnpj: String) {
+    fun signUpInstituicao(
+        nome: String,
+        email: String,
+        senha: String,
+        cnpj: String,
+    ) {
         viewModelScope.launch {
             _signUpState.value = AuthState.Loading
             try {
                 // TODO: Chamada real ao backend: POST /api/auth/registro/instituicao
                 kotlinx.coroutines.delay(1000)
-                
+
                 if (nome.isBlank() || email.isBlank() || senha.isBlank() || cnpj.isBlank()) {
                     _signUpState.value = AuthState.Error("Por favor, preencha todos os campos corretamente.")
                     return@launch
@@ -91,11 +106,11 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun resetLoginState() {
         _loginState.value = AuthState.Idle
     }
-    
+
     fun resetSignUpState() {
         _signUpState.value = AuthState.Idle
     }
