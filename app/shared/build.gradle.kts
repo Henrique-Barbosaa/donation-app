@@ -63,8 +63,9 @@ kotlin {
                 implementation(libs.androidx.lifecycle.viewmodelCompose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
 
-                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
-
+                implementation(libs.androidx.navigation.compose)
+                implementation(libs.compose.material3.adaptive)
+                
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.contentNegotiation)
                 implementation(libs.ktor.client.logging)
