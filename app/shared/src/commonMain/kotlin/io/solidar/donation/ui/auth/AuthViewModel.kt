@@ -2,6 +2,8 @@ package io.solidar.donation.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.solidar.donation.data.repository.AuthRepositoryImpl
+import io.solidar.donation.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +19,9 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    private val authRepository: AuthRepository = AuthRepositoryImpl(),
+) : ViewModel() {
     private val _loginState = MutableStateFlow<AuthState>(AuthState.Idle)
     val loginState: StateFlow<AuthState> = _loginState.asStateFlow()
 
@@ -28,26 +32,25 @@ class AuthViewModel : ViewModel() {
         email: String,
         senha: String,
     ) {
+        if (email.isBlank() || senha.isBlank()) {
+            _loginState.value = AuthState.Error("Por favor, preencha o e-mail e a senha.")
+            return
+        }
+
         viewModelScope.launch {
             _loginState.value = AuthState.Loading
-            try {
-                // TODO: Chamada real ao backend: POST /api/auth/login
-                kotlinx.coroutines.delay(1000)
-
-                if (email.isBlank() || senha.isBlank()) {
-                    _loginState.value = AuthState.Error("Por favor, preencha o e-mail e a senha.")
-                    return@launch
-                }
-
-                // Simulação de erro de rede se o usuário digitar "erro"
-                if (email.contains("erro", ignoreCase = true)) {
-                    throw Exception("Servidor offline")
-                }
-
-                _loginState.value = AuthState.Success("Login realizado com sucesso!")
-            } catch (e: Exception) {
-                _loginState.value = AuthState.Error("Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.")
-            }
+            val result = authRepository.login(email, senha)
+            result.fold(
+                onSuccess = { session ->
+                    _loginState.value = AuthState.Success("Bem-vindo de volta, ${session.nome}!")
+                },
+                onFailure = { error ->
+                    _loginState.value =
+                        AuthState.Error(
+                            error.message ?: "Não foi possível conectar ao servidor. Verifique sua conexão e se a API está ativa.",
+                        )
+                },
+            )
         }
     }
 
@@ -57,25 +60,25 @@ class AuthViewModel : ViewModel() {
         senha: String,
         cpf: String,
     ) {
+        if (nome.isBlank() || email.isBlank() || senha.isBlank() || cpf.isBlank()) {
+            _signUpState.value = AuthState.Error("Por favor, preencha todos os campos obrigatórios.")
+            return
+        }
+
         viewModelScope.launch {
             _signUpState.value = AuthState.Loading
-            try {
-                // TODO: Chamada real ao backend: POST /api/auth/registro/pessoa-fisica
-                kotlinx.coroutines.delay(1000)
-
-                if (nome.isBlank() || email.isBlank() || senha.isBlank() || cpf.isBlank()) {
-                    _signUpState.value = AuthState.Error("Por favor, preencha todos os campos corretamente.")
-                    return@launch
-                }
-
-                if (email.contains("erro", ignoreCase = true)) {
-                    throw Exception("Servidor offline")
-                }
-
-                _signUpState.value = AuthState.Success("Cadastro realizado com sucesso!")
-            } catch (e: Exception) {
-                _signUpState.value = AuthState.Error("Ocorreu um erro ao tentar cadastrar. Tente novamente mais tarde.")
-            }
+            val result = authRepository.registerPessoaFisica(nome, email, senha, cpf)
+            result.fold(
+                onSuccess = { session ->
+                    _signUpState.value = AuthState.Success("Cadastro realizado com sucesso! Bem-vindo, ${session.nome}.")
+                },
+                onFailure = { error ->
+                    _signUpState.value =
+                        AuthState.Error(
+                            error.message ?: "Ocorreu um erro ao tentar cadastrar. Tente novamente mais tarde.",
+                        )
+                },
+            )
         }
     }
 
@@ -85,25 +88,25 @@ class AuthViewModel : ViewModel() {
         senha: String,
         cnpj: String,
     ) {
+        if (nome.isBlank() || email.isBlank() || senha.isBlank() || cnpj.isBlank()) {
+            _signUpState.value = AuthState.Error("Por favor, preencha todos os campos obrigatórios.")
+            return
+        }
+
         viewModelScope.launch {
             _signUpState.value = AuthState.Loading
-            try {
-                // TODO: Chamada real ao backend: POST /api/auth/registro/instituicao
-                kotlinx.coroutines.delay(1000)
-
-                if (nome.isBlank() || email.isBlank() || senha.isBlank() || cnpj.isBlank()) {
-                    _signUpState.value = AuthState.Error("Por favor, preencha todos os campos corretamente.")
-                    return@launch
-                }
-
-                if (email.contains("erro", ignoreCase = true)) {
-                    throw Exception("Servidor offline")
-                }
-
-                _signUpState.value = AuthState.Success("Instituição cadastrada com sucesso!")
-            } catch (e: Exception) {
-                _signUpState.value = AuthState.Error("Serviço temporariamente indisponível. Tente novamente mais tarde.")
-            }
+            val result = authRepository.registerInstituicao(nome, email, senha, cnpj)
+            result.fold(
+                onSuccess = { session ->
+                    _signUpState.value = AuthState.Success("Instituição cadastrada com sucesso! Bem-vindo, ${session.nome}.")
+                },
+                onFailure = { error ->
+                    _signUpState.value =
+                        AuthState.Error(
+                            error.message ?: "Ocorreu um erro ao tentar cadastrar. Tente novamente mais tarde.",
+                        )
+                },
+            )
         }
     }
 

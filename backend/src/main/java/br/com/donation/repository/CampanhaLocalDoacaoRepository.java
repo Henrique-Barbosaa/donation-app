@@ -1,106 +1,25 @@
 package br.com.donation.repository;
 
 import br.com.donation.model.CampanhaLocalDoacao;
-import org.springframework.stereotype.Repository;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public class CampanhaLocalDoacaoRepository extends AbstractRepository {
+/**
+ * Contrato de persistência de CampanhaLocalDoacao.
+ * <p>
+ * Independe de tecnologia/banco de dados: a implementação concreta (hoje JDBC) fica
+ * em {@code br.com.donation.repository.jdbc} e pode ser trocada sem afetar os services.
+ */
+public interface CampanhaLocalDoacaoRepository {
 
-    public CampanhaLocalDoacao save(CampanhaLocalDoacao assoc) {
-        return execute(connection -> {
-            String checkSql = "SELECT CAMPANHA_DOACAO_id, LOCAL_DOACAO_id FROM CAMPANHA_LOCAL_DOACAO WHERE CAMPANHA_DOACAO_id = ? AND LOCAL_DOACAO_id = ?";
-            boolean exists = false;
-            try (PreparedStatement psCheck = connection.prepareStatement(checkSql)) {
-                psCheck.setInt(1, assoc.getCampanhaDoacaoId());
-                psCheck.setInt(2, assoc.getLocalDoacaoId());
-                try (ResultSet rsCheck = psCheck.executeQuery()) {
-                    while (rsCheck.next()) {
-                        exists = true;
-                    }
-                }
-            }
+    CampanhaLocalDoacao save(CampanhaLocalDoacao assoc);
 
-            if (!exists) {
-                String insertSql = "INSERT INTO CAMPANHA_LOCAL_DOACAO (CAMPANHA_DOACAO_id, LOCAL_DOACAO_id) VALUES (?, ?)";
-                try (PreparedStatement psInsert = connection.prepareStatement(insertSql)) {
-                    psInsert.setInt(1, assoc.getCampanhaDoacaoId());
-                    psInsert.setInt(2, assoc.getLocalDoacaoId());
-                    psInsert.executeUpdate();
-                }
-            }
-            return assoc;
-        });
-    }
+    Optional<CampanhaLocalDoacao> findById(Integer campanhaDoacaoId, Integer localDoacaoId);
 
-    public Optional<CampanhaLocalDoacao> findById(Integer campanhaDoacaoId, Integer localDoacaoId) {
-        return execute(connection -> {
-            String sql = "SELECT CAMPANHA_DOACAO_id, LOCAL_DOACAO_id FROM CAMPANHA_LOCAL_DOACAO WHERE CAMPANHA_DOACAO_id = ? AND LOCAL_DOACAO_id = ?";
-            CampanhaLocalDoacao assoc = null;
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                ps.setInt(1, campanhaDoacaoId);
-                ps.setInt(2, localDoacaoId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        assoc = mapRow(rs);
-                    }
-                }
-            }
-            return Optional.ofNullable(assoc);
-        });
-    }
+    List<CampanhaLocalDoacao> findAll();
 
-    public List<CampanhaLocalDoacao> findAll() {
-        return execute(connection -> {
-            String sql = "SELECT CAMPANHA_DOACAO_id, LOCAL_DOACAO_id FROM CAMPANHA_LOCAL_DOACAO";
-            List<CampanhaLocalDoacao> lista = new ArrayList<>();
-            try (PreparedStatement ps = connection.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapRow(rs));
-                }
-            }
-            return lista;
-        });
-    }
+    void deleteById(Integer campanhaDoacaoId, Integer localDoacaoId);
 
-    public void deleteById(Integer campanhaDoacaoId, Integer localDoacaoId) {
-        executeWithoutResult(connection -> {
-            String sql = "DELETE FROM CAMPANHA_LOCAL_DOACAO WHERE CAMPANHA_DOACAO_id = ? AND LOCAL_DOACAO_id = ?";
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                ps.setInt(1, campanhaDoacaoId);
-                ps.setInt(2, localDoacaoId);
-                ps.executeUpdate();
-            }
-        });
-    }
+    List<CampanhaLocalDoacao> findByCampanhaId(Integer campanhaId);
 
-    private CampanhaLocalDoacao mapRow(ResultSet rs) throws SQLException {
-        CampanhaLocalDoacao assoc = new CampanhaLocalDoacao();
-        assoc.setCampanhaDoacaoId(rs.getInt("CAMPANHA_DOACAO_id"));
-        assoc.setLocalDoacaoId(rs.getInt("LOCAL_DOACAO_id"));
-        return assoc;
-    }
-
-    public List<CampanhaLocalDoacao> findByCampanhaId(Integer campanhaId) {
-        return execute(connection -> {
-            String sql = "SELECT CAMPANHA_DOACAO_id, LOCAL_DOACAO_id FROM CAMPANHA_LOCAL_DOACAO WHERE CAMPANHA_DOACAO_id = ?";
-            List<CampanhaLocalDoacao> lista = new ArrayList<>();
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                ps.setInt(1, campanhaId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        lista.add(mapRow(rs));
-                    }
-                }
-            }
-            return lista;
-        });
-    }
 }
