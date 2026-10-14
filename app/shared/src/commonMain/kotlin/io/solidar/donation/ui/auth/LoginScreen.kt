@@ -41,7 +41,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Validação T3
     val isEmailError = email.isNotEmpty() && !isEmailValid(email)
     val isPasswordError = password.isNotEmpty() && !isPasswordValid(password)
     val isFormValid = isEmailValid(email) && isPasswordValid(password)
