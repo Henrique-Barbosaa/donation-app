@@ -87,8 +87,7 @@ dependencies {
 }
 
 abstract class GenerateBackendConfigTask : DefaultTask() {
-    @get:InputFile
-    @get:Optional
+    @get:Internal
     abstract val localProperties: RegularFileProperty
 
     @get:OutputDirectory
@@ -157,7 +156,10 @@ abstract class GenerateBackendConfigTask : DefaultTask() {
 val generateBackendConfig =
     tasks.register<GenerateBackendConfigTask>("generateBackendConfig") {
         description = "Gera a classe com o host do backend resolvido (via local.properties ou deteccao de IP)"
-        localProperties.set(rootProject.file("local.properties"))
+        val localProps = rootProject.file("local.properties")
+        if (localProps.exists()) {
+            localProperties.set(localProps)
+        }
         outputDir.set(layout.buildDirectory.dir("generated/backendConfig/kotlin"))
     }
 
