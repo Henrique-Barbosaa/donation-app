@@ -61,5 +61,5 @@ out/
 *.rar
 hs_err_pid*
 replay_pid*
-.mvn/wrapper/maven-wrapper.jar
-application-secret-properties
+application-secret.properties
+*secret*.properties

@@ -1,8 +1,8 @@
-package br.com.donation.repository;
+package br.com.donation.repository.jdbc;
 
 import br.com.donation.exception.DatabaseException;
-import br.com.donation.repository.callback.ConnectionCallback;
-import br.com.donation.repository.callback.VoidConnectionCallback;
+import br.com.donation.repository.jdbc.callback.ConnectionCallback;
+import br.com.donation.repository.jdbc.callback.VoidConnectionCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -11,15 +11,15 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 @Repository
-public abstract class AbstractRepository {
+public abstract class AbstractJdbcRepository {
 
     @Autowired
     protected DataSource dataSource;
 
-    public AbstractRepository() {
+    public AbstractJdbcRepository() {
     }
 
-    public AbstractRepository(DataSource dataSource) {
+    public AbstractJdbcRepository(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

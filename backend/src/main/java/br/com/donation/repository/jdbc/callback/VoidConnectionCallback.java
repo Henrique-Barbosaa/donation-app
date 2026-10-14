@@ -1,4 +1,4 @@
-package br.com.donation.repository.callback;
+package br.com.donation.repository.jdbc.callback;
 
 import java.sql.Connection;
 import java.sql.SQLException;
