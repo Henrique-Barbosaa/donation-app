@@ -16,6 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +41,11 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Validação T3
+    val isEmailError = email.isNotEmpty() && !isEmailValid(email)
+    val isPasswordError = password.isNotEmpty() && !isPasswordValid(password)
+    val isFormValid = isEmailValid(email) && isPasswordValid(password)
+
     LaunchedEffect(loginState) {
         if (loginState is AuthState.Success) {
             onLoginSuccess()
@@ -53,7 +61,6 @@ fun LoginScreen(
                 .imePadding(),
         contentAlignment = Alignment.Center,
     ) {
-        // Efeito Glow de Fundo (Minimalista)
         Box(
             modifier =
                 Modifier
@@ -62,11 +69,7 @@ fun LoginScreen(
                     .height(400.dp)
                     .background(
                         Brush.radialGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    Color.Transparent,
-                                ),
+                            colors = listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), Color.Transparent),
                             radius = 600f,
                         ),
                     ),
@@ -94,6 +97,7 @@ fun LoginScreen(
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = 34.sp,
+                modifier = Modifier.semantics { heading() },
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -111,33 +115,24 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("E-mail") },
-                leadingIcon = {
-                    Icon(imageVector = AppIcons.Email, contentDescription = "E-mail")
-                },
+                isError = isEmailError,
+                supportingText = { if (isEmailError) Text("Insira um e-mail válido") },
+                leadingIcon = { Icon(imageVector = AppIcons.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next,
-                    ),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                    ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 singleLine = true,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Senha") },
-                leadingIcon = {
-                    Icon(imageVector = AppIcons.Lock, contentDescription = "Senha")
-                },
+                isError = isPasswordError,
+                supportingText = { if (isPasswordError) Text("A senha deve ter pelo menos 6 caracteres") },
+                leadingIcon = { Icon(imageVector = AppIcons.Lock, contentDescription = null) },
                 trailingIcon = {
                     TextButton(onClick = { passwordVisible = !passwordVisible }) {
                         Text(if (passwordVisible) "Ocultar" else "Ver")
@@ -146,28 +141,14 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done,
-                    ),
-                keyboardActions =
-                    KeyboardActions(
-                        onDone = {
-                            viewModel.login(email, password)
-                        },
-                    ),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                    ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { if (isFormValid) viewModel.login(email, password) }),
                 singleLine = true,
             )
 
             TextButton(
                 onClick = { /* TODO: Forgot Password API */ },
-                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier.align(Alignment.End).defaultMinSize(minHeight = 48.dp),
             ) {
                 Text(
                     text = "Esqueci minha senha",
@@ -182,10 +163,10 @@ fun LoginScreen(
             if (loginState is AuthState.Error) {
                 Row(
                     modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp))
-                            .padding(16.dp),
+                        Modifier.fillMaxWidth().background(
+                            MaterialTheme.colorScheme.errorContainer,
+                            RoundedCornerShape(12.dp),
+                        ).padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text("⚠️", fontSize = 18.sp)
@@ -202,16 +183,9 @@ fun LoginScreen(
 
             Button(
                 onClick = { viewModel.login(email, password) },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                enabled = loginState !is AuthState.Loading,
+                enabled = isFormValid && loginState !is AuthState.Loading,
             ) {
                 if (loginState is AuthState.Loading) {
                     CircularProgressIndicator(
@@ -230,19 +204,16 @@ fun LoginScreen(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable(role = Role.Button) { onNavigateToSignUp() }
+                        .padding(8.dp),
             ) {
-                Text(
-                    text = "Ainda não faz parte? ",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "Cadastre-se",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onNavigateToSignUp() },
-                )
+                Text("Ainda não faz parte? ", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Cadastre-se", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
         }
     }

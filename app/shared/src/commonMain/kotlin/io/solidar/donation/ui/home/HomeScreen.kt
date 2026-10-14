@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ import io.solidar.donation.ui.components.CampaignCard
 fun HomeScreen(
     campaigns: List<Campaign>,
     onCampaignClick: (Campaign) -> Unit,
+    onVerHistorico: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -42,7 +44,12 @@ fun HomeScreen(
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
         )
-
+        Button(
+            onClick = onVerHistorico,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        ) {
+            Text("Ver histórico")
+        }
         if (campaigns.isEmpty()) {
             EmptyCampaignsMessage(modifier = Modifier.fillMaxSize())
         } else {
@@ -84,6 +91,7 @@ private fun HomeScreenFilledPreview() {
         HomeScreen(
             campaigns = sampleCampaigns,
             onCampaignClick = {},
+            onVerHistorico = {},
         )
     }
 }
@@ -93,8 +101,9 @@ private fun HomeScreenFilledPreview() {
 private fun HomeScreenEmptyPreview() {
     DonationTheme {
         HomeScreen(
-            campaigns = emptyList(),
+            campaigns = sampleCampaigns,
             onCampaignClick = {},
+            onVerHistorico = {},
         )
     }
 }

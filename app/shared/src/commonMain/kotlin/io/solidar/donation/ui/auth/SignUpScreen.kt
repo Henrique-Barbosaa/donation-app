@@ -13,6 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -124,61 +127,42 @@ fun SignUpScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Criar Conta", fontWeight = FontWeight.Bold) },
+                title = { Text("Criar Conta", fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
                     IconButton(onClick = {
-                        if (currentStep == SignUpStep.CHOOSE_PROFILE) {
-                            onNavigateBack()
-                        } else {
-                            currentStep = SignUpStep.CHOOSE_PROFILE
-                        }
+                        if (currentStep == SignUpStep.CHOOSE_PROFILE) onNavigateBack() else currentStep = SignUpStep.CHOOSE_PROFILE
                     }) {
                         Icon(imageVector = AppIcons.ArrowBack, contentDescription = "Voltar")
                     }
                 },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { paddingValues ->
         Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(paddingValues)
-                    .imePadding(),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(paddingValues).imePadding(),
             contentAlignment = Alignment.TopCenter,
         ) {
             Crossfade(targetState = currentStep) { step ->
                 when (step) {
-                    SignUpStep.CHOOSE_PROFILE ->
-                        ProfileTypeSelection { selectedStep ->
-                            currentStep = selectedStep
-                        }
+                    SignUpStep.CHOOSE_PROFILE -> ProfileTypeSelection { currentStep = it }
                     SignUpStep.FORM_PF ->
                         SignUpForm(
-                            isPf = true,
-                            nome = nome, onNomeChange = { nome = it },
+                            isPf = true, nome = nome, onNomeChange = { nome = it },
                             email = email, onEmailChange = { email = it },
                             document = document, onDocumentChange = { document = it.take(11).filter { char -> char.isDigit() } },
                             password = password, onPasswordChange = { password = it },
                             passwordVisible = passwordVisible, onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
-                            signUpState = signUpState,
-                            onSubmit = { viewModel.signUpPessoaFisica(nome, email, password, document) },
+                            signUpState = signUpState, onSubmit = { viewModel.signUpPessoaFisica(nome, email, password, document) },
                         )
                     SignUpStep.FORM_PJ ->
                         SignUpForm(
-                            isPf = false,
-                            nome = nome, onNomeChange = { nome = it },
+                            isPf = false, nome = nome, onNomeChange = { nome = it },
                             email = email, onEmailChange = { email = it },
                             document = document, onDocumentChange = { document = it.take(14).filter { char -> char.isDigit() } },
                             password = password, onPasswordChange = { password = it },
                             passwordVisible = passwordVisible, onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
-                            signUpState = signUpState,
-                            onSubmit = { viewModel.signUpInstituicao(nome, email, password, document) },
+                            signUpState = signUpState, onSubmit = { viewModel.signUpInstituicao(nome, email, password, document) },
                         )
                 }
             }
@@ -189,11 +173,7 @@ fun SignUpScreen(
 @Composable
 fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -201,25 +181,22 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 32.dp),
+            modifier = Modifier.padding(bottom = 32.dp).semantics { heading() },
         )
 
         Card(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onSelectProfile(SignUpStep.FORM_PF) },
+                Modifier.fillMaxWidth().defaultMinSize(
+                    minHeight = 48.dp,
+                ).clickable(role = Role.Button) { onSelectProfile(SignUpStep.FORM_PF) },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         ) {
-            Row(
-                modifier = Modifier.padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Row(modifier = Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = AppIcons.Person,
-                    contentDescription = "Pessoa Física",
+                    contentDescription = null,
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -239,20 +216,17 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
 
         Card(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onSelectProfile(SignUpStep.FORM_PJ) },
+                Modifier.fillMaxWidth().defaultMinSize(
+                    minHeight = 48.dp,
+                ).clickable(role = Role.Button) { onSelectProfile(SignUpStep.FORM_PJ) },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         ) {
-            Row(
-                modifier = Modifier.padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Row(modifier = Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = AppIcons.Home,
-                    contentDescription = "Instituição / ONG",
+                    contentDescription = null,
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -267,8 +241,6 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -288,12 +260,19 @@ fun SignUpForm(
     signUpState: AuthState,
     onSubmit: () -> Unit,
 ) {
+    val isNomeValid = nome.isNotBlank()
+    val isEmailError = email.isNotEmpty() && !isEmailValid(email)
+    val isPasswordError = password.isNotEmpty() && !isPasswordValid(password)
+    val isDocumentError = document.isNotEmpty() && if (isPf) !isCpfValid(document) else !isCnpjValid(document)
+
+    val isFormValid =
+        isNomeValid &&
+            isEmailValid(email) &&
+            isPasswordValid(password) &&
+            if (isPf) isCpfValid(document) else isCnpjValid(document)
+
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(8.dp))
@@ -304,70 +283,52 @@ fun SignUpForm(
             label = { Text(if (isPf) "Nome completo" else "Nome da Organização") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            keyboardOptions =
-                KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next,
-                ),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
             singleLine = true,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = onEmailChange,
+            value = email, onValueChange = onEmailChange,
             label = { Text("E-mail") },
+            isError = isEmailError,
+            supportingText = { if (isEmailError) Text("Insira um e-mail válido") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next,
-                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = document,
-            onValueChange = onDocumentChange,
+            value = document, onValueChange = onDocumentChange,
             label = { Text(if (isPf) "CPF" else "CNPJ") },
+            isError = isDocumentError,
+            supportingText = { if (isDocumentError) Text(if (isPf) "O CPF deve ter 11 dígitos" else "O CNPJ deve ter 14 dígitos") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             visualTransformation = if (isPf) CpfVisualTransformation() else CnpjVisualTransformation(),
-            keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next,
-                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = onPasswordChange,
+            value = password, onValueChange = onPasswordChange,
             label = { Text("Senha") },
+            isError = isPasswordError,
+            supportingText = { if (isPasswordError) Text("A senha deve ter pelo menos 6 caracteres") },
             trailingIcon = {
-                TextButton(onClick = onPasswordVisibilityChange) {
-                    Text(if (passwordVisible) "Ocultar" else "Ver")
-                }
+                TextButton(onClick = onPasswordVisibilityChange) { Text(if (passwordVisible) "Ocultar" else "Ver") }
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-            keyboardActions =
-                KeyboardActions(
-                    onDone = { onSubmit() },
-                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { if (isFormValid) onSubmit() }),
             singleLine = true,
         )
 
@@ -376,10 +337,10 @@ fun SignUpForm(
         if (signUpState is AuthState.Error) {
             Row(
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp))
-                        .padding(16.dp),
+                    Modifier.fillMaxWidth().background(
+                        MaterialTheme.colorScheme.errorContainer,
+                        RoundedCornerShape(12.dp),
+                    ).padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("⚠️", fontSize = 18.sp)
@@ -396,26 +357,18 @@ fun SignUpForm(
 
         Button(
             onClick = onSubmit,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            enabled = signUpState !is AuthState.Loading,
+            enabled = isFormValid && signUpState !is AuthState.Loading,
         ) {
             if (signUpState is AuthState.Loading) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                )
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Text("Cadastrando...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             } else {
                 Text("Cadastrar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
-
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
