@@ -2,7 +2,8 @@
 [![CI Pipeline](https://github.com/Henrique-Barbosaa/donation-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Henrique-Barbosaa/donation-app/actions/workflows/ci.yml)  
 
 > Aplicativo de doações desenvolvido para a disciplina de Desenvolvimento de Sistemas para Dispositivos Móveis.   
-> **Vídeo de Apresentação (Sprint 0):** *(Link do vídeo de 5 minutos)*
+> **Vídeo de Apresentação (Sprint 0):** *(Link do vídeo de 5 minutos)*  
+> **Vídeo de Apresentação (Sprint 1):** [Acessar vídeo da Sprint 1 (Google Drive)](https://drive.google.com/drive/folders/12fEucObhW5YguU4JAUaxxDRwLSnvapnZ)
 
 ## 👥 Equipe
 * **Nome da Equipe:** Team Solidar.io
@@ -105,6 +106,14 @@ ou abra o projeto em Android Studio e execute a configuração do módulo `andro
 ### iOS
 
 Abra a pasta `app/iosApp` no Xcode e execute o projeto em um simulador ou dispositivo Apple.
+
+### Teste de Deep Link (Android)
+
+Para testar a abertura direta de uma campanha via deep link configurado na Sprint 1:
+
+```bash
+adb shell am start -a android.intent.action.VIEW -d "solidar://campanha/1"
+```
 
 ## Execução dos testes
 
