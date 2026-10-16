@@ -28,7 +28,6 @@ data class CampanhaDetalheRoute(
     val id: String,
 )
 
-/** Rota para a tela de escolha do tipo de doação (Dinheiro ou Itens). */
 @Serializable
 data class OpcoesDoacaoRoute(
     val id: String,

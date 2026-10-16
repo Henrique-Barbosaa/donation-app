@@ -19,14 +19,14 @@ import io.solidar.donation.navigation.CriarDoacaoRoute
 import io.solidar.donation.navigation.DEEP_LINK_CAMPANHA
 import io.solidar.donation.navigation.LoginRoute
 import io.solidar.donation.navigation.MainRoute
+import io.solidar.donation.navigation.OpcoesDoacaoRoute
 import io.solidar.donation.navigation.SignUpRoute
-import io.solidar.donation.navigation.OpcoesDoacaoRoute // <-- Importa a tua nova rota
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.auth.LoginScreen
 import io.solidar.donation.ui.auth.SignUpScreen
 import io.solidar.donation.ui.campaign.CampanhaDetalheScreen
 import io.solidar.donation.ui.donation.CriarDoacaoScreen
-import io.solidar.donation.ui.donation.OpcoesDoacaoScreen // <-- Importa o ecrã novo
+import io.solidar.donation.ui.donation.OpcoesDoacaoScreen
 import io.solidar.donation.ui.home.MainNavigationScaffold
 import io.solidar.donation.ui.home.sampleCampaigns
 
@@ -94,16 +94,14 @@ fun DonationNavHost(navController: NavHostController) {
                 onBack = {
                     if (!navController.popBackStack()) navController.navigate(AuthGraph)
                 },
-                // Passamos o evento para navegar para a tela de opções:
                 onQueroDoar = {
                     if (campaign != null) {
                         navController.navigate(OpcoesDoacaoRoute(campaign.id))
                     }
-                }
+                },
             )
         }
 
-        // NOVO ECRÃ AQUI:
         composable<OpcoesDoacaoRoute> { entry ->
             val route = entry.toRoute<OpcoesDoacaoRoute>()
             val campaign = campaigns.firstOrNull { it.id == route.id }
@@ -113,7 +111,7 @@ fun DonationNavHost(navController: NavHostController) {
                     campaign = campaign,
                     onBack = { navController.popBackStack() },
                     onDoarDinheiro = { /* TODO: Rota do PIX */ },
-                    onDoarItens = { /* TODO: Rota do Formulário */ }
+                    onDoarItens = { /* TODO: Rota do Formulário */ },
                 )
             }
         }

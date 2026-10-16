@@ -48,7 +48,7 @@ fun OpcoesDoacaoScreen(
     onBack: () -> Unit,
     onDoarDinheiro: () -> Unit,
     onDoarItens: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -61,47 +61,45 @@ fun OpcoesDoacaoScreen(
                     IconButton(onClick = onBack) {
                         Icon(AppIcons.ArrowBack, contentDescription = "Voltar")
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Text(
                 text = "Como gostaria de ajudar a campanha?",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
 
-            // Mostramos o nome da campanha para confirmar o contexto
             Text(
                 text = campaign.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF006B4E), // Verde de alto contraste
-                fontWeight = FontWeight.Bold
+                color = Color(0xFF006B4E),
+                fontWeight = FontWeight.Bold,
             )
 
-            // Opção 1: Dinheiro
             OpcaoDoacaoCard(
                 titulo = "Contribuir com Dinheiro",
                 descricao = "Ajude a instituição a bater a meta financeira através de Pix, Boleto ou Cartão.",
                 emoji = "💰",
-                onClick = onDoarDinheiro
+                onClick = onDoarDinheiro,
             )
 
-            // Opção 2: Itens
             OpcaoDoacaoCard(
                 titulo = "Doar Itens Físicos",
                 descricao = "Tem os materiais solicitados? Agende a entrega ou recolha dos produtos.",
                 emoji = "📦",
-                onClick = onDoarItens
+                onClick = onDoarItens,
             )
         }
     }
@@ -112,26 +110,28 @@ private fun OpcaoDoacaoCard(
     titulo: String,
     descricao: String,
     emoji: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick) // Transforma o cartão todo num botão gigante
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable(onClick = onClick),
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF006B4E).copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF006B4E).copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(text = emoji, fontSize = 32.sp)
             }
@@ -143,14 +143,14 @@ private fun OpcaoDoacaoCard(
                     text = titulo,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF006B4E) // Verde de alto contraste
+                    color = Color(0xFF006B4E),
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = descricao,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -165,7 +165,7 @@ private fun OpcoesDoacaoPreview() {
             campaign = sampleCampaigns.first(),
             onBack = {},
             onDoarDinheiro = {},
-            onDoarItens = {}
+            onDoarItens = {},
         )
     }
 }

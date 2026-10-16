@@ -146,7 +146,6 @@ fun MainNavigationContent(
                         NavigationBarItem(
                             selected = selectedTab == tab,
                             onClick = { onTabSelected(tab) },
-                            // O rótulo visível já nomeia o item para o leitor de tela.
                             icon = { Icon(tab.icon, contentDescription = null) },
                             label = { Text(tab.label) },
                         )
@@ -188,10 +187,10 @@ private fun TabContent(
                     wide = wide,
                 )
             MainTab.FAVORITES -> {
-                // Filtramos a lista para mostrar apenas as favoritadas
-                val campanhasFavoritas = campaigns.filter {
-                    io.solidar.donation.util.FavoritosManager.isFavorito(it.id)
-                }
+                val campanhasFavoritas =
+                    campaigns.filter {
+                        io.solidar.donation.util.FavoritosManager.isFavorito(it.id)
+                    }
 
                 if (campanhasFavoritas.isEmpty()) {
                     PlaceholderScreen(
@@ -200,7 +199,6 @@ private fun TabContent(
                         icon = AppIcons.Search,
                     )
                 } else {
-                    // Reutilizamos a tua HomeScreen maravilhosa, mas só com as favoritas!
                     HomeScreen(
                         campaigns = campanhasFavoritas,
                         onCampaignClick = onCampaignClick,
