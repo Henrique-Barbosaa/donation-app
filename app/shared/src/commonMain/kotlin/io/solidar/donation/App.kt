@@ -1,72 +1,108 @@
 package io.solidar.donation
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
+import io.solidar.donation.navigation.AuthGraph
+import io.solidar.donation.navigation.CampanhaDetalheRoute
+import io.solidar.donation.navigation.CriarDoacaoRoute
+import io.solidar.donation.navigation.DEEP_LINK_CAMPANHA
+import io.solidar.donation.navigation.LoginRoute
+import io.solidar.donation.navigation.MainRoute
+import io.solidar.donation.navigation.SignUpRoute
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.auth.LoginScreen
 import io.solidar.donation.ui.auth.SignUpScreen
-import io.solidar.donation.ui.history.HistoricoAba
-import io.solidar.donation.ui.history.HistoricoScreen
-import io.solidar.donation.ui.history.sampleDoacoes
-import io.solidar.donation.ui.home.HomeScreen
+import io.solidar.donation.ui.campaign.CampanhaDetalheScreen
+import io.solidar.donation.ui.donation.CriarDoacaoScreen
+import io.solidar.donation.ui.home.MainNavigationScaffold
 import io.solidar.donation.ui.home.sampleCampaigns
-
-enum class Screen {
-    LOGIN,
-    SIGN_UP,
-    HOME,
-    HISTORICO,
-}
 
 @Composable
 @Preview
-fun App() {
+fun App(navController: NavHostController = rememberNavController()) {
     DonationTheme {
-        var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
-        var historicoTab by remember { mutableStateOf(HistoricoAba.FEITAS) }
+        // Surface na raiz garante fundo e cor de texto vindos do tema (claro/escuro).
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            DonationNavHost(navController)
+        }
+    }
+}
 
-        when (currentScreen) {
-            Screen.LOGIN -> {
+/**
+ * Grafo de navegação. As telas recebem lambdas e nunca o [NavHostController].
+ * Dados em memória (campanhas de exemplo) ficam acima da navegação.
+ */
+@Composable
+fun DonationNavHost(navController: NavHostController) {
+    val campaigns = sampleCampaigns
+
+    NavHost(navController = navController, startDestination = AuthGraph) {
+        // Grafo aninhado: o fluxo de autenticação entra e sai como unidade.
+        navigation<AuthGraph>(startDestination = LoginRoute) {
+            composable<LoginRoute> {
                 LoginScreen(
-                    onNavigateToSignUp = { currentScreen = Screen.SIGN_UP },
-                    onLoginSuccess = { currentScreen = Screen.HOME },
+                    onNavigateToSignUp = { navController.navigate(SignUpRoute) },
+                    onLoginSuccess = { navController.irParaMain() },
                 )
             }
-            Screen.SIGN_UP -> {
+            composable<SignUpRoute> {
                 SignUpScreen(
-                    onNavigateBack = { currentScreen = Screen.LOGIN },
-                    onSignUpSuccess = { currentScreen = Screen.HOME },
-                )
-            }
-            Screen.HOME -> {
-                Column {
-                    // TODO: trocar por um componente de navegação de verdade quando existir.
-                    Text(
-                        text = "Ver histórico",
-                        modifier =
-                            Modifier
-                                .padding(16.dp)
-                                .clickable { currentScreen = Screen.HISTORICO },
-                    )
-                    HomeScreen(
-                        campaigns = sampleCampaigns,
-                        onCampaignClick = { /* TODO: navegar para o detalhe da campanha */ },
-                    )
-                }
-            }
-            Screen.HISTORICO -> {
-                HistoricoScreen(
-                    doacoes = sampleDoacoes,
-                    selectedTab = historicoTab,
-                    onTabSelected = { historicoTab = it },
+                    onNavigateBack = { navController.popBackStack() },
+                    onSignUpSuccess = { navController.irParaMain() },
                 )
             }
         }
+
+        composable<MainRoute> {
+            MainNavigationScaffold(
+                campaigns = campaigns,
+                onNavigateToCreateDonation = { navController.navigate(CriarDoacaoRoute) },
+                onCampaignClick = { navController.navigate(CampanhaDetalheRoute(it.id)) },
+                onLogout = {
+                    navController.navigate(AuthGraph) {
+                        popUpTo<MainRoute> { inclusive = true }
+                    }
+                },
+            )
+        }
+
+        composable<CriarDoacaoRoute> {
+            CriarDoacaoScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onDonationCreated = { navController.popBackStack() },
+            )
+        }
+
+        composable<CampanhaDetalheRoute>(
+            deepLinks = listOf(navDeepLink<CampanhaDetalheRoute>(basePath = DEEP_LINK_CAMPANHA)),
+        ) { entry ->
+            val route = entry.toRoute<CampanhaDetalheRoute>()
+            CampanhaDetalheScreen(
+                campaign = campaigns.firstOrNull { it.id == route.id },
+                onBack = {
+                    if (!navController.popBackStack()) navController.navigate(AuthGraph)
+                },
+            )
+        }
+    }
+}
+
+private fun NavHostController.irParaMain() {
+    navigate(MainRoute) {
+        popUpTo<AuthGraph> { inclusive = true }
     }
 }

@@ -5,13 +5,13 @@ import io.solidar.donation.data.remote.HttpClientFactory
 import io.solidar.donation.data.remote.dto.LoginRequest
 import io.solidar.donation.data.remote.dto.RegisterPfRequest
 import io.solidar.donation.data.remote.dto.RegisterPjRequest
-import io.solidar.donation.data.storage.InMemoryTokenStorage
+import io.solidar.donation.data.storage.SessionStorage
 import io.solidar.donation.data.storage.TokenStorage
 import io.solidar.donation.domain.repository.AuthRepository
 import io.solidar.donation.model.UserSession
 
 class AuthRepositoryImpl(
-    private val tokenStorage: TokenStorage = InMemoryTokenStorage(),
+    private val tokenStorage: TokenStorage = SessionStorage.instance,
     private val remoteDataSource: AuthRemoteDataSource =
         AuthRemoteDataSource(
             httpClient = HttpClientFactory.create { tokenStorage.getToken() },

@@ -68,6 +68,8 @@ kotlin {
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.json)
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.navigation.compose)
+                implementation(libs.material3.adaptive)
             }
         }
         iosMain.dependencies {

@@ -167,4 +167,157 @@ object AppIcons {
                     close()
                 }
             }.build()
+
+    val Search: ImageVector
+        get() =
+            ImageVector.Builder(
+                name = "Search",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 24f,
+                viewportHeight = 24f,
+            ).apply {
+                path(fill = SolidColor(Color.Black)) {
+                    moveTo(15.5f, 14f)
+                    horizontalLineTo(14.71f)
+                    lineTo(14.43f, 13.73f)
+                    curveTo(15.41f, 12.59f, 16f, 11.11f, 16f, 9.5f)
+                    curveTo(16f, 5.91f, 13.09f, 3f, 9.5f, 3f)
+                    curveTo(5.91f, 3f, 3f, 5.91f, 3f, 9.5f)
+                    curveTo(3f, 13.09f, 5.91f, 16f, 9.5f, 16f)
+                    curveTo(11.11f, 16f, 12.59f, 15.41f, 13.73f, 14.43f)
+                    lineTo(14f, 14.71f)
+                    verticalLineTo(15.5f)
+                    lineTo(19f, 20.49f)
+                    lineTo(20.49f, 19f)
+                    lineTo(15.5f, 14f)
+                    close()
+                    moveTo(9.5f, 14f)
+                    curveTo(7.01f, 14f, 5f, 11.99f, 5f, 9.5f)
+                    curveTo(5f, 7.01f, 7.01f, 5f, 9.5f, 5f)
+                    curveTo(11.99f, 5f, 14f, 7.01f, 14f, 9.5f)
+                    curveTo(14f, 11.99f, 11.99f, 14f, 9.5f, 14f)
+                    close()
+                }
+            }.build()
+
+    val Add: ImageVector
+        get() =
+            ImageVector.Builder(
+                name = "Add",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 24f,
+                viewportHeight = 24f,
+            ).apply {
+                path(fill = SolidColor(Color.Black)) {
+                    moveTo(19f, 13f)
+                    horizontalLineTo(13f)
+                    verticalLineTo(19f)
+                    horizontalLineTo(11f)
+                    verticalLineTo(13f)
+                    horizontalLineTo(5f)
+                    verticalLineTo(11f)
+                    horizontalLineTo(11f)
+                    verticalLineTo(5f)
+                    horizontalLineTo(13f)
+                    verticalLineTo(11f)
+                    horizontalLineTo(19f)
+                    verticalLineTo(13f)
+                    close()
+                }
+            }.build()
+
+    val Notifications: ImageVector
+        get() =
+            ImageVector.Builder(
+                name = "Notifications",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 24f,
+                viewportHeight = 24f,
+            ).apply {
+                path(fill = SolidColor(Color.Black)) {
+                    moveTo(12f, 22f)
+                    curveTo(13.1f, 22f, 14f, 21.1f, 14f, 20f)
+                    horizontalLineTo(10f)
+                    curveTo(10f, 21.1f, 10.9f, 22f, 12f, 22f)
+                    close()
+                    moveTo(18f, 16f)
+                    verticalLineTo(11f)
+                    curveTo(18f, 7.93f, 16.37f, 5.36f, 13.5f, 4.68f)
+                    verticalLineTo(4f)
+                    curveTo(13.5f, 3.17f, 12.83f, 2.5f, 12f, 2.5f)
+                    curveTo(11.17f, 2.5f, 10.5f, 3.17f, 10.5f, 4f)
+                    verticalLineTo(4.68f)
+                    curveTo(7.64f, 5.36f, 6f, 7.92f, 6f, 11f)
+                    verticalLineTo(16f)
+                    lineTo(4f, 18f)
+                    verticalLineTo(19f)
+                    horizontalLineTo(20f)
+                    verticalLineTo(18f)
+                    lineTo(18f, 16f)
+                    close()
+                }
+            }.build()
+
+    val Camera: ImageVector
+        get() =
+            ImageVector.Builder(
+                name = "Camera",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 24f,
+                viewportHeight = 24f,
+            ).apply {
+                path(fill = SolidColor(Color.Black)) {
+                    moveTo(12f, 12f)
+                    curveTo(10.34f, 12f, 9f, 13.34f, 9f, 15f)
+                    curveTo(9f, 16.66f, 10.34f, 18f, 12f, 18f)
+                    curveTo(13.66f, 18f, 15f, 16.66f, 15f, 15f)
+                    curveTo(15f, 13.34f, 13.66f, 12f, 12f, 12f)
+                    close()
+                    moveTo(9f, 2f)
+                    lineTo(7.17f, 4f)
+                    horizontalLineTo(4f)
+                    curveTo(2.9f, 4f, 2f, 4.9f, 2f, 6f)
+                    verticalLineTo(18f)
+                    curveTo(2f, 19.1f, 2.9f, 20f, 4f, 20f)
+                    horizontalLineTo(20f)
+                    curveTo(21.1f, 20f, 22f, 19.1f, 22f, 18f)
+                    verticalLineTo(6f)
+                    curveTo(22f, 4.9f, 21.1f, 4f, 20f, 4f)
+                    horizontalLineTo(16.83f)
+                    lineTo(15f, 2f)
+                    horizontalLineTo(9f)
+                    close()
+                    moveTo(12f, 19f)
+                    curveTo(9.79f, 19f, 8f, 17.21f, 8f, 15f)
+                    curveTo(8f, 12.79f, 9.79f, 11f, 12f, 11f)
+                    curveTo(14.21f, 11f, 16f, 12.79f, 16f, 15f)
+                    curveTo(16f, 17.21f, 14.21f, 19f, 12f, 19f)
+                    close()
+                }
+            }.build()
+
+    val Check: ImageVector
+        get() =
+            ImageVector.Builder(
+                name = "Check",
+                defaultWidth = 24.dp,
+                defaultHeight = 24.dp,
+                viewportWidth = 24f,
+                viewportHeight = 24f,
+            ).apply {
+                path(fill = SolidColor(Color.Black)) {
+                    moveTo(9f, 16.17f)
+                    lineTo(4.83f, 12f)
+                    lineTo(3.41f, 13.41f)
+                    lineTo(9f, 19f)
+                    lineTo(21f, 7f)
+                    lineTo(19.59f, 5.59f)
+                    lineTo(9f, 16.17f)
+                    close()
+                }
+            }.build()
 }
