@@ -8,12 +8,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,23 +33,44 @@ import io.solidar.donation.ui.components.CampaignCard
  * A tela é stateless por opção de projeto: recebe pronto o que deve mostrar e
  * devolve os eventos para o chamador. Assim ela pode ser renderizada em
  * `@Preview` e testada sem depender de ViewModel ou de rede.
+ *
+ * Suporta layout compacto (LazyColumn) e largo (LazyVerticalGrid em 2 colunas).
  */
 @Composable
 fun HomeScreen(
     campaigns: List<Campaign>,
     onCampaignClick: (Campaign) -> Unit,
     modifier: Modifier = Modifier,
+    wide: Boolean = false,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Text(
             text = "Campanhas abertas",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
+            modifier =
+                Modifier
+                    .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
+                    .semantics { heading() },
         )
 
         if (campaigns.isEmpty()) {
             EmptyCampaignsMessage(modifier = Modifier.fillMaxSize())
+        } else if (wide) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                items(items = campaigns, key = { it.id }) { campaign ->
+                    CampaignCard(
+                        campaign = campaign,
+                        onClick = onCampaignClick,
+                    )
+                }
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
@@ -84,6 +110,18 @@ private fun HomeScreenFilledPreview() {
         HomeScreen(
             campaigns = sampleCampaigns,
             onCampaignClick = {},
+        )
+    }
+}
+
+@Preview(widthDp = 840, heightDp = 600)
+@Composable
+private fun HomeScreenWidePreview() {
+    DonationTheme {
+        HomeScreen(
+            campaigns = sampleCampaigns,
+            onCampaignClick = {},
+            wide = true,
         )
     }
 }

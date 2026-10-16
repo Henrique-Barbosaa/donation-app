@@ -27,3 +27,7 @@ class InMemoryTokenStorage : TokenStorage {
         currentSession = null
     }
 }
+
+object SessionStorage {
+    val instance: TokenStorage = InMemoryTokenStorage()
+}

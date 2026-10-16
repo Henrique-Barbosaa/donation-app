@@ -63,3 +63,6 @@ hs_err_pid*
 replay_pid*
 application-secret.properties
 *secret*.properties
+
+# Agent Customizations & Context
+.agents/

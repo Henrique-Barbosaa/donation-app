@@ -6,6 +6,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.solidar.donation.data.remote.dto.ApiErrorResponse
 import io.solidar.donation.data.remote.dto.AuthResponse
@@ -30,6 +32,7 @@ class AuthRemoteDataSource(
     suspend fun login(request: LoginRequest): AuthResponse {
         val response =
             httpClient.post("$baseUrl/api/auth/login") {
+                contentType(ContentType.Application.Json)
                 setBody(request)
             }
 
@@ -43,6 +46,7 @@ class AuthRemoteDataSource(
     suspend fun registerPessoaFisica(request: RegisterPfRequest): AuthResponse {
         val response =
             httpClient.post("$baseUrl/api/auth/registro/pessoa-fisica") {
+                contentType(ContentType.Application.Json)
                 setBody(request)
             }
 
@@ -56,6 +60,7 @@ class AuthRemoteDataSource(
     suspend fun registerInstituicao(request: RegisterPjRequest): AuthResponse {
         val response =
             httpClient.post("$baseUrl/api/auth/registro/instituicao") {
+                contentType(ContentType.Application.Json)
                 setBody(request)
             }
 

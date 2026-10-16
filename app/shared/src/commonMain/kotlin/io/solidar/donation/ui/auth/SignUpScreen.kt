@@ -3,16 +3,48 @@ package io.solidar.donation.ui.auth
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -22,10 +54,13 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
+import io.solidar.donation.util.Validators
 
 enum class SignUpStep {
     CHOOSE_PROFILE,
@@ -124,16 +159,28 @@ fun SignUpScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Criar Conta", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Criar Conta",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        if (currentStep == SignUpStep.CHOOSE_PROFILE) {
-                            onNavigateBack()
-                        } else {
-                            currentStep = SignUpStep.CHOOSE_PROFILE
-                        }
-                    }) {
-                        Icon(imageVector = AppIcons.ArrowBack, contentDescription = "Voltar")
+                    IconButton(
+                        onClick = {
+                            if (currentStep == SignUpStep.CHOOSE_PROFILE) {
+                                onNavigateBack()
+                            } else {
+                                currentStep = SignUpStep.CHOOSE_PROFILE
+                            }
+                        },
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.ArrowBack,
+                            contentDescription = "Voltar",
+                        )
                     }
                 },
                 colors =
@@ -161,22 +208,32 @@ fun SignUpScreen(
                     SignUpStep.FORM_PF ->
                         SignUpForm(
                             isPf = true,
-                            nome = nome, onNomeChange = { nome = it },
-                            email = email, onEmailChange = { email = it },
-                            document = document, onDocumentChange = { document = it.take(11).filter { char -> char.isDigit() } },
-                            password = password, onPasswordChange = { password = it },
-                            passwordVisible = passwordVisible, onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
+                            nome = nome,
+                            onNomeChange = { nome = it },
+                            email = email,
+                            onEmailChange = { email = it },
+                            document = document,
+                            onDocumentChange = { document = it.take(11).filter { char -> char.isDigit() } },
+                            password = password,
+                            onPasswordChange = { password = it },
+                            passwordVisible = passwordVisible,
+                            onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
                             signUpState = signUpState,
                             onSubmit = { viewModel.signUpPessoaFisica(nome, email, password, document) },
                         )
                     SignUpStep.FORM_PJ ->
                         SignUpForm(
                             isPf = false,
-                            nome = nome, onNomeChange = { nome = it },
-                            email = email, onEmailChange = { email = it },
-                            document = document, onDocumentChange = { document = it.take(14).filter { char -> char.isDigit() } },
-                            password = password, onPasswordChange = { password = it },
-                            passwordVisible = passwordVisible, onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
+                            nome = nome,
+                            onNomeChange = { nome = it },
+                            email = email,
+                            onEmailChange = { email = it },
+                            document = document,
+                            onDocumentChange = { document = it.take(14).filter { char -> char.isDigit() } },
+                            password = password,
+                            onPasswordChange = { password = it },
+                            passwordVisible = passwordVisible,
+                            onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
                             signUpState = signUpState,
                             onSubmit = { viewModel.signUpInstituicao(nome, email, password, document) },
                         )
@@ -201,7 +258,10 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 32.dp),
+            modifier =
+                Modifier
+                    .padding(bottom = 32.dp)
+                    .semantics { heading() },
         )
 
         Card(
@@ -211,7 +271,7 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
                     .clickable { onSelectProfile(SignUpStep.FORM_PF) },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
             Row(
                 modifier = Modifier.padding(24.dp),
@@ -225,9 +285,14 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Pessoa Física", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Text(
-                        "Quero doar itens, receber doações ou ser voluntário",
+                        text = "Pessoa Física",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "Quero doar itens, receber doações ou ser voluntário",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -244,7 +309,7 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
                     .clickable { onSelectProfile(SignUpStep.FORM_PJ) },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
             Row(
                 modifier = Modifier.padding(24.dp),
@@ -258,9 +323,14 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Instituição / ONG", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Text(
-                        "Represento uma ONG, quero criar campanhas e buscar voluntários",
+                        text = "Instituição / ONG",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "Represento uma ONG, quero criar campanhas e buscar voluntários",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -288,6 +358,19 @@ fun SignUpForm(
     signUpState: AuthState,
     onSubmit: () -> Unit,
 ) {
+    val isValid = Validators.signUpValido(isPf, nome, email, document, password)
+
+    val erroNome = if (nome.isNotBlank() && nome.trim().length < 3) "O nome deve ter no mínimo 3 caracteres." else null
+    val erroEmail = Validators.erroEmail(email)
+    val erroDoc =
+        when {
+            document.isBlank() -> null
+            isPf && !Validators.cpfValido(document) -> "O CPF deve ter 11 dígitos."
+            !isPf && !Validators.cnpjValido(document) -> "O CNPJ deve ter 14 dígitos."
+            else -> null
+        }
+    val erroSenha = Validators.erroSenha(password)
+
     Column(
         modifier =
             Modifier
@@ -298,12 +381,30 @@ fun SignUpForm(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
+        Text(
+            text = if (isPf) "Cadastro de Pessoa Física" else "Cadastro de Organização",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .semantics { heading() },
+        )
+
         OutlinedTextField(
             value = nome,
             onValueChange = onNomeChange,
             label = { Text(if (isPf) "Nome completo" else "Nome da Organização") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
+            isError = erroNome != null,
+            supportingText = {
+                erroNome?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+            },
             keyboardOptions =
                 KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
@@ -312,7 +413,7 @@ fun SignUpForm(
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = email,
@@ -320,6 +421,12 @@ fun SignUpForm(
             label = { Text("E-mail") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
+            isError = erroEmail != null,
+            supportingText = {
+                erroEmail?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+            },
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -328,15 +435,21 @@ fun SignUpForm(
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = document,
             onValueChange = onDocumentChange,
-            label = { Text(if (isPf) "CPF" else "CNPJ") },
+            label = { Text(if (isPf) "CPF (apenas dígitos)" else "CNPJ (apenas dígitos)") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             visualTransformation = if (isPf) CpfVisualTransformation() else CnpjVisualTransformation(),
+            isError = erroDoc != null,
+            supportingText = {
+                erroDoc?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+            },
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = KeyboardType.Number,
@@ -345,12 +458,18 @@ fun SignUpForm(
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = password,
             onValueChange = onPasswordChange,
             label = { Text("Senha") },
+            isError = erroSenha != null,
+            supportingText = {
+                erroSenha?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+            },
             trailingIcon = {
                 TextButton(onClick = onPasswordVisibilityChange) {
                     Text(if (passwordVisible) "Ocultar" else "Ver")
@@ -366,12 +485,14 @@ fun SignUpForm(
                 ),
             keyboardActions =
                 KeyboardActions(
-                    onDone = { onSubmit() },
+                    onDone = {
+                        if (isValid) onSubmit()
+                    },
                 ),
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         if (signUpState is AuthState.Error) {
             Row(
@@ -391,7 +512,7 @@ fun SignUpForm(
                     fontWeight = FontWeight.Medium,
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
 
         Button(
@@ -401,7 +522,14 @@ fun SignUpForm(
                     .fillMaxWidth()
                     .height(56.dp),
             shape = RoundedCornerShape(16.dp),
-            enabled = signUpState !is AuthState.Loading,
+            enabled = isValid && signUpState !is AuthState.Loading,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
         ) {
             if (signUpState is AuthState.Loading) {
                 CircularProgressIndicator(
@@ -417,5 +545,57 @@ fun SignUpForm(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileTypeSelectionPreview() {
+    DonationTheme {
+        ProfileTypeSelection(onSelectProfile = {})
+    }
+}
+
+@Preview
+@Composable
+private fun SignUpFormPfPreview() {
+    DonationTheme {
+        SignUpForm(
+            isPf = true,
+            nome = "Maria Oliveira",
+            onNomeChange = {},
+            email = "maria@exemplo.com",
+            onEmailChange = {},
+            document = "12345678901",
+            onDocumentChange = {},
+            password = "senhaSegura123",
+            onPasswordChange = {},
+            passwordVisible = false,
+            onPasswordVisibilityChange = {},
+            signUpState = AuthState.Idle,
+            onSubmit = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SignUpFormDarkPreview() {
+    DonationTheme(darkTheme = true) {
+        SignUpForm(
+            isPf = false,
+            nome = "ONG Esperança",
+            onNomeChange = {},
+            email = "contato@ong.org",
+            onEmailChange = {},
+            document = "12345678000199",
+            onDocumentChange = {},
+            password = "senha",
+            onPasswordChange = {},
+            passwordVisible = false,
+            onPasswordVisibilityChange = {},
+            signUpState = AuthState.Idle,
+            onSubmit = {},
+        )
     }
 }
