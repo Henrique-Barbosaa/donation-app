@@ -1,70 +1,88 @@
 package io.solidar.donation.ui.campaign
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.solidar.donation.model.Campaign
+import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.ui.home.sampleCampaigns
 import io.solidar.donation.util.formatBrl
 
-/**
- * Detalhe de uma campanha. Stateless: recebe a campanha (ou `null`, quando o id
- * não existe) e devolve o evento de voltar.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampanhaDetalheScreen(
     campaign: Campaign?,
     onBack: () -> Unit,
+    onQueroDoar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Campanha",
-                        modifier = Modifier.semantics { heading() },
-                    )
-                },
+                title = { Text(text = "Campanha", modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.size(48.dp),
-                    ) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
                         Icon(AppIcons.ArrowBack, contentDescription = "Voltar")
                     }
                 },
             )
         },
+        bottomBar = {
+            if (campaign != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val interesseSalvo = io.solidar.donation.util.FavoritosManager.isFavorito(campaign.id)
+
+                        IconButton(
+                            onClick = { io.solidar.donation.util.FavoritosManager.toggle(campaign.id) },
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        ) {
+                            Text(text = if (interesseSalvo) "❤️" else "🤍", fontSize = 28.sp)
+                        }
+                        Button(
+                            onClick = onQueroDoar,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF006B4E),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text("Quero doar", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
     ) { padding ->
         if (campaign == null) {
             Box(
@@ -86,34 +104,143 @@ fun CampanhaDetalheScreen(
             contentAlignment = Alignment.TopCenter,
         ) {
             Column(
-                modifier =
-                    Modifier
-                        .widthIn(max = 720.dp)
+                modifier = Modifier
+                    .widthIn(max = 720.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .height(200.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color(0xFF006B4E).copy(alpha = 0.2f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("🖼️", fontSize = 48.sp)
+                        }
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = campaign.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    Text(
+                        text = "Organizado por ${campaign.organizer}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    LinearProgressIndicator(
+                        progress = { campaign.progress },
+                        modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
+                        color = Color(0xFF006B4E),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Text(
+                        text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color(0xFF006B4E),
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+
+                    // SECÇÃO DE DESCRIÇÃO DO PROJETO / CAUSA
+                    if (campaign.descricao.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Sobre a campanha:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = campaign.descricao,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 22.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (campaign.itensNecessarios.isNotEmpty()) {
+                        Text(
+                            text = "Itens necessários para doar:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        campaign.itensNecessarios.chunked(2).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                rowItems.forEach { item ->
+                                    CampaignItemCard(item = item, modifier = Modifier.weight(1f))
+                                }
+                                if (rowItems.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CampaignItemCard(item: CampaignItem, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = campaign.title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    text = item.nome.take(1).uppercase(),
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.semantics { heading() },
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
                 Text(
-                    text = "Organizado por ${campaign.organizer}",
+                    text = item.nome,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                LinearProgressIndicator(
-                    progress = { campaign.progress },
-                    modifier = Modifier.fillMaxWidth().height(8.dp),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
+                    text = item.quantidadeDescricao,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -124,14 +251,6 @@ fun CampanhaDetalheScreen(
 @Composable
 private fun CampanhaDetalhePreview() {
     DonationTheme {
-        CampanhaDetalheScreen(campaign = sampleCampaigns.first(), onBack = {})
-    }
-}
-
-@Preview
-@Composable
-private fun CampanhaDetalheNaoEncontradaPreview() {
-    DonationTheme {
-        CampanhaDetalheScreen(campaign = null, onBack = {})
+        CampanhaDetalheScreen(campaign = sampleCampaigns.first(), onBack = {}, onQueroDoar = {})
     }
 }

@@ -41,13 +41,14 @@ enum class MainTab(
 ) {
     HOME("Início", AppIcons.Home),
     EXPLORE("Explorar", AppIcons.Search),
+    FAVORITES("Favoritas", AppIcons.Favorite),
     ACTIVITIES("Atividades", AppIcons.Notifications),
     PROFILE("Perfil", AppIcons.Person),
 }
 
 /**
  * Shell principal pós-login. Lê a classe de largura da janela e delega para
- * [MainNavigationContent], que recebe a decisão de layout como parâmetro
+ * MainNavigationContent, que recebe a decisão de layout como parâmetro
  * (`wide`) — assim os dois modos podem ser conferidos em preview e testados.
  */
 @Composable
@@ -186,6 +187,27 @@ private fun TabContent(
                     onCampaignClick = onCampaignClick,
                     wide = wide,
                 )
+            MainTab.FAVORITES -> {
+                // Filtramos a lista para mostrar apenas as favoritadas
+                val campanhasFavoritas = campaigns.filter {
+                    io.solidar.donation.util.FavoritosManager.isFavorito(it.id)
+                }
+
+                if (campanhasFavoritas.isEmpty()) {
+                    PlaceholderScreen(
+                        title = "Nenhuma campanha salva",
+                        subtitle = "As campanhas que você marcar com ❤️ aparecerão aqui.",
+                        icon = AppIcons.Search,
+                    )
+                } else {
+                    // Reutilizamos a tua HomeScreen maravilhosa, mas só com as favoritas!
+                    HomeScreen(
+                        campaigns = campanhasFavoritas,
+                        onCampaignClick = onCampaignClick,
+                        wide = wide,
+                    )
+                }
+            }
             MainTab.EXPLORE ->
                 PlaceholderScreen(
                     title = "Explorar Causas e ONGs",

@@ -20,11 +20,13 @@ import io.solidar.donation.navigation.DEEP_LINK_CAMPANHA
 import io.solidar.donation.navigation.LoginRoute
 import io.solidar.donation.navigation.MainRoute
 import io.solidar.donation.navigation.SignUpRoute
+import io.solidar.donation.navigation.OpcoesDoacaoRoute // <-- Importa a tua nova rota
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.auth.LoginScreen
 import io.solidar.donation.ui.auth.SignUpScreen
 import io.solidar.donation.ui.campaign.CampanhaDetalheScreen
 import io.solidar.donation.ui.donation.CriarDoacaoScreen
+import io.solidar.donation.ui.donation.OpcoesDoacaoScreen // <-- Importa o ecrã novo
 import io.solidar.donation.ui.home.MainNavigationScaffold
 import io.solidar.donation.ui.home.sampleCampaigns
 
@@ -32,7 +34,6 @@ import io.solidar.donation.ui.home.sampleCampaigns
 @Preview
 fun App(navController: NavHostController = rememberNavController()) {
     DonationTheme {
-        // Surface na raiz garante fundo e cor de texto vindos do tema (claro/escuro).
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
@@ -42,16 +43,11 @@ fun App(navController: NavHostController = rememberNavController()) {
     }
 }
 
-/**
- * Grafo de navegação. As telas recebem lambdas e nunca o [NavHostController].
- * Dados em memória (campanhas de exemplo) ficam acima da navegação.
- */
 @Composable
 fun DonationNavHost(navController: NavHostController) {
     val campaigns = sampleCampaigns
 
     NavHost(navController = navController, startDestination = AuthGraph) {
-        // Grafo aninhado: o fluxo de autenticação entra e sai como unidade.
         navigation<AuthGraph>(startDestination = LoginRoute) {
             composable<LoginRoute> {
                 LoginScreen(
@@ -91,12 +87,35 @@ fun DonationNavHost(navController: NavHostController) {
             deepLinks = listOf(navDeepLink<CampanhaDetalheRoute>(basePath = DEEP_LINK_CAMPANHA)),
         ) { entry ->
             val route = entry.toRoute<CampanhaDetalheRoute>()
+            val campaign = campaigns.firstOrNull { it.id == route.id }
+
             CampanhaDetalheScreen(
-                campaign = campaigns.firstOrNull { it.id == route.id },
+                campaign = campaign,
                 onBack = {
                     if (!navController.popBackStack()) navController.navigate(AuthGraph)
                 },
+                // Passamos o evento para navegar para a tela de opções:
+                onQueroDoar = {
+                    if (campaign != null) {
+                        navController.navigate(OpcoesDoacaoRoute(campaign.id))
+                    }
+                }
             )
+        }
+
+        // NOVO ECRÃ AQUI:
+        composable<OpcoesDoacaoRoute> { entry ->
+            val route = entry.toRoute<OpcoesDoacaoRoute>()
+            val campaign = campaigns.firstOrNull { it.id == route.id }
+
+            if (campaign != null) {
+                OpcoesDoacaoScreen(
+                    campaign = campaign,
+                    onBack = { navController.popBackStack() },
+                    onDoarDinheiro = { /* TODO: Rota do PIX */ },
+                    onDoarItens = { /* TODO: Rota do Formulário */ }
+                )
+            }
         }
     }
 }
