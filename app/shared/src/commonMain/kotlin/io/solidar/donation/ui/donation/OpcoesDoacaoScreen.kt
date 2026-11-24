@@ -29,7 +29,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +59,7 @@ fun OpcoesDoacaoScreen(
                     Text("Tipo de Doação", modifier = Modifier.semantics { heading() })
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
                         Icon(AppIcons.ArrowBack, contentDescription = "Voltar")
                     }
                 },
@@ -79,12 +80,13 @@ fun OpcoesDoacaoScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() },
             )
 
             Text(
                 text = campaign.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF006B4E),
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
             )
 
@@ -119,7 +121,7 @@ private fun OpcaoDoacaoCard(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .clickable(onClick = onClick),
+                .clickable(role = Role.Button, onClick = onClick),
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
@@ -130,7 +132,8 @@ private fun OpcaoDoacaoCard(
                     Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF006B4E).copy(alpha = 0.1f)),
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clearAndSetSemantics {},
                 contentAlignment = Alignment.Center,
             ) {
                 Text(text = emoji, fontSize = 32.sp)
@@ -143,7 +146,7 @@ private fun OpcaoDoacaoCard(
                     text = titulo,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF006B4E),
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -161,6 +164,19 @@ private fun OpcaoDoacaoCard(
 @Composable
 private fun OpcoesDoacaoPreview() {
     DonationTheme {
+        OpcoesDoacaoScreen(
+            campaign = sampleCampaigns.first(),
+            onBack = {},
+            onDoarDinheiro = {},
+            onDoarItens = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun OpcoesDoacaoDarkPreview() {
+    DonationTheme(darkTheme = true) {
         OpcoesDoacaoScreen(
             campaign = sampleCampaigns.first(),
             onBack = {},

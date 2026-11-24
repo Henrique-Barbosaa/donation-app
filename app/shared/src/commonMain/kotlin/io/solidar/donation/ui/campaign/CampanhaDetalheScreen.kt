@@ -1,17 +1,39 @@
 package io.solidar.donation.ui.campaign
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +46,7 @@ import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.ui.home.sampleCampaigns
+import io.solidar.donation.util.FavoritosManager
 import io.solidar.donation.util.formatBrl
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,25 +79,46 @@ fun CampanhaDetalheScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val interesseSalvo = io.solidar.donation.util.FavoritosManager.isFavorito(campaign.id)
+                        val interesseSalvo = FavoritosManager.isFavorito(campaign.id)
 
                         IconButton(
-                            onClick = { io.solidar.donation.util.FavoritosManager.toggle(campaign.id) },
+                            onClick = { FavoritosManager.toggle(campaign.id) },
                             modifier =
                                 Modifier
                                     .size(56.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                                    .background(
+                                        if (interesseSalvo) {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        },
+                                    ),
                         ) {
-                            Text(text = if (interesseSalvo) "❤️" else "🤍", fontSize = 28.sp)
+                            Icon(
+                                imageVector = AppIcons.Favorite,
+                                contentDescription =
+                                    if (interesseSalvo) {
+                                        "Remover campanha dos favoritos"
+                                    } else {
+                                        "Adicionar campanha aos favoritos"
+                                    },
+                                tint =
+                                    if (interesseSalvo) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                modifier = Modifier.size(28.dp),
+                            )
                         }
                         Button(
                             onClick = onQueroDoar,
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             colors =
                                 ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF006B4E),
-                                    contentColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
                                 ),
                         ) {
                             Text("Quero doar", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -117,12 +161,13 @@ fun CampanhaDetalheScreen(
                         Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clearAndSetSemantics {},
                     contentAlignment = Alignment.Center,
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        color = Color(0xFF006B4E).copy(alpha = 0.2f),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text("🖼️", fontSize = 48.sp)
@@ -138,6 +183,7 @@ fun CampanhaDetalheScreen(
                         text = campaign.title,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.semantics { heading() },
                     )
                     Text(
@@ -148,16 +194,24 @@ fun CampanhaDetalheScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    val percentualArrecadado = (campaign.progress * 100).toInt()
                     LinearProgressIndicator(
                         progress = { campaign.progress },
-                        modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
-                        color = Color(0xFF006B4E),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .semantics {
+                                    contentDescription = "Progresso da campanha: $percentualArrecadado por cento"
+                                },
+                        color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )
                     Text(
                         text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF006B4E),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold,
                     )
 
@@ -167,6 +221,8 @@ fun CampanhaDetalheScreen(
                             text = "Sobre a campanha:",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.semantics { heading() },
                         )
                         Text(
                             text = campaign.descricao,
@@ -183,6 +239,8 @@ fun CampanhaDetalheScreen(
                             text = "Itens necessários para doar:",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.semantics { heading() },
                         )
 
                         campaign.itensNecessarios.chunked(2).forEach { rowItems ->
@@ -213,7 +271,7 @@ private fun CampaignItemCard(
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) {},
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -224,13 +282,14 @@ private fun CampaignItemCard(
                     Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clearAndSetSemantics {},
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = item.nome.take(1).uppercase(),
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
@@ -256,6 +315,14 @@ private fun CampaignItemCard(
 @Composable
 private fun CampanhaDetalhePreview() {
     DonationTheme {
+        CampanhaDetalheScreen(campaign = sampleCampaigns.first(), onBack = {}, onQueroDoar = {})
+    }
+}
+
+@Preview
+@Composable
+private fun CampanhaDetalheDarkPreview() {
+    DonationTheme(darkTheme = true) {
         CampanhaDetalheScreen(campaign = sampleCampaigns.first(), onBack = {}, onQueroDoar = {})
     }
 }

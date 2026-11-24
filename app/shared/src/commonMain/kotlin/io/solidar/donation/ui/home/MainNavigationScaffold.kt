@@ -24,6 +24,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
@@ -138,6 +140,10 @@ fun MainNavigationContent(
                     onClick = onNavigateToCreateDonation,
                     icon = { Icon(AppIcons.Add, contentDescription = null) },
                     text = { Text("Doar") },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Criar nova doação"
+                        },
                 )
             },
             bottomBar = {
