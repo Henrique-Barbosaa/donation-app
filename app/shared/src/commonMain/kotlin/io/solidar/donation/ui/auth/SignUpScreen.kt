@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,6 +44,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -268,7 +272,7 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clickable { onSelectProfile(SignUpStep.FORM_PF) },
+                    .clickable(role = Role.Button) { onSelectProfile(SignUpStep.FORM_PF) },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -279,7 +283,7 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
             ) {
                 Icon(
                     imageVector = AppIcons.Person,
-                    contentDescription = "Pessoa Física",
+                    contentDescription = null,
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -306,7 +310,7 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clickable { onSelectProfile(SignUpStep.FORM_PJ) },
+                    .clickable(role = Role.Button) { onSelectProfile(SignUpStep.FORM_PJ) },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -317,7 +321,7 @@ fun ProfileTypeSelection(onSelectProfile: (SignUpStep) -> Unit) {
             ) {
                 Icon(
                     imageVector = AppIcons.Home,
-                    contentDescription = "Instituição / ONG",
+                    contentDescription = null,
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -471,7 +475,15 @@ fun SignUpForm(
                 }
             },
             trailingIcon = {
-                TextButton(onClick = onPasswordVisibilityChange) {
+                TextButton(
+                    onClick = onPasswordVisibilityChange,
+                    modifier =
+                        Modifier
+                            .heightIn(min = 48.dp)
+                            .semantics {
+                                contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
+                            },
+                ) {
                     Text(if (passwordVisible) "Ocultar" else "Ver")
                 }
             },
@@ -503,7 +515,7 @@ fun SignUpForm(
                         .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("⚠️", fontSize = 18.sp)
+                Text("⚠️", fontSize = 18.sp, modifier = Modifier.clearAndSetSemantics {})
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = signUpState.message,

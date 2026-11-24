@@ -15,6 +15,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,9 +62,16 @@ fun CampaignCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            val percentual = (campaign.progress * 100).toInt()
             LinearProgressIndicator(
                 progress = { campaign.progress },
-                modifier = Modifier.fillMaxWidth().height(6.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .semantics {
+                            contentDescription = "Progresso da campanha: $percentual por cento"
+                        },
             )
 
             Row(
@@ -89,6 +98,25 @@ fun CampaignCard(
 @Composable
 private fun CampaignCardPreview() {
     DonationTheme {
+        CampaignCard(
+            campaign =
+                Campaign(
+                    id = "1",
+                    title = "Cestas básicas para o bairro das Rocas",
+                    organizer = "Instituto Mãos Solidárias",
+                    goalInCents = 500_000L,
+                    raisedInCents = 312_500L,
+                ),
+            onClick = {},
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CampaignCardDarkPreview() {
+    DonationTheme(darkTheme = true) {
         CampaignCard(
             campaign =
                 Campaign(

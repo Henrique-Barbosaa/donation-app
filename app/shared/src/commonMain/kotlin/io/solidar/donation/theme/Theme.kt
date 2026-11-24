@@ -5,33 +5,40 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme =
     lightColorScheme(
         primary = Emerald500,
-        onPrimary = Color(0xFFFFFFFF),
+        onPrimary = OnAccentWhite,
+        primaryContainer = Emerald100,
+        onPrimaryContainer = Emerald900,
         secondary = Teal500,
-        onSecondary = Color(0xFFFFFFFF),
+        onSecondary = OnAccentWhite,
+        secondaryContainer = Teal100,
+        onSecondaryContainer = Teal900,
         background = LightBackground,
         onBackground = TextPrimaryLight,
         surface = LightSurface,
         onSurface = TextPrimaryLight,
-        surfaceVariant = Color(0xFFF1F5F9),
+        surfaceVariant = LightSurfaceVariant,
         onSurfaceVariant = TextSecondaryLight,
     )
 
 private val DarkColorScheme =
     darkColorScheme(
         primary = Emerald500,
-        onPrimary = Color(0xFFFFFFFF),
+        onPrimary = OnAccentWhite,
+        primaryContainer = Emerald900,
+        onPrimaryContainer = Emerald100,
         secondary = Teal500,
-        onSecondary = Color(0xFFFFFFFF),
+        onSecondary = OnAccentWhite,
+        secondaryContainer = Teal900,
+        onSecondaryContainer = Teal100,
         background = DarkBackground,
         onBackground = TextPrimaryDark,
         surface = DarkSurface,
         onSurface = TextPrimaryDark,
-        surfaceVariant = Color(0xFF1E293B),
+        surfaceVariant = DarkSurfaceVariant,
         onSurfaceVariant = TextSecondaryDark,
     )
 

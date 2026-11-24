@@ -13,6 +13,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,7 +35,7 @@ fun DoacaoCard(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -84,20 +85,37 @@ private fun StatusBadge(
     status: DoacaoStatus,
     modifier: Modifier = Modifier,
 ) {
-    val (label, containerColor) =
+    val (label, containerColor, contentColor) =
         when (status) {
-            DoacaoStatus.CONCLUIDA -> "Concluída" to MaterialTheme.colorScheme.primaryContainer
-            DoacaoStatus.PENDENTE -> "Pendente" to MaterialTheme.colorScheme.secondaryContainer
-            DoacaoStatus.CANCELADA -> "Cancelada" to MaterialTheme.colorScheme.errorContainer
+            DoacaoStatus.CONCLUIDA ->
+                Triple(
+                    "Concluída",
+                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            DoacaoStatus.PENDENTE ->
+                Triple(
+                    "Pendente",
+                    MaterialTheme.colorScheme.secondaryContainer,
+                    MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            DoacaoStatus.CANCELADA ->
+                Triple(
+                    "Cancelada",
+                    MaterialTheme.colorScheme.errorContainer,
+                    MaterialTheme.colorScheme.onErrorContainer,
+                )
         }
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(50),
         color = containerColor,
+        contentColor = contentColor,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
@@ -135,6 +153,25 @@ private fun DoacaoCardRecebidaPendentePreview() {
                     direction = DoacaoDirecao.RECEBIDA,
                     status = DoacaoStatus.PENDENTE,
                     dateLabel = "18 de setembro de 2026",
+                ),
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DoacaoCardDarkPreview() {
+    DonationTheme(darkTheme = true) {
+        DoacaoCard(
+            doacao =
+                Doacao(
+                    id = "3",
+                    itemTitle = "Cesta básica",
+                    counterpartName = "Instituto Mãos Solidárias",
+                    direction = DoacaoDirecao.FEITA,
+                    status = DoacaoStatus.CONCLUIDA,
+                    dateLabel = "12 de setembro de 2026",
                 ),
             modifier = Modifier.padding(16.dp),
         )

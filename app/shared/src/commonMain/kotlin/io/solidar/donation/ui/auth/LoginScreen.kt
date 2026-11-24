@@ -1,7 +1,6 @@
 package io.solidar.donation.ui.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,7 +39,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -122,7 +123,7 @@ fun LoginContent(
                             colors =
                                 listOf(
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0f),
                                 ),
                             radius = 600f,
                         ),
@@ -170,7 +171,7 @@ fun LoginContent(
                 onValueChange = onEmailChange,
                 label = { Text("E-mail") },
                 leadingIcon = {
-                    Icon(imageVector = AppIcons.Email, contentDescription = "E-mail")
+                    Icon(imageVector = AppIcons.Email, contentDescription = null)
                 },
                 isError = erroEmail != null,
                 supportingText =
@@ -201,7 +202,7 @@ fun LoginContent(
                 onValueChange = onPasswordChange,
                 label = { Text("Senha") },
                 leadingIcon = {
-                    Icon(imageVector = AppIcons.Lock, contentDescription = "Senha")
+                    Icon(imageVector = AppIcons.Lock, contentDescription = null)
                 },
                 isError = erroSenha != null,
                 supportingText =
@@ -211,7 +212,15 @@ fun LoginContent(
                         null
                     },
                 trailingIcon = {
-                    TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                    TextButton(
+                        onClick = { passwordVisible = !passwordVisible },
+                        modifier =
+                            Modifier
+                                .heightIn(min = 48.dp)
+                                .semantics {
+                                    contentDescription = if (passwordVisible) "Ocultar senha" else "Mostrar senha"
+                                },
+                    ) {
                         Text(if (passwordVisible) "Ocultar" else "Ver")
                     }
                 },
@@ -241,7 +250,7 @@ fun LoginContent(
 
             TextButton(
                 onClick = { /* TODO: Forgot Password API */ },
-                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp),
             ) {
                 Text(
                     text = "Esqueci minha senha",
@@ -262,7 +271,7 @@ fun LoginContent(
                             .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("⚠️", fontSize = 18.sp)
+                    Text("⚠️", fontSize = 18.sp, modifier = Modifier.clearAndSetSemantics {})
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = loginState.message,
@@ -313,16 +322,17 @@ fun LoginContent(
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(
-                    text = "Cadastre-se",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier =
-                        Modifier
-                            .clickable { onNavigateToSignUp() }
-                            .padding(8.dp),
-                )
+                TextButton(
+                    onClick = onNavigateToSignUp,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text(
+                        text = "Cadastre-se",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
     }

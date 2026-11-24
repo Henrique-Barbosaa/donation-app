@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -23,10 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import io.solidar.donation.theme.Emerald500
 
 /**
  * Tela de espaço reservado (esqueleto) para abas secundárias que ainda não possuem conteúdo ativo.
@@ -66,13 +68,13 @@ fun PlaceholderScreen(
                         Modifier
                             .size(72.dp)
                             .clip(CircleShape)
-                            .background(Emerald500.copy(alpha = 0.12f)),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = Emerald500,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(36.dp),
                     )
                 }
@@ -85,6 +87,7 @@ fun PlaceholderScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { heading() },
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -100,10 +103,11 @@ fun PlaceholderScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     OutlinedButton(
                         onClick = onActionClick,
+                        modifier = Modifier.heightIn(min = 48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors =
                             ButtonDefaults.outlinedButtonColors(
-                                contentColor = Emerald500,
+                                contentColor = MaterialTheme.colorScheme.primary,
                             ),
                     ) {
                         Text(text = actionButtonText, fontWeight = FontWeight.SemiBold)

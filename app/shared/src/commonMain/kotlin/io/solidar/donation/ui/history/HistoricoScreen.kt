@@ -16,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,7 +60,12 @@ fun HistoricoScreen(
         Text(
             text = "Histórico de doações",
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp),
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier =
+                Modifier
+                    .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp)
+                    .semantics { heading() },
         )
 
         TabRow(selectedTabIndex = selectedTab.ordinal) {
@@ -131,6 +139,18 @@ private fun HistoricoScreenEmptyPreview() {
         HistoricoScreen(
             doacoes = emptyList(),
             selectedTab = HistoricoAba.RECEBIDAS,
+            onTabSelected = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HistoricoScreenDarkPreview() {
+    DonationTheme(darkTheme = true) {
+        HistoricoScreen(
+            doacoes = sampleDoacoes,
+            selectedTab = HistoricoAba.FEITAS,
             onTabSelected = {},
         )
     }
