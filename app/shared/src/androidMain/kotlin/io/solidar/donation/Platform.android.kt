@@ -20,31 +20,7 @@ class AndroidPlatform : Platform {
 
 actual fun getPlatform(): Platform = AndroidPlatform()
 
-private fun isAndroidEmulator(): Boolean {
-    val fingerprint = Build.FINGERPRINT.lowercase()
-    val model = Build.MODEL.lowercase()
-    val product = Build.PRODUCT.lowercase()
-    val hardware = Build.HARDWARE.lowercase()
-    return fingerprint.startsWith("generic") ||
-        fingerprint.contains("emulator") ||
-        model.contains("google_sdk") ||
-        model.contains("emulator") ||
-        model.contains("sdk_gphone") ||
-        product.contains("sdk") ||
-        product.contains("emulator") ||
-        hardware.contains("goldfish") ||
-        hardware.contains("ranchu")
-}
-
-actual fun platformDefaultBackendUrl(): String {
-    val host =
-        if (!GeneratedBackendConfig.IS_CUSTOM_HOST && isAndroidEmulator()) {
-            "10.0.2.2:8080"
-        } else {
-            GeneratedBackendConfig.ANDROID_DEFAULT_HOST
-        }
-    return "http://$host"
-}
+actual fun platformDefaultBackendUrl(): String = "http://${GeneratedBackendConfig.ANDROID_DEFAULT_HOST}"
 
 actual fun platformStorageDir(): String {
     val dirPath =
