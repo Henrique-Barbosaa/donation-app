@@ -67,14 +67,22 @@ fun DonationNavHost(
             composable<LoginRoute> {
                 LoginScreen(
                     onNavigateToSignUp = { navController.navigate(SignUpRoute) },
-                    onLoginSuccess = { navController.irParaMain() },
+                    onLoginSuccess = {
+                        campanhasViewModel.carregarCampanhas()
+                        historicoViewModel.carregarHistorico()
+                        navController.irParaMain()
+                    },
                     viewModel = authViewModel,
                 )
             }
             composable<SignUpRoute> {
                 SignUpScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onSignUpSuccess = { navController.irParaMain() },
+                    onSignUpSuccess = {
+                        campanhasViewModel.carregarCampanhas()
+                        historicoViewModel.carregarHistorico()
+                        navController.irParaMain()
+                    },
                     viewModel = authViewModel,
                 )
             }

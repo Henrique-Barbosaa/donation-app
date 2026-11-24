@@ -132,13 +132,11 @@ fun LoginContent(
                 Modifier
                     .fillMaxWidth(0.9f)
                     .shadow(
-                        elevation = 24.dp,
+                        elevation = 4.dp,
                         shape = RoundedCornerShape(32.dp),
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
                     )
                     .clip(RoundedCornerShape(32.dp))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(32.dp)
                     .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,

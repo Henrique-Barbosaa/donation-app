@@ -29,29 +29,21 @@ import io.solidar.donation.ui.home.CampanhasViewModel
 class AppContainer(
     val tokenStorage: TokenStorage = SessionStorage.instance,
     val localCacheStorage: LocalCacheStorage = FileLocalCacheStorage(),
+    httpClient: io.ktor.client.HttpClient = HttpClientFactory.create { tokenStorage.getToken() },
     val authRepository: AuthRepository =
         AuthRepositoryImpl(
             tokenStorage = tokenStorage,
-            remoteDataSource =
-                AuthRemoteDataSource(
-                    httpClient = HttpClientFactory.create { tokenStorage.getToken() },
-                ),
+            remoteDataSource = AuthRemoteDataSource(httpClient = httpClient),
         ),
     val campanhaRepository: CampanhaRepository =
         CampanhaRepositoryImpl(
-            remoteDataSource =
-                CampanhaRemoteDataSource(
-                    httpClient = HttpClientFactory.create { tokenStorage.getToken() },
-                ),
+            remoteDataSource = CampanhaRemoteDataSource(httpClient = httpClient),
             localCacheStorage = localCacheStorage,
         ),
     val doacaoRepository: DoacaoRepository =
         DoacaoRepositoryImpl(
             tokenStorage = tokenStorage,
-            remoteDataSource =
-                DoacaoRemoteDataSource(
-                    httpClient = HttpClientFactory.create { tokenStorage.getToken() },
-                ),
+            remoteDataSource = DoacaoRemoteDataSource(httpClient = httpClient),
             localCacheStorage = localCacheStorage,
         ),
 ) {
