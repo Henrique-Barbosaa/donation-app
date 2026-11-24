@@ -153,18 +153,24 @@ cd backend
 ./mvnw test
 ```
 
-### Mobile
+### Mobile (KMP — ViewModel, Repositório e Interface Compose)
 
 ```bash
 cd app
-./gradlew test
+./gradlew :shared:jvmTest
 ```
+
+## Documentação Adicional
+
+- [Proposta e Escopo do MVP](docs/proposta.md)
+- [Arquitetura em Camadas, Fluxo de Dados e Persistência Offline](docs/arquitetura.md)
+- [Registro de Uso de Inteligência Artificial](docs/uso-de-ia.md)
 
 ## Observações
 
 - O backend possui autenticação com Spring Security e uso de JWT.
 - O banco de dados é configurado via `application.properties`.
-- O código compartilhado da aplicação mobile fica em `app/shared`.
+- O código compartilhado da aplicação mobile fica em `app/shared`, estruturado nas camadas `domain`, `data` e `ui` com persistência local para abertura offline.
 
 ## Contribuição
 

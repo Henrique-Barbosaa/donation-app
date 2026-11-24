@@ -77,9 +77,19 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
+            implementation(libs.kotlinx.coroutinesSwing)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.compose.uiTest)
+        }
+        jvmTest.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.compose.uiTestJunit4)
+            implementation(libs.kotlinx.coroutinesSwing)
         }
     }
 }

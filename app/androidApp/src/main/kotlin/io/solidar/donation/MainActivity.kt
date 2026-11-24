@@ -10,6 +10,7 @@ import io.solidar.donation.App
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        AndroidPlatformContext.init(applicationContext)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 

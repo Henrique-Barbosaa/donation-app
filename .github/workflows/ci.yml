@@ -28,11 +28,17 @@ jobs:
     - name: Dar permissão de execução para o Gradle
       run: chmod +x gradlew
 
+    - name: Instalar bibliotecas gráficas para testes de UI no Desktop
+      run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libfontconfig1
+
     - name: Verificar padronização de código (ktlint)
       run: ./gradlew ktlintCheck
 
     - name: Procurar bugs e checar qualidade (detekt)
       run: ./gradlew detekt
+
+    - name: Executar testes de ViewModel, Repositório e Interface (Desktop JVM)
+      run: ./gradlew :shared:jvmTest
 
     - name: Compilar o aplicativo Android
       run: ./gradlew assembleDebug

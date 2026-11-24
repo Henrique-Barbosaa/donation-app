@@ -19,23 +19,26 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
+import io.solidar.donation.di.AppContainer
 import io.solidar.donation.model.Campaign
+import io.solidar.donation.model.Doacao
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.ui.components.PlaceholderScreen
 import io.solidar.donation.ui.history.HistoricoAba
 import io.solidar.donation.ui.history.HistoricoScreen
+import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.history.sampleDoacoes
+import io.solidar.donation.ui.state.TelaEstado
 
 enum class MainTab(
     val label: String,
@@ -49,9 +52,8 @@ enum class MainTab(
 }
 
 /**
- * Shell principal pós-login. Lê a classe de largura da janela e delega para
- * MainNavigationContent, que recebe a decisão de layout como parâmetro
- * (`wide`) — assim os dois modos podem ser conferidos em preview e testados.
+ * Shell principal pós-login. Lê o estado de [CampanhasViewModel] e [HistoricoViewModel]
+ * com [collectAsStateWithLifecycle], sem manter estado de negócio em `remember`.
  */
 @Composable
 fun MainNavigationScaffold(
@@ -59,23 +61,28 @@ fun MainNavigationScaffold(
     onLogout: () -> Unit,
     onCampaignClick: (Campaign) -> Unit,
     modifier: Modifier = Modifier,
-    campaigns: List<Campaign> = sampleCampaigns,
+    campanhasViewModel: CampanhasViewModel = viewModel { AppContainer.default.createCampanhasViewModel() },
+    historicoViewModel: HistoricoViewModel = viewModel { AppContainer.default.createHistoricoViewModel() },
 ) {
     val wide =
         currentWindowAdaptiveInfo()
             .windowSizeClass
             .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
-    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
-    var historicoTab by rememberSaveable { mutableStateOf(HistoricoAba.FEITAS) }
+    val campanhasUiState by campanhasViewModel.uiState.collectAsStateWithLifecycle()
+    val historicoUiState by historicoViewModel.uiState.collectAsStateWithLifecycle()
 
     MainNavigationContent(
         wide = wide,
-        selectedTab = selectedTab,
-        onTabSelected = { selectedTab = it },
-        historicoTab = historicoTab,
-        onHistoricoTabSelected = { historicoTab = it },
-        campaigns = campaigns,
+        selectedTab = campanhasUiState.abaPrincipal,
+        onTabSelected = campanhasViewModel::selecionarAbaPrincipal,
+        historicoTab = historicoUiState.abaSelecionada,
+        onHistoricoTabSelected = historicoViewModel::selecionarAba,
+        estadoCampanhas = campanhasUiState.estadoLista,
+        favoritosIds = campanhasUiState.favoritosIds,
+        onRecarregarCampanhas = campanhasViewModel::carregarCampanhas,
+        estadoHistorico = historicoUiState.estadoLista,
+        onRecarregarHistorico = historicoViewModel::carregarHistorico,
         onCampaignClick = onCampaignClick,
         onNavigateToCreateDonation = onNavigateToCreateDonation,
         onLogout = onLogout,
@@ -94,11 +101,15 @@ fun MainNavigationContent(
     onTabSelected: (MainTab) -> Unit,
     historicoTab: HistoricoAba,
     onHistoricoTabSelected: (HistoricoAba) -> Unit,
-    campaigns: List<Campaign>,
     onCampaignClick: (Campaign) -> Unit,
     onNavigateToCreateDonation: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
+    estadoCampanhas: TelaEstado<List<Campaign>> = TelaEstado.Sucesso(sampleCampaigns),
+    favoritosIds: Set<String> = emptySet(),
+    onRecarregarCampanhas: () -> Unit = {},
+    estadoHistorico: TelaEstado<List<Doacao>> = TelaEstado.Sucesso(sampleDoacoes),
+    onRecarregarHistorico: () -> Unit = {},
 ) {
     if (wide) {
         Row(modifier = modifier.fillMaxSize()) {
@@ -125,7 +136,11 @@ fun MainNavigationContent(
                     wide = true,
                     historicoTab = historicoTab,
                     onHistoricoTabSelected = onHistoricoTabSelected,
-                    campaigns = campaigns,
+                    estadoCampanhas = estadoCampanhas,
+                    favoritosIds = favoritosIds,
+                    onRecarregarCampanhas = onRecarregarCampanhas,
+                    estadoHistorico = estadoHistorico,
+                    onRecarregarHistorico = onRecarregarHistorico,
                     onCampaignClick = onCampaignClick,
                     onLogout = onLogout,
                     modifier = Modifier.padding(padding),
@@ -164,7 +179,11 @@ fun MainNavigationContent(
                 wide = false,
                 historicoTab = historicoTab,
                 onHistoricoTabSelected = onHistoricoTabSelected,
-                campaigns = campaigns,
+                estadoCampanhas = estadoCampanhas,
+                favoritosIds = favoritosIds,
+                onRecarregarCampanhas = onRecarregarCampanhas,
+                estadoHistorico = estadoHistorico,
+                onRecarregarHistorico = onRecarregarHistorico,
                 onCampaignClick = onCampaignClick,
                 onLogout = onLogout,
                 modifier = Modifier.padding(padding),
@@ -179,7 +198,11 @@ private fun TabContent(
     wide: Boolean,
     historicoTab: HistoricoAba,
     onHistoricoTabSelected: (HistoricoAba) -> Unit,
-    campaigns: List<Campaign>,
+    estadoCampanhas: TelaEstado<List<Campaign>>,
+    favoritosIds: Set<String>,
+    onRecarregarCampanhas: () -> Unit,
+    estadoHistorico: TelaEstado<List<Doacao>>,
+    onRecarregarHistorico: () -> Unit,
     onCampaignClick: (Campaign) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -188,27 +211,28 @@ private fun TabContent(
         when (current) {
             MainTab.HOME ->
                 HomeScreen(
-                    campaigns = campaigns,
+                    estado = estadoCampanhas,
                     onCampaignClick = onCampaignClick,
+                    onTentarDeNovo = onRecarregarCampanhas,
                     wide = wide,
                 )
             MainTab.FAVORITES -> {
-                val campanhasFavoritas =
-                    campaigns.filter {
-                        io.solidar.donation.util.FavoritosManager.isFavorito(it.id)
-                    }
+                val campanhasAtuais = (estadoCampanhas as? TelaEstado.Sucesso)?.dados.orEmpty()
+                val campanhasFavoritas = campanhasAtuais.filter { favoritosIds.contains(it.id) }
 
                 if (campanhasFavoritas.isEmpty()) {
                     PlaceholderScreen(
                         title = "Nenhuma campanha salva",
-                        subtitle = "As campanhas que você marcar com ❤️ aparecerão aqui.",
-                        icon = AppIcons.Search,
+                        subtitle = "As campanhas que você marcar nos favoritos aparecerão aqui.",
+                        icon = AppIcons.Favorite,
                     )
                 } else {
                     HomeScreen(
-                        campaigns = campanhasFavoritas,
+                        estado = TelaEstado.Sucesso(campanhasFavoritas),
                         onCampaignClick = onCampaignClick,
+                        onTentarDeNovo = onRecarregarCampanhas,
                         wide = wide,
+                        titulo = "Campanhas favoritas",
                     )
                 }
             }
@@ -220,9 +244,10 @@ private fun TabContent(
                 )
             MainTab.ACTIVITIES ->
                 HistoricoScreen(
-                    doacoes = sampleDoacoes,
+                    estado = estadoHistorico,
                     selectedTab = historicoTab,
                     onTabSelected = onHistoricoTabSelected,
+                    onTentarDeNovo = onRecarregarHistorico,
                 )
             MainTab.PROFILE ->
                 PlaceholderScreen(
@@ -246,7 +271,6 @@ private fun MainCompactPreview() {
             onTabSelected = {},
             historicoTab = HistoricoAba.FEITAS,
             onHistoricoTabSelected = {},
-            campaigns = sampleCampaigns,
             onCampaignClick = {},
             onNavigateToCreateDonation = {},
             onLogout = {},
@@ -264,7 +288,6 @@ private fun MainWidePreview() {
             onTabSelected = {},
             historicoTab = HistoricoAba.FEITAS,
             onHistoricoTabSelected = {},
-            campaigns = sampleCampaigns,
             onCampaignClick = {},
             onNavigateToCreateDonation = {},
             onLogout = {},
