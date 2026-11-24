@@ -115,9 +115,10 @@ abstract class GenerateBackendConfigTask : DefaultTask() {
             customUrl = props.getProperty("backend.url") ?: props.getProperty("backend.host")
         }
 
+        val isCustom = !customUrl.isNullOrBlank()
         val host =
-            if (!customUrl.isNullOrBlank()) {
-                customUrl.trim().removePrefix("http://").removePrefix("https://").removeSuffix("/")
+            if (isCustom) {
+                customUrl!!.trim().removePrefix("http://").removePrefix("https://").removeSuffix("/")
             } else {
                 resolveLocalIp()
             }
@@ -131,6 +132,7 @@ abstract class GenerateBackendConfigTask : DefaultTask() {
             |// Gerado automaticamente pelo Gradle com base no IP local da maquina ou local.properties
             |internal object GeneratedBackendConfig {
             |    const val ANDROID_DEFAULT_HOST: String = "$host"
+            |    const val IS_CUSTOM_HOST: Boolean = $isCustom
             |}
             |
             """.trimMargin(),
@@ -168,6 +170,7 @@ abstract class GenerateBackendConfigTask : DefaultTask() {
 val generateBackendConfig =
     tasks.register<GenerateBackendConfigTask>("generateBackendConfig") {
         description = "Gera a classe com o host do backend resolvido (via local.properties ou deteccao de IP)"
+        outputs.upToDateWhen { false }
         val localProps = rootProject.file("local.properties")
         if (localProps.exists()) {
             localProperties.set(localProps)
