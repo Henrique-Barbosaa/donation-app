@@ -2,34 +2,61 @@ package io.solidar.donation.ui.donation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.solidar.donation.data.remote.dto.CriarDoacaoRequest
-import io.solidar.donation.data.remote.dto.DoacaoResponse
-import io.solidar.donation.data.remote.dto.ItemRequest
-import io.solidar.donation.data.repository.DoacaoRepositoryImpl
+import io.solidar.donation.domain.model.NovaDoacaoInput
 import io.solidar.donation.domain.repository.DoacaoRepository
+import io.solidar.donation.model.Doacao
+import io.solidar.donation.ui.state.mapearMensagemDeErro
+import io.solidar.donation.util.DoacaoForm
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed class CriarDoacaoState {
-    object Idle : CriarDoacaoState()
+    data object Idle : CriarDoacaoState()
 
-    object Loading : CriarDoacaoState()
+    data object Loading : CriarDoacaoState()
 
-    data class Success(val doacao: DoacaoResponse) : CriarDoacaoState()
+    data class Success(val doacao: Doacao) : CriarDoacaoState()
 
     data class Error(val message: String) : CriarDoacaoState()
 }
 
+data class CriarDoacaoUiState(
+    val form: DoacaoForm = DoacaoForm(),
+    val submissionState: CriarDoacaoState = CriarDoacaoState.Idle,
+)
+
+/**
+ * ViewModel multiplataforma para criação de uma nova doação.
+ * Mantém o estado do formulário no [StateFlow] (quando salvar falhar, mantém os dados na tela e mostra o aviso).
+ * Recebe [DoacaoRepository] pelo construtor.
+ */
 class CriarDoacaoViewModel(
-    private val repository: DoacaoRepository = DoacaoRepositoryImpl(),
+    private val repository: DoacaoRepository,
 ) : ViewModel() {
-    private val _state = MutableStateFlow<CriarDoacaoState>(CriarDoacaoState.Idle)
-    val state: StateFlow<CriarDoacaoState> = _state.asStateFlow()
+    private val _uiState = MutableStateFlow(CriarDoacaoUiState())
+    val uiState: StateFlow<CriarDoacaoUiState> = _uiState.asStateFlow()
+
+    fun atualizarForm(novoForm: DoacaoForm) {
+        _uiState.update { it.copy(form = novoForm) }
+    }
 
     fun resetState() {
-        _state.value = CriarDoacaoState.Idle
+        _uiState.value = CriarDoacaoUiState()
+    }
+
+    fun submeterDoacao() {
+        val currentForm = _uiState.value.form
+        criarDoacao(
+            nome = currentForm.nome,
+            quantidade = currentForm.quantidade,
+            categoria = currentForm.categoria,
+            eNovo = currentForm.eNovo,
+            descricao = currentForm.descricao,
+            motivo = currentForm.motivo,
+        )
     }
 
     fun criarDoacao(
@@ -41,39 +68,42 @@ class CriarDoacaoViewModel(
         motivo: String,
     ) {
         if (nome.isBlank()) {
-            _state.value = CriarDoacaoState.Error("O título ou nome do item é obrigatório.")
+            _uiState.update {
+                it.copy(submissionState = CriarDoacaoState.Error("O título ou nome do item é obrigatório."))
+            }
             return
         }
         if (quantidade < 1) {
-            _state.value = CriarDoacaoState.Error("A quantidade deve ser pelo menos 1.")
+            _uiState.update {
+                it.copy(submissionState = CriarDoacaoState.Error("A quantidade deve ser pelo menos 1."))
+            }
             return
         }
 
         viewModelScope.launch {
-            _state.value = CriarDoacaoState.Loading
+            _uiState.update { it.copy(submissionState = CriarDoacaoState.Loading) }
 
-            val item =
-                ItemRequest(
+            val input =
+                NovaDoacaoInput(
                     nome = nome.trim(),
                     quantidade = quantidade,
-                    descricao = descricao.trim().ifBlank { null },
-                    motivo = motivo.trim().ifBlank { null },
-                    eNovo = if (eNovo) "S" else "N",
-                    categoria = categoria.uppercase(),
+                    categoria = categoria,
+                    eNovo = eNovo,
+                    descricao = descricao,
+                    motivo = motivo,
                 )
 
-            val request = CriarDoacaoRequest(itens = listOf(item))
-
-            val result = repository.criarDoacao(request = request)
+            val result = repository.criarDoacao(input = input)
             result.fold(
                 onSuccess = { doacao ->
-                    _state.value = CriarDoacaoState.Success(doacao)
+                    _uiState.update { it.copy(submissionState = CriarDoacaoState.Success(doacao)) }
                 },
                 onFailure = { error ->
-                    _state.value =
-                        CriarDoacaoState.Error(
-                            error.message ?: "Não foi possível cadastrar a doação. Verifique sua conexão e se a sessão está ativa.",
+                    _uiState.update {
+                        it.copy(
+                            submissionState = CriarDoacaoState.Error(mapearMensagemDeErro(error)),
                         )
+                    }
                 },
             )
         }

@@ -25,27 +25,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.theme.DonationTheme
+import io.solidar.donation.ui.components.AvisoDadosDesatualizadosBanner
 import io.solidar.donation.ui.components.CampaignCard
+import io.solidar.donation.ui.components.EstadoCarregandoView
+import io.solidar.donation.ui.components.EstadoErroView
+import io.solidar.donation.ui.state.TelaEstado
 
 /**
- * Lista as campanhas abertas.
- *
- * A tela é stateless por opção de projeto: recebe pronto o que deve mostrar e
- * devolve os eventos para o chamador. Assim ela pode ser renderizada em
- * `@Preview` e testada sem depender de ViewModel ou de rede.
- *
- * Suporta layout compacto (LazyColumn) e largo (LazyVerticalGrid em 2 colunas).
+ * Tela de listagem de campanhas abertas, tratando exaustivamente os estados da classe selada
+ * [TelaEstado] (`Carregando`, `Vazio`, `Sucesso` e `Erro`) via `when` sem `else`.
  */
 @Composable
 fun HomeScreen(
-    campaigns: List<Campaign>,
+    estado: TelaEstado<List<Campaign>>,
     onCampaignClick: (Campaign) -> Unit,
+    onTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
     wide: Boolean = false,
+    titulo: String = "Campanhas abertas",
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Text(
-            text = "Campanhas abertas",
+            text = titulo,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.ExtraBold,
             modifier =
@@ -54,35 +55,92 @@ fun HomeScreen(
                     .semantics { heading() },
         )
 
-        if (campaigns.isEmpty()) {
-            EmptyCampaignsMessage(modifier = Modifier.fillMaxSize())
-        } else if (wide) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(items = campaigns, key = { it.id }) { campaign ->
-                    CampaignCard(
-                        campaign = campaign,
-                        onClick = onCampaignClick,
-                    )
-                }
+        when (estado) {
+            is TelaEstado.Carregando -> {
+                EstadoCarregandoView(
+                    descricao = "Carregando campanhas",
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(items = campaigns, key = { it.id }) { campaign ->
-                    CampaignCard(
-                        campaign = campaign,
-                        onClick = onCampaignClick,
-                    )
+            is TelaEstado.Vazio -> {
+                EmptyCampaignsMessage(modifier = Modifier.fillMaxSize())
+            }
+            is TelaEstado.Erro -> {
+                EstadoErroView(
+                    mensagem = estado.mensagem,
+                    onTentarDeNovo = onTentarDeNovo,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            is TelaEstado.Sucesso -> {
+                if (estado.desatualizado) {
+                    AvisoDadosDesatualizadosBanner(onRecarregar = onTentarDeNovo)
                 }
+                CampaignListContent(
+                    campaigns = estado.dados,
+                    onCampaignClick = onCampaignClick,
+                    wide = wide,
+                )
+            }
+        }
+    }
+}
+
+/** Sobrecarga conveniente para exibir uma lista direta já resolvida. */
+@Composable
+fun HomeScreen(
+    campaigns: List<Campaign>,
+    onCampaignClick: (Campaign) -> Unit,
+    modifier: Modifier = Modifier,
+    wide: Boolean = false,
+) {
+    val estado =
+        if (campaigns.isEmpty()) {
+            TelaEstado.Vazio
+        } else {
+            TelaEstado.Sucesso(dados = campaigns)
+        }
+    HomeScreen(
+        estado = estado,
+        onCampaignClick = onCampaignClick,
+        onTentarDeNovo = {},
+        modifier = modifier,
+        wide = wide,
+    )
+}
+
+@Composable
+private fun CampaignListContent(
+    campaigns: List<Campaign>,
+    onCampaignClick: (Campaign) -> Unit,
+    wide: Boolean,
+) {
+    if (wide) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(items = campaigns, key = { it.id }) { campaign ->
+                CampaignCard(
+                    campaign = campaign,
+                    onClick = onCampaignClick,
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(items = campaigns, key = { it.id }) { campaign ->
+                CampaignCard(
+                    campaign = campaign,
+                    onClick = onCampaignClick,
+                )
             }
         }
     }
@@ -108,8 +166,9 @@ private fun EmptyCampaignsMessage(modifier: Modifier = Modifier) {
 private fun HomeScreenFilledPreview() {
     DonationTheme {
         HomeScreen(
-            campaigns = sampleCampaigns,
+            estado = TelaEstado.Sucesso(dados = sampleCampaigns),
             onCampaignClick = {},
+            onTentarDeNovo = {},
         )
     }
 }
@@ -119,8 +178,9 @@ private fun HomeScreenFilledPreview() {
 private fun HomeScreenWidePreview() {
     DonationTheme {
         HomeScreen(
-            campaigns = sampleCampaigns,
+            estado = TelaEstado.Sucesso(dados = sampleCampaigns),
             onCampaignClick = {},
+            onTentarDeNovo = {},
             wide = true,
         )
     }
@@ -131,8 +191,21 @@ private fun HomeScreenWidePreview() {
 private fun HomeScreenEmptyPreview() {
     DonationTheme {
         HomeScreen(
-            campaigns = emptyList(),
+            estado = TelaEstado.Vazio,
             onCampaignClick = {},
+            onTentarDeNovo = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenErrorPreview() {
+    DonationTheme(darkTheme = true) {
+        HomeScreen(
+            estado = TelaEstado.Erro("Sem conexão com o servidor. Verifique sua internet."),
+            onCampaignClick = {},
+            onTentarDeNovo = {},
         )
     }
 }

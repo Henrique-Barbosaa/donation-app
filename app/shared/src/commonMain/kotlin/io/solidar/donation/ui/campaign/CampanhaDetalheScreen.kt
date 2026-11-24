@@ -46,7 +46,6 @@ import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.ui.home.sampleCampaigns
-import io.solidar.donation.util.FavoritosManager
 import io.solidar.donation.util.formatBrl
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +55,8 @@ fun CampanhaDetalheScreen(
     onBack: () -> Unit,
     onQueroDoar: () -> Unit,
     modifier: Modifier = Modifier,
+    isFavorito: Boolean = false,
+    onToggleFavorito: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -79,16 +80,14 @@ fun CampanhaDetalheScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val interesseSalvo = FavoritosManager.isFavorito(campaign.id)
-
                         IconButton(
-                            onClick = { FavoritosManager.toggle(campaign.id) },
+                            onClick = onToggleFavorito,
                             modifier =
                                 Modifier
                                     .size(56.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        if (interesseSalvo) {
+                                        if (isFavorito) {
                                             MaterialTheme.colorScheme.primaryContainer
                                         } else {
                                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -98,13 +97,13 @@ fun CampanhaDetalheScreen(
                             Icon(
                                 imageVector = AppIcons.Favorite,
                                 contentDescription =
-                                    if (interesseSalvo) {
+                                    if (isFavorito) {
                                         "Remover campanha dos favoritos"
                                     } else {
                                         "Adicionar campanha aos favoritos"
                                     },
                                 tint =
-                                    if (interesseSalvo) {
+                                    if (isFavorito) {
                                         MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.onSurfaceVariant

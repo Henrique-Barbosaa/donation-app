@@ -37,11 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -61,16 +57,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.solidar.donation.di.AppContainer
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.util.Validators
-
-enum class SignUpStep {
-    CHOOSE_PROFILE,
-    FORM_PF,
-    FORM_PJ,
-}
 
 private class CpfVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
@@ -142,19 +134,12 @@ private class CnpjVisualTransformation : VisualTransformation {
 fun SignUpScreen(
     onNavigateBack: () -> Unit,
     onSignUpSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel { AuthViewModel() },
+    viewModel: AuthViewModel = viewModel { AppContainer.default.createAuthViewModel() },
 ) {
-    val signUpState by viewModel.signUpState.collectAsState()
-    var currentStep by remember { mutableStateOf(SignUpStep.CHOOSE_PROFILE) }
+    val uiState by viewModel.signUpUiState.collectAsStateWithLifecycle()
 
-    var nome by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var document by remember { mutableStateOf("") }
-
-    LaunchedEffect(signUpState) {
-        if (signUpState is AuthState.Success) {
+    LaunchedEffect(uiState.authState) {
+        if (uiState.authState is AuthState.Success) {
             onSignUpSuccess()
             viewModel.resetSignUpState()
         }
@@ -173,10 +158,10 @@ fun SignUpScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (currentStep == SignUpStep.CHOOSE_PROFILE) {
+                            if (uiState.currentStep == SignUpStep.CHOOSE_PROFILE) {
                                 onNavigateBack()
                             } else {
-                                currentStep = SignUpStep.CHOOSE_PROFILE
+                                viewModel.onSignUpStepChange(SignUpStep.CHOOSE_PROFILE)
                             }
                         },
                         modifier = Modifier.size(48.dp),
@@ -203,43 +188,43 @@ fun SignUpScreen(
                     .imePadding(),
             contentAlignment = Alignment.TopCenter,
         ) {
-            Crossfade(targetState = currentStep) { step ->
+            Crossfade(targetState = uiState.currentStep) { step ->
                 when (step) {
                     SignUpStep.CHOOSE_PROFILE ->
                         ProfileTypeSelection { selectedStep ->
-                            currentStep = selectedStep
+                            viewModel.onSignUpStepChange(selectedStep)
                         }
                     SignUpStep.FORM_PF ->
                         SignUpForm(
                             isPf = true,
-                            nome = nome,
-                            onNomeChange = { nome = it },
-                            email = email,
-                            onEmailChange = { email = it },
-                            document = document,
-                            onDocumentChange = { document = it.take(11).filter { char -> char.isDigit() } },
-                            password = password,
-                            onPasswordChange = { password = it },
-                            passwordVisible = passwordVisible,
-                            onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
-                            signUpState = signUpState,
-                            onSubmit = { viewModel.signUpPessoaFisica(nome, email, password, document) },
+                            nome = uiState.nome,
+                            onNomeChange = viewModel::onSignUpNomeChange,
+                            email = uiState.email,
+                            onEmailChange = viewModel::onSignUpEmailChange,
+                            document = uiState.document,
+                            onDocumentChange = { viewModel.onSignUpDocumentChange(it, 11) },
+                            password = uiState.password,
+                            onPasswordChange = viewModel::onSignUpPasswordChange,
+                            passwordVisible = uiState.passwordVisible,
+                            onPasswordVisibilityChange = viewModel::toggleSignUpPasswordVisibility,
+                            signUpState = uiState.authState,
+                            onSubmit = { viewModel.signUpPessoaFisica() },
                         )
                     SignUpStep.FORM_PJ ->
                         SignUpForm(
                             isPf = false,
-                            nome = nome,
-                            onNomeChange = { nome = it },
-                            email = email,
-                            onEmailChange = { email = it },
-                            document = document,
-                            onDocumentChange = { document = it.take(14).filter { char -> char.isDigit() } },
-                            password = password,
-                            onPasswordChange = { password = it },
-                            passwordVisible = passwordVisible,
-                            onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
-                            signUpState = signUpState,
-                            onSubmit = { viewModel.signUpInstituicao(nome, email, password, document) },
+                            nome = uiState.nome,
+                            onNomeChange = viewModel::onSignUpNomeChange,
+                            email = uiState.email,
+                            onEmailChange = viewModel::onSignUpEmailChange,
+                            document = uiState.document,
+                            onDocumentChange = { viewModel.onSignUpDocumentChange(it, 14) },
+                            password = uiState.password,
+                            onPasswordChange = viewModel::onSignUpPasswordChange,
+                            passwordVisible = uiState.passwordVisible,
+                            onPasswordVisibilityChange = viewModel::toggleSignUpPasswordVisibility,
+                            signUpState = uiState.authState,
+                            onSubmit = { viewModel.signUpInstituicao() },
                         )
                 }
             }

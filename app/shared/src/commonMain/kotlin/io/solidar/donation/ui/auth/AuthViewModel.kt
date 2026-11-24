@@ -2,119 +2,208 @@ package io.solidar.donation.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.solidar.donation.data.repository.AuthRepositoryImpl
 import io.solidar.donation.domain.repository.AuthRepository
+import io.solidar.donation.ui.state.mapearMensagemDeErro
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-sealed class AuthState {
-    object Idle : AuthState()
+enum class SignUpStep {
+    CHOOSE_PROFILE,
+    FORM_PF,
+    FORM_PJ,
+}
 
-    object Loading : AuthState()
+sealed class AuthState {
+    data object Idle : AuthState()
+
+    data object Loading : AuthState()
 
     data class Success(val message: String) : AuthState()
 
     data class Error(val message: String) : AuthState()
 }
 
-class AuthViewModel(
-    private val authRepository: AuthRepository = AuthRepositoryImpl(),
-) : ViewModel() {
-    private val _loginState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val loginState: StateFlow<AuthState> = _loginState.asStateFlow()
+data class LoginFormUiState(
+    val email: String = "",
+    val password: String = "",
+    val passwordVisible: Boolean = false,
+    val authState: AuthState = AuthState.Idle,
+)
 
-    private val _signUpState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val signUpState: StateFlow<AuthState> = _signUpState.asStateFlow()
+data class SignUpFormUiState(
+    val currentStep: SignUpStep = SignUpStep.CHOOSE_PROFILE,
+    val nome: String = "",
+    val email: String = "",
+    val document: String = "",
+    val password: String = "",
+    val passwordVisible: Boolean = false,
+    val authState: AuthState = AuthState.Idle,
+)
+
+/**
+ * ViewModel multiplataforma de autenticação (Login e Cadastro).
+ * Recebe [AuthRepository] pelo construtor (injeção de dependência).
+ */
+class AuthViewModel(
+    private val authRepository: AuthRepository,
+) : ViewModel() {
+    private val _loginUiState = MutableStateFlow(LoginFormUiState())
+    val loginUiState: StateFlow<LoginFormUiState> = _loginUiState.asStateFlow()
+
+    private val _signUpUiState = MutableStateFlow(SignUpFormUiState())
+    val signUpUiState: StateFlow<SignUpFormUiState> = _signUpUiState.asStateFlow()
+
+    fun onLoginEmailChange(email: String) {
+        _loginUiState.update { it.copy(email = email) }
+    }
+
+    fun onLoginPasswordChange(password: String) {
+        _loginUiState.update { it.copy(password = password) }
+    }
+
+    fun toggleLoginPasswordVisibility() {
+        _loginUiState.update { it.copy(passwordVisible = !it.passwordVisible) }
+    }
+
+    fun onSignUpStepChange(step: SignUpStep) {
+        _signUpUiState.update {
+            it.copy(
+                currentStep = step,
+                document = "",
+                authState = AuthState.Idle,
+            )
+        }
+    }
+
+    fun onSignUpNomeChange(nome: String) {
+        _signUpUiState.update { it.copy(nome = nome) }
+    }
+
+    fun onSignUpEmailChange(email: String) {
+        _signUpUiState.update { it.copy(email = email) }
+    }
+
+    fun onSignUpDocumentChange(
+        rawDocument: String,
+        maxDigits: Int,
+    ) {
+        val cleaned = rawDocument.filter { it.isDigit() }.take(maxDigits)
+        _signUpUiState.update { it.copy(document = cleaned) }
+    }
+
+    fun onSignUpPasswordChange(password: String) {
+        _signUpUiState.update { it.copy(password = password) }
+    }
+
+    fun toggleSignUpPasswordVisibility() {
+        _signUpUiState.update { it.copy(passwordVisible = !it.passwordVisible) }
+    }
 
     fun login(
-        email: String,
-        senha: String,
+        email: String = _loginUiState.value.email,
+        senha: String = _loginUiState.value.password,
     ) {
         if (email.isBlank() || senha.isBlank()) {
-            _loginState.value = AuthState.Error("Por favor, preencha o e-mail e a senha.")
+            _loginUiState.update {
+                it.copy(authState = AuthState.Error("Por favor, preencha o e-mail e a senha."))
+            }
             return
         }
 
         viewModelScope.launch {
-            _loginState.value = AuthState.Loading
+            _loginUiState.update { it.copy(authState = AuthState.Loading) }
             val result = authRepository.login(email, senha)
             result.fold(
                 onSuccess = { session ->
-                    _loginState.value = AuthState.Success("Bem-vindo de volta, ${session.nome}!")
+                    _loginUiState.update {
+                        it.copy(authState = AuthState.Success("Bem-vindo de volta, ${session.nome}!"))
+                    }
                 },
                 onFailure = { error ->
-                    _loginState.value =
-                        AuthState.Error(
-                            error.message ?: "Não foi possível conectar ao servidor. Verifique sua conexão e se a API está ativa.",
-                        )
+                    _loginUiState.update {
+                        it.copy(authState = AuthState.Error(mapearMensagemDeErro(error)))
+                    }
                 },
             )
         }
     }
 
     fun signUpPessoaFisica(
-        nome: String,
-        email: String,
-        senha: String,
-        cpf: String,
+        nome: String = _signUpUiState.value.nome,
+        email: String = _signUpUiState.value.email,
+        senha: String = _signUpUiState.value.password,
+        cpf: String = _signUpUiState.value.document,
     ) {
         if (nome.isBlank() || email.isBlank() || senha.isBlank() || cpf.isBlank()) {
-            _signUpState.value = AuthState.Error("Por favor, preencha todos os campos obrigatórios.")
+            _signUpUiState.update {
+                it.copy(authState = AuthState.Error("Por favor, preencha todos os campos obrigatórios."))
+            }
             return
         }
 
         viewModelScope.launch {
-            _signUpState.value = AuthState.Loading
+            _signUpUiState.update { it.copy(authState = AuthState.Loading) }
             val result = authRepository.registerPessoaFisica(nome, email, senha, cpf)
             result.fold(
                 onSuccess = { session ->
-                    _signUpState.value = AuthState.Success("Cadastro realizado com sucesso! Bem-vindo, ${session.nome}.")
+                    _signUpUiState.update {
+                        it.copy(authState = AuthState.Success("Cadastro realizado com sucesso! Bem-vindo, ${session.nome}."))
+                    }
                 },
                 onFailure = { error ->
-                    _signUpState.value =
-                        AuthState.Error(
-                            error.message ?: "Ocorreu um erro ao tentar cadastrar. Tente novamente mais tarde.",
-                        )
+                    _signUpUiState.update {
+                        it.copy(authState = AuthState.Error(mapearMensagemDeErro(error)))
+                    }
                 },
             )
         }
     }
 
     fun signUpInstituicao(
-        nome: String,
-        email: String,
-        senha: String,
-        cnpj: String,
+        nome: String = _signUpUiState.value.nome,
+        email: String = _signUpUiState.value.email,
+        senha: String = _signUpUiState.value.password,
+        cnpj: String = _signUpUiState.value.document,
     ) {
         if (nome.isBlank() || email.isBlank() || senha.isBlank() || cnpj.isBlank()) {
-            _signUpState.value = AuthState.Error("Por favor, preencha todos os campos obrigatórios.")
+            _signUpUiState.update {
+                it.copy(authState = AuthState.Error("Por favor, preencha todos os campos obrigatórios."))
+            }
             return
         }
 
         viewModelScope.launch {
-            _signUpState.value = AuthState.Loading
+            _signUpUiState.update { it.copy(authState = AuthState.Loading) }
             val result = authRepository.registerInstituicao(nome, email, senha, cnpj)
             result.fold(
                 onSuccess = { session ->
-                    _signUpState.value = AuthState.Success("Instituição cadastrada com sucesso! Bem-vindo, ${session.nome}.")
+                    _signUpUiState.update {
+                        it.copy(authState = AuthState.Success("Instituição cadastrada com sucesso! Bem-vindo, ${session.nome}."))
+                    }
                 },
                 onFailure = { error ->
-                    _signUpState.value =
-                        AuthState.Error(
-                            error.message ?: "Ocorreu um erro ao tentar cadastrar. Tente novamente mais tarde.",
-                        )
+                    _signUpUiState.update {
+                        it.copy(authState = AuthState.Error(mapearMensagemDeErro(error)))
+                    }
                 },
             )
         }
     }
 
     fun resetLoginState() {
-        _loginState.value = AuthState.Idle
+        _loginUiState.update { it.copy(authState = AuthState.Idle) }
     }
 
     fun resetSignUpState() {
-        _signUpState.value = AuthState.Idle
+        _signUpUiState.update { it.copy(authState = AuthState.Idle) }
+    }
+
+    fun logout() {
+        authRepository.logout()
+        _loginUiState.value = LoginFormUiState()
+        _signUpUiState.value = SignUpFormUiState()
     }
 }

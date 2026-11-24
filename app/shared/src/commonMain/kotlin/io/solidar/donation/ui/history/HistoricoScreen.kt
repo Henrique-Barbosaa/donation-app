@@ -25,7 +25,11 @@ import androidx.compose.ui.unit.dp
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
 import io.solidar.donation.theme.DonationTheme
+import io.solidar.donation.ui.components.AvisoDadosDesatualizadosBanner
 import io.solidar.donation.ui.components.DoacaoCard
+import io.solidar.donation.ui.components.EstadoCarregandoView
+import io.solidar.donation.ui.components.EstadoErroView
+import io.solidar.donation.ui.state.TelaEstado
 
 /** As duas abas do histórico, pedidas na issue #11. */
 enum class HistoricoAba {
@@ -35,27 +39,17 @@ enum class HistoricoAba {
 
 /**
  * Tela de histórico de doações: "doações que eu fiz" e "que eu recebi",
- * separadas por abas.
- *
- * Segue o mesmo princípio da [io.solidar.donation.ui.home.HomeScreen]: sem
- * `remember` aqui dentro. A aba selecionada e a lista completa vêm de fora,
- * e a filtragem por direção é só uma computação pura — não é estado
- * guardado pela tela.
+ * separadas por abas, tratando os estados selados [TelaEstado] (`Carregando`, `Vazio`,
+ * `Sucesso` e `Erro`) via `when` exaustivo sem `else`.
  */
 @Composable
 fun HistoricoScreen(
-    doacoes: List<Doacao>,
+    estado: TelaEstado<List<Doacao>>,
     selectedTab: HistoricoAba,
     onTabSelected: (HistoricoAba) -> Unit,
+    onTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val direcaoDaAba =
-        when (selectedTab) {
-            HistoricoAba.FEITAS -> DoacaoDirecao.FEITA
-            HistoricoAba.RECEBIDAS -> DoacaoDirecao.RECEBIDA
-        }
-    val doacoesFiltradas = doacoes.filter { it.direction == direcaoDaAba }
-
     Column(modifier = modifier.fillMaxSize()) {
         Text(
             text = "Histórico de doações",
@@ -81,20 +75,72 @@ fun HistoricoScreen(
             )
         }
 
-        if (doacoesFiltradas.isEmpty()) {
-            EmptyHistoricoMessage(selectedTab = selectedTab, modifier = Modifier.fillMaxSize())
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(items = doacoesFiltradas, key = { it.id }) { doacao ->
-                    DoacaoCard(doacao = doacao)
+        when (estado) {
+            is TelaEstado.Carregando -> {
+                EstadoCarregandoView(
+                    descricao = "Carregando histórico de doações",
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            is TelaEstado.Vazio -> {
+                EmptyHistoricoMessage(
+                    selectedTab = selectedTab,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            is TelaEstado.Erro -> {
+                EstadoErroView(
+                    mensagem = estado.mensagem,
+                    onTentarDeNovo = onTentarDeNovo,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            is TelaEstado.Sucesso -> {
+                if (estado.desatualizado) {
+                    AvisoDadosDesatualizadosBanner(onRecarregar = onTentarDeNovo)
+                }
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(items = estado.dados, key = { it.id }) { doacao ->
+                        DoacaoCard(doacao = doacao)
+                    }
                 }
             }
         }
     }
+}
+
+/** Sobrecarga stateless que filtra uma lista estática e delega para o componente baseado em [TelaEstado]. */
+@Composable
+fun HistoricoScreen(
+    doacoes: List<Doacao>,
+    selectedTab: HistoricoAba,
+    onTabSelected: (HistoricoAba) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val direcaoDaAba =
+        when (selectedTab) {
+            HistoricoAba.FEITAS -> DoacaoDirecao.FEITA
+            HistoricoAba.RECEBIDAS -> DoacaoDirecao.RECEBIDA
+        }
+    val doacoesFiltradas = doacoes.filter { it.direction == direcaoDaAba }
+    val estado =
+        if (doacoesFiltradas.isEmpty()) {
+            TelaEstado.Vazio
+        } else {
+            TelaEstado.Sucesso(dados = doacoesFiltradas)
+        }
+
+    HistoricoScreen(
+        estado = estado,
+        selectedTab = selectedTab,
+        onTabSelected = onTabSelected,
+        onTentarDeNovo = {},
+        modifier = modifier,
+    )
 }
 
 @Composable

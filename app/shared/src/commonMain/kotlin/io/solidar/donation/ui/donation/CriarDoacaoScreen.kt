@@ -41,11 +41,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,7 +57,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.solidar.donation.di.AppContainer
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.util.DoacaoForm
@@ -79,43 +77,34 @@ val CATEGORIAS_PADRAO =
     )
 
 /**
- * Tela de criação de uma nova doação com elevação de estado para o ViewModel.
+ * Tela de criação de uma nova doação com estado gerenciado integralmente pelo [CriarDoacaoViewModel]
+ * e leitura via [collectAsStateWithLifecycle].
  */
 @Composable
 fun CriarDoacaoScreen(
     onNavigateBack: () -> Unit,
     onDonationCreated: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CriarDoacaoViewModel = viewModel { CriarDoacaoViewModel() },
+    viewModel: CriarDoacaoViewModel = viewModel { AppContainer.default.createCriarDoacaoViewModel() },
 ) {
-    val state by viewModel.state.collectAsState()
-    var form by remember { mutableStateOf(DoacaoForm()) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state) {
-        if (state is CriarDoacaoState.Success) {
+    LaunchedEffect(uiState.submissionState) {
+        if (uiState.submissionState is CriarDoacaoState.Success) {
             viewModel.resetState()
             onDonationCreated()
         }
     }
 
     CriarDoacaoContent(
-        state = state,
-        form = form,
-        onFormChange = { form = it },
+        state = uiState.submissionState,
+        form = uiState.form,
+        onFormChange = viewModel::atualizarForm,
         onNavigateBack = {
             viewModel.resetState()
             onNavigateBack()
         },
-        onSubmit = {
-            viewModel.criarDoacao(
-                nome = form.nome,
-                quantidade = form.quantidade,
-                categoria = form.categoria,
-                eNovo = form.eNovo,
-                descricao = form.descricao,
-                motivo = form.motivo,
-            )
-        },
+        onSubmit = viewModel::submeterDoacao,
         modifier = modifier,
     )
 }

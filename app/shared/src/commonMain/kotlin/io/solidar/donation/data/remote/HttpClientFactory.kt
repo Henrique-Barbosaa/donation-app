@@ -1,6 +1,8 @@
 package io.solidar.donation.data.remote
 
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -14,23 +16,29 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 object HttpClientFactory {
-    fun create(tokenProvider: () -> String? = { null }): HttpClient {
-        return HttpClient {
+    val defaultJson: Json =
+        Json {
+            ignoreUnknownKeys = true
+            prettyPrint = false
+            isLenient = true
+            encodeDefaults = true
+        }
+
+    fun create(
+        engine: HttpClientEngine? = null,
+        tokenProvider: () -> String? = { null },
+    ): HttpClient {
+        val configure: HttpClientConfig<*>.() -> Unit = {
+            expectSuccess = true
+
             install(ContentNegotiation) {
-                json(
-                    Json {
-                        ignoreUnknownKeys = true
-                        prettyPrint = false
-                        isLenient = true
-                        encodeDefaults = true
-                    },
-                )
+                json(defaultJson)
             }
 
             install(HttpTimeout) {
-                requestTimeoutMillis = 15_000
+                requestTimeoutMillis = 30_000
                 connectTimeoutMillis = 15_000
-                socketTimeoutMillis = 15_000
+                socketTimeoutMillis = 30_000
             }
 
             install(Logging) {
@@ -40,15 +48,23 @@ object HttpClientFactory {
                             println("KTOR_HTTP: $message")
                         }
                     }
-                level = LogLevel.ALL
+                level = LogLevel.INFO
             }
 
             defaultRequest {
                 contentType(ContentType.Application.Json)
                 tokenProvider()?.let { token ->
-                    header("Authorization", "Bearer $token")
+                    if (token.isNotBlank()) {
+                        header("Authorization", "Bearer $token")
+                    }
                 }
             }
+        }
+
+        return if (engine != null) {
+            HttpClient(engine, configure)
+        } else {
+            HttpClient(configure)
         }
     }
 }

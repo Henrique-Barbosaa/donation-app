@@ -2,11 +2,13 @@ package io.solidar.donation.data.repository
 
 import io.solidar.donation.data.remote.AuthRemoteDataSource
 import io.solidar.donation.data.remote.HttpClientFactory
+import io.solidar.donation.data.remote.NetworkErrorMapper
 import io.solidar.donation.data.remote.dto.LoginRequest
 import io.solidar.donation.data.remote.dto.RegisterPfRequest
 import io.solidar.donation.data.remote.dto.RegisterPjRequest
 import io.solidar.donation.data.storage.SessionStorage
 import io.solidar.donation.data.storage.TokenStorage
+import io.solidar.donation.domain.error.FalhaDominio
 import io.solidar.donation.domain.repository.AuthRepository
 import io.solidar.donation.model.UserSession
 
@@ -21,7 +23,7 @@ class AuthRepositoryImpl(
         email: String,
         senha: String,
     ): Result<UserSession> {
-        return runCatching {
+        return try {
             val response =
                 remoteDataSource.login(
                     LoginRequest(
@@ -38,7 +40,9 @@ class AuthRepositoryImpl(
                     email = response.email.orEmpty(),
                 )
             tokenStorage.saveSession(session)
-            session
+            Result.success(session)
+        } catch (t: Throwable) {
+            Result.failure(NetworkErrorMapper.mapear(t))
         }
     }
 
@@ -48,7 +52,7 @@ class AuthRepositoryImpl(
         senha: String,
         cpf: String,
     ): Result<UserSession> {
-        return runCatching {
+        return try {
             val cleanCpf = cpf.filter { it.isDigit() }
             val response =
                 remoteDataSource.registerPessoaFisica(
@@ -68,7 +72,9 @@ class AuthRepositoryImpl(
                     email = response.email.orEmpty(),
                 )
             tokenStorage.saveSession(session)
-            session
+            Result.success(session)
+        } catch (t: Throwable) {
+            Result.failure(NetworkErrorMapper.mapear(t))
         }
     }
 
@@ -78,7 +84,7 @@ class AuthRepositoryImpl(
         senha: String,
         cnpj: String,
     ): Result<UserSession> {
-        return runCatching {
+        return try {
             val cleanCnpj = cnpj.filter { it.isDigit() }
             val response =
                 remoteDataSource.registerInstituicao(
@@ -98,12 +104,14 @@ class AuthRepositoryImpl(
                     email = response.email.orEmpty(),
                 )
             tokenStorage.saveSession(session)
-            session
+            Result.success(session)
+        } catch (t: Throwable) {
+            Result.failure(NetworkErrorMapper.mapear(t))
         }
     }
 
     override suspend fun verifySession(): Result<UserSession> {
-        return runCatching {
+        return try {
             val response = remoteDataSource.verifySession()
             if (response.logado && response.usuario != null) {
                 val user = response.usuario
@@ -116,11 +124,15 @@ class AuthRepositoryImpl(
                         email = user.email.orEmpty(),
                     )
                 tokenStorage.saveSession(session)
-                session
+                Result.success(session)
             } else {
                 tokenStorage.clear()
-                throw Exception(response.mensagem ?: "Sessão não autenticada.")
+                Result.failure(
+                    FalhaDominio.DadosInvalidos(response.mensagem ?: "Sessão não autenticada."),
+                )
             }
+        } catch (t: Throwable) {
+            Result.failure(NetworkErrorMapper.mapear(t))
         }
     }
 

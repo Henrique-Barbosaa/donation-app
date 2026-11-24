@@ -29,11 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +48,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.solidar.donation.di.AppContainer
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.util.Validators
@@ -61,27 +59,26 @@ import io.solidar.donation.util.Validators
 fun LoginScreen(
     onNavigateToSignUp: () -> Unit,
     onLoginSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel { AuthViewModel() },
+    viewModel: AuthViewModel = viewModel { AppContainer.default.createAuthViewModel() },
 ) {
-    val loginState by viewModel.loginState.collectAsState()
+    val uiState by viewModel.loginUiState.collectAsStateWithLifecycle()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
-    LaunchedEffect(loginState) {
-        if (loginState is AuthState.Success) {
+    LaunchedEffect(uiState.authState) {
+        if (uiState.authState is AuthState.Success) {
             onLoginSuccess()
             viewModel.resetLoginState()
         }
     }
 
     LoginContent(
-        email = email,
-        onEmailChange = { email = it },
-        password = password,
-        onPasswordChange = { password = it },
-        loginState = loginState,
-        onLogin = { viewModel.login(email, password) },
+        email = uiState.email,
+        onEmailChange = viewModel::onLoginEmailChange,
+        password = uiState.password,
+        onPasswordChange = viewModel::onLoginPasswordChange,
+        passwordVisible = uiState.passwordVisible,
+        onTogglePasswordVisibility = viewModel::toggleLoginPasswordVisibility,
+        loginState = uiState.authState,
+        onLogin = { viewModel.login() },
         onNavigateToSignUp = onNavigateToSignUp,
     )
 }
@@ -96,9 +93,9 @@ fun LoginContent(
     onLogin: () -> Unit,
     onNavigateToSignUp: () -> Unit,
     modifier: Modifier = Modifier,
+    passwordVisible: Boolean = false,
+    onTogglePasswordVisibility: () -> Unit = {},
 ) {
-    var passwordVisible by remember { mutableStateOf(false) }
-
     val erroEmail = Validators.erroEmail(email)
     val erroSenha = Validators.erroSenha(password)
     val formValido = Validators.loginValido(email, password)
@@ -135,13 +132,11 @@ fun LoginContent(
                 Modifier
                     .fillMaxWidth(0.9f)
                     .shadow(
-                        elevation = 24.dp,
+                        elevation = 4.dp,
                         shape = RoundedCornerShape(32.dp),
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
                     )
                     .clip(RoundedCornerShape(32.dp))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(32.dp)
                     .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -213,7 +208,7 @@ fun LoginContent(
                     },
                 trailingIcon = {
                     TextButton(
-                        onClick = { passwordVisible = !passwordVisible },
+                        onClick = onTogglePasswordVisibility,
                         modifier =
                             Modifier
                                 .heightIn(min = 48.dp)
