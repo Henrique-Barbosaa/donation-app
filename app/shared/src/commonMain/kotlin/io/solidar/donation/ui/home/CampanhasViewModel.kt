@@ -14,8 +14,11 @@ import kotlinx.coroutines.launch
 
 data class CampanhasUiState(
     val abaPrincipal: MainTab = MainTab.HOME,
+    val abaInicio: InicioAba = InicioAba.PEDIDOS,
     val estadoLista: TelaEstado<List<Campaign>> = TelaEstado.Carregando,
     val favoritosIds: Set<String> = emptySet(),
+    val cancelandoCampanha: Boolean = false,
+    val erroCancelamento: String? = null,
 ) {
     val campanhasAtuais: List<Campaign>
         get() = (estadoLista as? TelaEstado.Sucesso)?.dados.orEmpty()
@@ -79,9 +82,103 @@ class CampanhasViewModel(
         _uiState.update { it.copy(abaPrincipal = tab) }
     }
 
+    fun selecionarAbaInicio(aba: InicioAba) {
+        _uiState.update { it.copy(abaInicio = aba) }
+    }
+
     fun alternarFavorito(campanhaId: String) {
         val atualizados = repository.alternarFavorito(campanhaId)
         _uiState.update { it.copy(favoritosIds = atualizados) }
+    }
+
+    fun finalizarCampanha(
+        campanhaId: String,
+        onSucesso: () -> Unit,
+    ) {
+        if (_uiState.value.cancelandoCampanha) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(cancelandoCampanha = true, erroCancelamento = null) }
+            val result = repository.finalizarCampanha(campanhaId)
+            result.fold(
+                onSuccess = {
+                    val restantes = _uiState.value.campanhasAtuais.filterNot { it.id == campanhaId }
+                    val novoEstado =
+                        if (restantes.isEmpty()) {
+                            TelaEstado.Vazio
+                        } else {
+                            TelaEstado.Sucesso(dados = restantes)
+                        }
+                    _uiState.update {
+                        it.copy(
+                            estadoLista = novoEstado,
+                            cancelandoCampanha = false,
+                        )
+                    }
+                    onSucesso()
+                },
+                onFailure = { erro ->
+                    _uiState.update {
+                        it.copy(
+                            cancelandoCampanha = false,
+                            erroCancelamento = mapearMensagemDeErro(erro),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    fun cancelarCampanha(
+        campanhaId: String,
+        onSucesso: () -> Unit,
+    ) {
+        if (_uiState.value.cancelandoCampanha) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(cancelandoCampanha = true, erroCancelamento = null) }
+            val result = repository.cancelarCampanha(campanhaId)
+            result.fold(
+                onSuccess = {
+                    val restantes = _uiState.value.campanhasAtuais.filterNot { it.id == campanhaId }
+                    val novoEstado =
+                        if (restantes.isEmpty()) {
+                            TelaEstado.Vazio
+                        } else {
+                            TelaEstado.Sucesso(dados = restantes)
+                        }
+                    _uiState.update {
+                        it.copy(
+                            estadoLista = novoEstado,
+                            favoritosIds = repository.listarFavoritosIds(),
+                            cancelandoCampanha = false,
+                        )
+                    }
+                    onSucesso()
+                },
+                onFailure = { erro ->
+                    _uiState.update {
+                        it.copy(
+                            cancelandoCampanha = false,
+                            erroCancelamento = mapearMensagemDeErro(erro),
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    fun limparErroCancelamento() {
+        _uiState.update { it.copy(erroCancelamento = null) }
+    }
+
+    fun limparEstadoSessao() {
+        _uiState.update {
+            it.copy(
+                abaPrincipal = MainTab.HOME,
+                abaInicio = InicioAba.PEDIDOS,
+                favoritosIds = emptySet(),
+                erroCancelamento = null,
+            )
+        }
     }
 
     fun buscarCampanhaPorId(id: String): Campaign? {

@@ -1,5 +1,6 @@
 package io.solidar.donation
 
+import io.solidar.donation.data.remote.GeneratedBackendConfig
 import java.io.File
 
 class JVMPlatform : Platform {
@@ -8,7 +9,13 @@ class JVMPlatform : Platform {
 
 actual fun getPlatform(): Platform = JVMPlatform()
 
-actual fun platformDefaultBackendUrl(): String = "http://localhost:8080"
+actual fun platformDefaultBackendUrl(): String =
+    System.getenv("SOLIDAR_API_URL")?.trim()?.removeSuffix("/")
+        ?: if (GeneratedBackendConfig.IS_CUSTOM_HOST) {
+            "http://${GeneratedBackendConfig.ANDROID_DEFAULT_HOST}"
+        } else {
+            "http://localhost:8080"
+        }
 
 actual fun platformStorageDir(): String {
     val base = System.getProperty("user.home") ?: System.getProperty("java.io.tmpdir") ?: "."

@@ -19,4 +19,5 @@ data class NovaDoacaoInput(
     val eNovo: Boolean,
     val descricao: String = "",
     val motivo: String = "",
+    val donatarioId: Int? = null,
 )

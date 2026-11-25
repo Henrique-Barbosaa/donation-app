@@ -1,5 +1,6 @@
 package io.solidar.donation.ui.campaign
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,18 +19,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,7 +67,86 @@ fun CampanhaDetalheScreen(
     modifier: Modifier = Modifier,
     isFavorito: Boolean = false,
     onToggleFavorito: () -> Unit = {},
+    ehOrganizador: Boolean = false,
+    onFinalizarCampanha: (() -> Unit)? = null,
+    onCancelarCampanha: (() -> Unit)? = null,
+    cancelandoCampanha: Boolean = false,
+    erroCancelamento: String? = null,
 ) {
+    var confirmarCancelamento by rememberSaveable { mutableStateOf(false) }
+    var confirmarFinalizacao by rememberSaveable { mutableStateOf(false) }
+
+    if (confirmarFinalizacao && onFinalizarCampanha != null) {
+        AlertDialog(
+            onDismissRequest = { confirmarFinalizacao = false },
+            title = { Text("Finalizar campanha?") },
+            text = {
+                Text(
+                    "Esta campanha será encerrada e removida da lista de campanhas abertas, " +
+                        "mantendo todas as doações já recebidas.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmarFinalizacao = false
+                        onFinalizarCampanha()
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text(
+                        text = "Confirmar finalização",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { confirmarFinalizacao = false },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text("Voltar")
+                }
+            },
+        )
+    }
+
+    if (confirmarCancelamento && onCancelarCampanha != null) {
+        AlertDialog(
+            onDismissRequest = { confirmarCancelamento = false },
+            title = { Text("Cancelar campanha?") },
+            text = {
+                Text(
+                    "Esta campanha será cancelada e os itens ou contribuições vinculados serão devolvidos. " +
+                        "Deseja continuar?",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmarCancelamento = false
+                        onCancelarCampanha()
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text(
+                        text = "Confirmar cancelamento",
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { confirmarCancelamento = false },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Text("Voltar")
+                }
+            },
+        )
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -111,16 +200,103 @@ fun CampanhaDetalheScreen(
                                 modifier = Modifier.size(28.dp),
                             )
                         }
-                        Button(
-                            onClick = onQueroDoar,
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            colors =
-                                ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
-                        ) {
-                            Text("Quero doar", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        if (ehOrganizador) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                if (!erroCancelamento.isNullOrBlank()) {
+                                    Text(
+                                        text = erroCancelamento,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                                val campanhaAtiva = campaign.status.equals("ATIVA", ignoreCase = true)
+                                val labelOrganizador =
+                                    when (campaign.status.uppercase()) {
+                                        "FINALIZADA" -> "Campanha finalizada"
+                                        "CANCELADA" -> "Campanha cancelada"
+                                        else -> "Você é o organizador desta campanha"
+                                    }
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = labelOrganizador,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    )
+                                }
+                                if (campanhaAtiva && (onFinalizarCampanha != null || onCancelarCampanha != null)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        if (onFinalizarCampanha != null) {
+                                            Button(
+                                                onClick = { confirmarFinalizacao = true },
+                                                enabled = !cancelandoCampanha,
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors =
+                                                    ButtonDefaults.buttonColors(
+                                                        containerColor = MaterialTheme.colorScheme.primary,
+                                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    ),
+                                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                                            ) {
+                                                Text(
+                                                    text = "Finalizar campanha",
+                                                    fontWeight = FontWeight.Bold,
+                                                )
+                                            }
+                                        }
+                                        if (onCancelarCampanha != null) {
+                                            OutlinedButton(
+                                                onClick = { confirmarCancelamento = true },
+                                                enabled = !cancelandoCampanha,
+                                                shape = RoundedCornerShape(12.dp),
+                                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                                colors =
+                                                    ButtonDefaults.outlinedButtonColors(
+                                                        contentColor = MaterialTheme.colorScheme.error,
+                                                    ),
+                                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                                            ) {
+                                                if (cancelandoCampanha) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(18.dp),
+                                                        strokeWidth = 2.dp,
+                                                        color = MaterialTheme.colorScheme.error,
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "Cancelar campanha",
+                                                        fontWeight = FontWeight.Bold,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Button(
+                                onClick = onQueroDoar,
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                colors =
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    ),
+                            ) {
+                                Text("Quero doar", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

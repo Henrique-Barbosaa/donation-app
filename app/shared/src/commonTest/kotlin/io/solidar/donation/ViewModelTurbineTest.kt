@@ -2,6 +2,7 @@ package io.solidar.donation
 
 import app.cash.turbine.test
 import io.solidar.donation.domain.error.FalhaDominio
+import io.solidar.donation.domain.model.NovaCampanhaInput
 import io.solidar.donation.domain.model.NovaDoacaoInput
 import io.solidar.donation.domain.model.ResultadoCacheado
 import io.solidar.donation.domain.repository.CampanhaRepository
@@ -9,6 +10,7 @@ import io.solidar.donation.domain.repository.DoacaoRepository
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
+import io.solidar.donation.model.DoacaoDisponivel
 import io.solidar.donation.model.DoacaoStatus
 import io.solidar.donation.ui.donation.CriarDoacaoState
 import io.solidar.donation.ui.donation.CriarDoacaoViewModel
@@ -52,6 +54,20 @@ private class FakeCampanhaRepository(
         return resposta.map { res -> res.dados.firstOrNull { it.id == id } }
     }
 
+    override suspend fun criarCampanha(input: NovaCampanhaInput): Result<Campaign> {
+        if (atrasoMs > 0) delay(atrasoMs)
+        return Result.success(
+            Campaign(
+                id = "99",
+                title = input.titulo,
+                organizer = "ONG Teste",
+                goalInCents = input.metaVoluntarios * 10_000L,
+                raisedInCents = 0L,
+                descricao = input.descricao,
+            ),
+        )
+    }
+
     override fun listarFavoritosIds(): Set<String> = favoritos.toSet()
 
     override fun alternarFavorito(campanhaId: String): Set<String> {
@@ -85,6 +101,20 @@ private class FakeDoacaoRepository(
         if (atrasoMs > 0) delay(atrasoMs)
         return respostaHistorico
     }
+
+    override suspend fun listarDoacoesDisponiveis(
+        categoria: String?,
+        busca: String?,
+    ): Result<ResultadoCacheado<List<DoacaoDisponivel>>> {
+        if (atrasoMs > 0) delay(atrasoMs)
+        return Result.success(ResultadoCacheado(emptyList()))
+    }
+
+    override suspend fun registrarInteresse(doacaoId: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun removerInteresse(doacaoId: String): Result<Unit> = Result.success(Unit)
+
+    override fun listarInteressesIds(): Set<String> = emptySet()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

@@ -5,6 +5,7 @@ import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
+import io.solidar.donation.model.DoacaoDisponivel
 import io.solidar.donation.model.DoacaoStatus
 import io.solidar.donation.readPlatformFileText
 import io.solidar.donation.writePlatformFileText
@@ -25,9 +26,49 @@ interface LocalCacheStorage {
 
     fun lerDoacoes(): List<Doacao>?
 
+    fun salvarDoacoesDisponiveis(doacoes: List<DoacaoDisponivel>) {}
+
+    fun lerDoacoesDisponiveis(): List<DoacaoDisponivel>? = null
+
     fun salvarFavoritos(ids: Set<String>)
 
     fun lerFavoritos(): Set<String>
+
+    fun salvarFavoritosUsuario(
+        usuarioChave: String,
+        ids: Set<String>,
+    ) {
+        salvarFavoritos(ids)
+    }
+
+    fun lerFavoritosUsuario(usuarioChave: String): Set<String> = lerFavoritos()
+
+    fun salvarInteresses(ids: Set<String>) {}
+
+    fun lerInteresses(): Set<String> = emptySet()
+
+    fun salvarInteressesUsuario(
+        usuarioChave: String,
+        ids: Set<String>,
+    ) {
+        salvarInteresses(ids)
+    }
+
+    fun lerInteressesUsuario(usuarioChave: String): Set<String> = lerInteresses()
+
+    fun salvarItensDoadosCampanha(
+        campanhaId: String,
+        itensIds: Set<String>,
+    ) {}
+
+    fun lerItensDoadosCampanha(campanhaId: String): Set<String> = emptySet()
+
+    fun salvarQuantidadesDoadasCampanha(
+        campanhaId: String,
+        quantidades: Map<String, Int>,
+    ) {}
+
+    fun lerQuantidadesDoadasCampanha(campanhaId: String): Map<String, Int> = emptyMap()
 }
 
 @Serializable
@@ -36,6 +77,7 @@ internal data class CampaignItemCacheDto(
     val nome: String,
     val quantidadeDescricao: String,
     val iconeRef: String,
+    val quantidadeAlvo: Int? = null,
 )
 
 @Serializable
@@ -48,6 +90,8 @@ internal data class CampaignCacheDto(
     val descricao: String = "",
     val imageUrl: String? = null,
     val itensNecessarios: List<CampaignItemCacheDto> = emptyList(),
+    val instituicaoId: Int? = null,
+    val status: String = "ATIVA",
 )
 
 @Serializable
@@ -58,6 +102,20 @@ internal data class DoacaoCacheDto(
     val direction: String,
     val status: String,
     val dateLabel: String,
+)
+
+@Serializable
+internal data class DoacaoDisponivelCacheDto(
+    val id: String,
+    val itemTitle: String,
+    val quantidade: Int,
+    val categoria: String,
+    val condicao: String,
+    val descricao: String = "",
+    val motivo: String = "",
+    val nomeDoador: String = "Doador Solidário",
+    val urlImagem: String? = null,
+    val doadorId: Int? = null,
 )
 
 /**
@@ -80,6 +138,8 @@ class FileLocalCacheStorage(
                     raisedInCents = camp.raisedInCents,
                     descricao = camp.descricao,
                     imageUrl = camp.imageUrl,
+                    instituicaoId = camp.instituicaoId,
+                    status = camp.status,
                     itensNecessarios =
                         camp.itensNecessarios.map { item ->
                             CampaignItemCacheDto(
@@ -87,6 +147,7 @@ class FileLocalCacheStorage(
                                 nome = item.nome,
                                 quantidadeDescricao = item.quantidadeDescricao,
                                 iconeRef = item.iconeRef,
+                                quantidadeAlvo = item.quantidadeAlvo,
                             )
                         },
                 )
@@ -108,6 +169,8 @@ class FileLocalCacheStorage(
                     raisedInCents = dto.raisedInCents,
                     descricao = dto.descricao,
                     imageUrl = dto.imageUrl,
+                    instituicaoId = dto.instituicaoId,
+                    status = dto.status,
                     itensNecessarios =
                         dto.itensNecessarios.map { item ->
                             CampaignItem(
@@ -115,6 +178,7 @@ class FileLocalCacheStorage(
                                 nome = item.nome,
                                 quantidadeDescricao = item.quantidadeDescricao,
                                 iconeRef = item.iconeRef,
+                                quantidadeAlvo = item.quantidadeAlvo,
                             )
                         },
                 )
@@ -159,6 +223,47 @@ class FileLocalCacheStorage(
         }.getOrNull()
     }
 
+    override fun salvarDoacoesDisponiveis(doacoes: List<DoacaoDisponivel>) {
+        val dtos =
+            doacoes.map { item ->
+                DoacaoDisponivelCacheDto(
+                    id = item.id,
+                    itemTitle = item.itemTitle,
+                    quantidade = item.quantidade,
+                    categoria = item.categoria,
+                    condicao = item.condicao,
+                    descricao = item.descricao,
+                    motivo = item.motivo,
+                    nomeDoador = item.nomeDoador,
+                    urlImagem = item.urlImagem,
+                    doadorId = item.doadorId,
+                )
+            }
+        runCatching {
+            writer(ARQUIVO_DOACOES_DISPONIVEIS, json.encodeToString(dtos))
+        }
+    }
+
+    override fun lerDoacoesDisponiveis(): List<DoacaoDisponivel>? {
+        val raw = reader(ARQUIVO_DOACOES_DISPONIVEIS) ?: return null
+        return runCatching {
+            json.decodeFromString<List<DoacaoDisponivelCacheDto>>(raw).map { dto ->
+                DoacaoDisponivel(
+                    id = dto.id,
+                    itemTitle = dto.itemTitle,
+                    quantidade = dto.quantidade,
+                    categoria = dto.categoria,
+                    condicao = dto.condicao,
+                    descricao = dto.descricao,
+                    motivo = dto.motivo,
+                    nomeDoador = dto.nomeDoador,
+                    urlImagem = dto.urlImagem,
+                    doadorId = dto.doadorId,
+                )
+            }
+        }.getOrNull()
+    }
+
     override fun salvarFavoritos(ids: Set<String>) {
         runCatching {
             writer(ARQUIVO_FAVORITOS, json.encodeToString(ids.toList()))
@@ -172,10 +277,98 @@ class FileLocalCacheStorage(
         }.getOrDefault(emptySet())
     }
 
+    override fun salvarFavoritosUsuario(
+        usuarioChave: String,
+        ids: Set<String>,
+    ) {
+        val mapa = lerMapaStrings(ARQUIVO_FAVORITOS_USUARIO).toMutableMap()
+        mapa[usuarioChave] = ids.toList()
+        runCatching {
+            writer(ARQUIVO_FAVORITOS_USUARIO, json.encodeToString(mapa))
+        }
+    }
+
+    override fun lerFavoritosUsuario(usuarioChave: String): Set<String> =
+        lerMapaStrings(ARQUIVO_FAVORITOS_USUARIO)[usuarioChave]?.toSet().orEmpty()
+
+    override fun salvarInteresses(ids: Set<String>) {
+        runCatching {
+            writer(ARQUIVO_INTERESSES, json.encodeToString(ids.toList()))
+        }
+    }
+
+    override fun lerInteresses(): Set<String> {
+        val raw = reader(ARQUIVO_INTERESSES) ?: return emptySet()
+        return runCatching {
+            json.decodeFromString<List<String>>(raw).toSet()
+        }.getOrDefault(emptySet())
+    }
+
+    override fun salvarInteressesUsuario(
+        usuarioChave: String,
+        ids: Set<String>,
+    ) {
+        val mapa = lerMapaStrings(ARQUIVO_INTERESSES_USUARIO).toMutableMap()
+        mapa[usuarioChave] = ids.toList()
+        runCatching {
+            writer(ARQUIVO_INTERESSES_USUARIO, json.encodeToString(mapa))
+        }
+    }
+
+    override fun lerInteressesUsuario(usuarioChave: String): Set<String> =
+        lerMapaStrings(ARQUIVO_INTERESSES_USUARIO)[usuarioChave]?.toSet().orEmpty()
+
+    override fun salvarItensDoadosCampanha(
+        campanhaId: String,
+        itensIds: Set<String>,
+    ) {
+        val mapaAtual = lerMapaStrings(ARQUIVO_ITENS_DOADOS).toMutableMap()
+        mapaAtual[campanhaId] = itensIds.toList()
+        runCatching {
+            writer(ARQUIVO_ITENS_DOADOS, json.encodeToString(mapaAtual))
+        }
+    }
+
+    override fun lerItensDoadosCampanha(campanhaId: String): Set<String> =
+        lerMapaStrings(ARQUIVO_ITENS_DOADOS)[campanhaId]?.toSet().orEmpty()
+
+    override fun salvarQuantidadesDoadasCampanha(
+        campanhaId: String,
+        quantidades: Map<String, Int>,
+    ) {
+        val mapaAtual = lerMapaQuantidades().toMutableMap()
+        mapaAtual[campanhaId] = quantidades
+        runCatching {
+            writer(ARQUIVO_QUANTIDADES_DOADAS, json.encodeToString(mapaAtual))
+        }
+    }
+
+    override fun lerQuantidadesDoadasCampanha(campanhaId: String): Map<String, Int> = lerMapaQuantidades()[campanhaId].orEmpty()
+
+    private fun lerMapaStrings(arquivo: String): Map<String, List<String>> {
+        val raw = reader(arquivo) ?: return emptyMap()
+        return runCatching {
+            json.decodeFromString<Map<String, List<String>>>(raw)
+        }.getOrDefault(emptyMap())
+    }
+
+    private fun lerMapaQuantidades(): Map<String, Map<String, Int>> {
+        val raw = reader(ARQUIVO_QUANTIDADES_DOADAS) ?: return emptyMap()
+        return runCatching {
+            json.decodeFromString<Map<String, Map<String, Int>>>(raw)
+        }.getOrDefault(emptyMap())
+    }
+
     companion object {
         const val ARQUIVO_CAMPANHAS = "campanhas_cache.json"
         const val ARQUIVO_DOACOES = "doacoes_cache.json"
+        const val ARQUIVO_DOACOES_DISPONIVEIS = "doacoes_disponiveis_cache.json"
         const val ARQUIVO_FAVORITOS = "favoritos_cache.json"
+        const val ARQUIVO_FAVORITOS_USUARIO = "favoritos_por_usuario_cache.json"
+        const val ARQUIVO_INTERESSES = "interesses_cache.json"
+        const val ARQUIVO_INTERESSES_USUARIO = "interesses_por_usuario_cache.json"
+        const val ARQUIVO_ITENS_DOADOS = "itens_doados_campanha_cache.json"
+        const val ARQUIVO_QUANTIDADES_DOADAS = "quantidades_doadas_campanha_cache.json"
     }
 }
 
@@ -183,7 +376,13 @@ class FileLocalCacheStorage(
 class InMemoryLocalCacheStorage : LocalCacheStorage {
     private var campanhas: List<Campaign>? = null
     private var doacoes: List<Doacao>? = null
+    private var doacoesDisponiveis: List<DoacaoDisponivel>? = null
     private var favoritos: Set<String> = emptySet()
+    private val favoritosPorUsuario = mutableMapOf<String, Set<String>>()
+    private var interesses: Set<String> = emptySet()
+    private val interessesPorUsuario = mutableMapOf<String, Set<String>>()
+    private val itensDoadosPorCampanha = mutableMapOf<String, Set<String>>()
+    private val quantidadesDoadasPorCampanha = mutableMapOf<String, Map<String, Int>>()
 
     override fun salvarCampanhas(campanhas: List<Campaign>) {
         this.campanhas = campanhas
@@ -197,9 +396,57 @@ class InMemoryLocalCacheStorage : LocalCacheStorage {
 
     override fun lerDoacoes(): List<Doacao>? = doacoes
 
+    override fun salvarDoacoesDisponiveis(doacoes: List<DoacaoDisponivel>) {
+        this.doacoesDisponiveis = doacoes
+    }
+
+    override fun lerDoacoesDisponiveis(): List<DoacaoDisponivel>? = doacoesDisponiveis
+
     override fun salvarFavoritos(ids: Set<String>) {
         this.favoritos = ids
     }
 
     override fun lerFavoritos(): Set<String> = favoritos
+
+    override fun salvarFavoritosUsuario(
+        usuarioChave: String,
+        ids: Set<String>,
+    ) {
+        favoritosPorUsuario[usuarioChave] = ids
+    }
+
+    override fun lerFavoritosUsuario(usuarioChave: String): Set<String> = favoritosPorUsuario[usuarioChave].orEmpty()
+
+    override fun salvarInteresses(ids: Set<String>) {
+        this.interesses = ids
+    }
+
+    override fun lerInteresses(): Set<String> = interesses
+
+    override fun salvarInteressesUsuario(
+        usuarioChave: String,
+        ids: Set<String>,
+    ) {
+        interessesPorUsuario[usuarioChave] = ids
+    }
+
+    override fun lerInteressesUsuario(usuarioChave: String): Set<String> = interessesPorUsuario[usuarioChave].orEmpty()
+
+    override fun salvarItensDoadosCampanha(
+        campanhaId: String,
+        itensIds: Set<String>,
+    ) {
+        itensDoadosPorCampanha[campanhaId] = itensIds
+    }
+
+    override fun lerItensDoadosCampanha(campanhaId: String): Set<String> = itensDoadosPorCampanha[campanhaId].orEmpty()
+
+    override fun salvarQuantidadesDoadasCampanha(
+        campanhaId: String,
+        quantidades: Map<String, Int>,
+    ) {
+        quantidadesDoadasPorCampanha[campanhaId] = quantidades
+    }
+
+    override fun lerQuantidadesDoadasCampanha(campanhaId: String): Map<String, Int> = quantidadesDoadasPorCampanha[campanhaId].orEmpty()
 }

@@ -5,6 +5,7 @@ data class CampaignItem(
     val nome: String,
     val quantidadeDescricao: String,
     val iconeRef: String,
+    val quantidadeAlvo: Int? = null,
 )
 
 data class Campaign(
@@ -16,6 +17,8 @@ data class Campaign(
     val descricao: String = "",
     val imageUrl: String? = null,
     val itensNecessarios: List<CampaignItem> = emptyList(),
+    val instituicaoId: Int? = null,
+    val status: String = "ATIVA",
 ) {
     val progress: Float
         get() =

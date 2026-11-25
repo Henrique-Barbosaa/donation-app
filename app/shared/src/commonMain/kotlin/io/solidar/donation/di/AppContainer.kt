@@ -15,7 +15,12 @@ import io.solidar.donation.domain.repository.AuthRepository
 import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.domain.repository.DoacaoRepository
 import io.solidar.donation.ui.auth.AuthViewModel
+import io.solidar.donation.ui.campaign.CriarCampanhaViewModel
 import io.solidar.donation.ui.donation.CriarDoacaoViewModel
+import io.solidar.donation.ui.donation.DoarDinheiroViewModel
+import io.solidar.donation.ui.donation.DoarItensCampanhaViewModel
+import io.solidar.donation.ui.donation.EfetivarDoacaoViewModel
+import io.solidar.donation.ui.explore.ExplorarViewModel
 import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.home.CampanhasViewModel
 
@@ -39,6 +44,7 @@ class AppContainer(
         CampanhaRepositoryImpl(
             remoteDataSource = CampanhaRemoteDataSource(httpClient = httpClient),
             localCacheStorage = localCacheStorage,
+            tokenStorage = tokenStorage,
         ),
     val doacaoRepository: DoacaoRepository =
         DoacaoRepositoryImpl(
@@ -51,9 +57,19 @@ class AppContainer(
 
     fun createCampanhasViewModel(): CampanhasViewModel = CampanhasViewModel(campanhaRepository)
 
-    fun createHistoricoViewModel(): HistoricoViewModel = HistoricoViewModel(doacaoRepository)
+    fun createHistoricoViewModel(): HistoricoViewModel = HistoricoViewModel(doacaoRepository, campanhaRepository)
+
+    fun createExplorarViewModel(): ExplorarViewModel = ExplorarViewModel(doacaoRepository)
 
     fun createCriarDoacaoViewModel(): CriarDoacaoViewModel = CriarDoacaoViewModel(doacaoRepository)
+
+    fun createCriarCampanhaViewModel(): CriarCampanhaViewModel = CriarCampanhaViewModel(campanhaRepository)
+
+    fun createEfetivarDoacaoViewModel(): EfetivarDoacaoViewModel = EfetivarDoacaoViewModel(doacaoRepository)
+
+    fun createDoarItensCampanhaViewModel(): DoarItensCampanhaViewModel = DoarItensCampanhaViewModel(doacaoRepository)
+
+    fun createDoarDinheiroViewModel(): DoarDinheiroViewModel = DoarDinheiroViewModel(doacaoRepository)
 
     companion object {
         val default: AppContainer by lazy { AppContainer() }

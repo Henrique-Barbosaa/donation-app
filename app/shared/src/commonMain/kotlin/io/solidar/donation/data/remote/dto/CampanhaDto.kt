@@ -1,8 +1,25 @@
 package io.solidar.donation.data.remote.dto
 
+import io.solidar.donation.domain.model.NovaCampanhaInput
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
 import kotlinx.serialization.Serializable
+
+@Serializable
+data class CriarCampanhaRequest(
+    val titulo: String,
+    val descricao: String? = null,
+    val itensFoco: String? = null,
+    val metaVoluntarios: Int? = null,
+)
+
+fun NovaCampanhaInput.toCriarCampanhaRequest(): CriarCampanhaRequest =
+    CriarCampanhaRequest(
+        titulo = titulo.trim(),
+        descricao = descricao.trim().ifBlank { null },
+        itensFoco = itensFocoFormatado.ifBlank { null },
+        metaVoluntarios = metaVoluntarios.coerceAtLeast(1),
+    )
 
 @Serializable
 data class LocalDoacaoResponseDto(
@@ -40,6 +57,9 @@ data class PaginaResponseDto<T>(
     val currentPage: Int = 0,
 )
 
+private val ITEM_COM_QUANTIDADE_REGEX =
+    Regex("""^(.+?)\s*\((\d+)\s*(?:un\.?|unidades?)?\)\s*$""", RegexOption.IGNORE_CASE)
+
 /**
  * Conversão explícita de [CampanhaResponseDto] (camada `data`) para [Campaign] (camada `domain`).
  */
@@ -59,12 +79,22 @@ fun CampanhaResponseDto.toDomain(): Campaign {
             ?.split(",", ";")
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() }
-            ?.mapIndexed { index, itemNome ->
+            ?.mapIndexed { index, itemBruto ->
+                val match = ITEM_COM_QUANTIDADE_REGEX.matchEntire(itemBruto)
+                val nomeLimpo = match?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() } ?: itemBruto
+                val quantidade = match?.groupValues?.get(2)?.toIntOrNull()?.coerceAtLeast(1)
+                val quantidadeDescricao =
+                    when (quantidade) {
+                        null -> "Doação solicitada"
+                        1 -> "1 unidade"
+                        else -> "$quantidade unidades"
+                    }
                 CampaignItem(
                     id = "${idStr}_item_$index",
-                    nome = itemNome,
-                    quantidadeDescricao = "Doação solicitada",
+                    nome = nomeLimpo,
+                    quantidadeDescricao = quantidadeDescricao,
                     iconeRef = "check",
+                    quantidadeAlvo = quantidade,
                 )
             }.orEmpty()
 
@@ -77,5 +107,7 @@ fun CampanhaResponseDto.toDomain(): Campaign {
         descricao = descricao.orEmpty(),
         imageUrl = urlImagemCapa,
         itensNecessarios = itens,
+        instituicaoId = instituicaoId,
+        status = status?.takeIf { it.isNotBlank() }?.uppercase() ?: "ATIVA",
     )
 }

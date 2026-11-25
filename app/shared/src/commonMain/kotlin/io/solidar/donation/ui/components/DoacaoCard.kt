@@ -1,14 +1,22 @@
 package io.solidar.donation.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,15 +32,14 @@ import io.solidar.donation.theme.DonationTheme
 
 /**
  * Cartão reutilizável que resume uma doação do histórico do usuário.
- *
- * Assim como o [CampaignCard], não guarda estado: recebe a [Doacao] pronta
- * para exibir. Quem chama decide o que fazer com o item (por ora, sem ação
- * de clique — a issue #11 pede só a listagem).
  */
 @Composable
 fun DoacaoCard(
     doacao: Doacao,
     modifier: Modifier = Modifier,
+    onEfetivarClick: ((Doacao) -> Unit)? = null,
+    onCancelarClick: ((Doacao) -> Unit)? = null,
+    cancelando: Boolean = false,
 ) {
     Card(
         modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
@@ -67,6 +74,56 @@ fun DoacaoCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            val pendenteFeita =
+                doacao.direction == DoacaoDirecao.FEITA &&
+                    doacao.status == DoacaoStatus.PENDENTE
+
+            if (pendenteFeita && onEfetivarClick != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedButton(
+                    onClick = { onEfetivarClick(doacao) },
+                    enabled = !cancelando,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                ) {
+                    Text(
+                        text = "Ver interessados e efetivar",
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+
+            if (pendenteFeita && onCancelarClick != null) {
+                OutlinedButton(
+                    onClick = { onCancelarClick(doacao) },
+                    enabled = !cancelando,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                ) {
+                    if (cancelando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    } else {
+                        Text(
+                            text = "Cancelar doação",
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
         }
     }
 }

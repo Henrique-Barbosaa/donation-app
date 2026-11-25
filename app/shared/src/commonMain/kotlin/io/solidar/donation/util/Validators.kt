@@ -13,6 +13,7 @@ object Validators {
     const val NOME_ITEM_MIN = 3
     const val NOME_ITEM_MAX = 80
     const val DESCRICAO_MAX = 500
+    const val ITENS_FOCO_MAX = 200
 
     fun emailValido(email: String): Boolean = EMAIL_REGEX.matches(email.trim())
 
@@ -93,5 +94,72 @@ fun validarDoacao(form: DoacaoForm): DoacaoFormErros {
             } else {
                 null
             },
+    )
+}
+
+/** Item individual no formulário de criação de campanha, com quantidade unitária própria. */
+data class ItemCampanhaForm(
+    val id: Int,
+    val nome: String = "",
+    val quantidade: Int = 1,
+)
+
+/** Estado do formulário de criação de campanha de doação. */
+data class CampanhaForm(
+    val titulo: String = "",
+    val descricao: String = "",
+    val itens: List<ItemCampanhaForm> = listOf(ItemCampanhaForm(id = 1, nome = "", quantidade = 1)),
+) {
+    val itensPreenchidos: List<ItemCampanhaForm>
+        get() = itens.filter { it.nome.isNotBlank() }
+
+    val totalUnidades: Int
+        get() = itensPreenchidos.sumOf { it.quantidade.coerceAtLeast(1) }
+
+    val itensFocoFormatado: String
+        get() =
+            itensPreenchidos.joinToString(", ") { item ->
+                "${item.nome.trim()} (${item.quantidade.coerceAtLeast(1)} un.)"
+            }
+
+    fun proximoItemId(): Int = (itens.maxOfOrNull { it.id } ?: 0) + 1
+}
+
+/** Erros derivados do [CampanhaForm]; `null` significa campo válido. */
+data class CampanhaFormErros(
+    val titulo: String? = null,
+    val descricao: String? = null,
+    val itens: String? = null,
+) {
+    val valido: Boolean
+        get() = titulo == null && descricao == null && itens == null
+}
+
+fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
+    val titulo = form.titulo.trim()
+    val itensValidos = form.itensPreenchidos
+    val erroItens =
+        when {
+            itensValidos.isEmpty() -> "Adicione pelo menos um item com nome."
+            itensValidos.any { it.quantidade < 1 } -> "A quantidade de cada item deve ser pelo menos 1."
+            form.itensFocoFormatado.length > Validators.ITENS_FOCO_MAX ->
+                "A lista de itens excede o limite de ${Validators.ITENS_FOCO_MAX} caracteres."
+            else -> null
+        }
+    return CampanhaFormErros(
+        titulo =
+            when {
+                titulo.isEmpty() -> "Informe o título da campanha."
+                titulo.length < Validators.NOME_ITEM_MIN -> "Use pelo menos ${Validators.NOME_ITEM_MIN} caracteres."
+                titulo.length > Validators.NOME_ITEM_MAX -> "Use no máximo ${Validators.NOME_ITEM_MAX} caracteres."
+                else -> null
+            },
+        descricao =
+            if (form.descricao.length > Validators.DESCRICAO_MAX) {
+                "A descrição pode ter no máximo ${Validators.DESCRICAO_MAX} caracteres."
+            } else {
+                null
+            },
+        itens = erroItens,
     )
 }

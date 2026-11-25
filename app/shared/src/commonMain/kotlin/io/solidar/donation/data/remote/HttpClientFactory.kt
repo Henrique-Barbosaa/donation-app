@@ -13,15 +13,19 @@ import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 
 object HttpClientFactory {
+    @OptIn(ExperimentalSerializationApi::class)
     val defaultJson: Json =
         Json {
             ignoreUnknownKeys = true
             prettyPrint = false
             isLenient = true
             encodeDefaults = true
+            coerceInputValues = true
+            explicitNulls = false
         }
 
     fun create(
