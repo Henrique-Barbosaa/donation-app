@@ -8,10 +8,14 @@ import br.com.donation.exception.BusinessException;
 import br.com.donation.exception.ResourceNotFoundException;
 import br.com.donation.model.CampanhaDoacao;
 import br.com.donation.model.CampanhaLocalDoacao;
+import br.com.donation.model.Doacao;
+import br.com.donation.model.Item;
 import br.com.donation.model.LocalDoacao;
 import br.com.donation.repository.CampanhaDoacaoRepository;
 import br.com.donation.repository.CampanhaLocalDoacaoRepository;
+import br.com.donation.repository.DoacaoRepository;
 import br.com.donation.repository.InstituicaoRepository;
+import br.com.donation.repository.ItemRepository;
 import br.com.donation.repository.LocalDoacaoRepository;
 import br.com.donation.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,12 @@ public class CampanhaService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private DoacaoRepository doacaoRepository;
+
+    @Autowired
+    private ItemRepository itemRepository;
 
     @Autowired
     private StorageService storageService;
@@ -96,6 +106,35 @@ public class CampanhaService {
         buscarCampanhaSeDono(userId, campanhaId);
         
         campanhaLocalRepository.deleteById(campanhaId, localId);
+    }
+
+    public CampanhaDTO finalizarCampanha(Integer userId, Integer campanhaId) {
+        verificarSeInstituicao(userId);
+        CampanhaDoacao campanha = buscarCampanhaSeDono(userId, campanhaId);
+        campanha.setStatus("FINALIZADA");
+        campanhaRepository.save(campanha);
+        return converterParaDTO(campanha);
+    }
+
+    public CampanhaDTO cancelarCampanha(Integer userId, Integer campanhaId) {
+        verificarSeInstituicao(userId);
+        CampanhaDoacao campanha = buscarCampanhaSeDono(userId, campanhaId);
+        String motivoCampanha = "Campanha: " + (campanha.getTitulo() != null ? campanha.getTitulo().trim() : "");
+
+        // Estorna/devolve as doações de itens e contribuições PIX vinculadas a esta campanha
+        List<Doacao> recebidas = doacaoRepository.findByDonatarioId(userId);
+        for (Doacao d : recebidas) {
+            List<Item> itens = itemRepository.findByDoacaoId(d.getId());
+            boolean pertenceACampanha = itens.stream()
+                    .anyMatch(item -> item.getMotivo() != null && item.getMotivo().equalsIgnoreCase(motivoCampanha));
+            if (pertenceACampanha) {
+                doacaoRepository.deleteById(d.getId());
+            }
+        }
+
+        campanha.setStatus("CANCELADA");
+        campanhaRepository.save(campanha);
+        return converterParaDTO(campanha);
     }
 
     public PaginaDTO<CampanhaDTO> listarCampanhas(int page, int size) {

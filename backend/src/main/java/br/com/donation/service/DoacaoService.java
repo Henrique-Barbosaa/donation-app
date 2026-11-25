@@ -24,10 +24,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class DoacaoService {
+
+    private static final String MENSAGEM_INTERESSE_PADRAO =
+            "Tenho interesse em receber esta doação e posso combinar a retirada.";
+
+    private final Map<String, String> mensagensInteresse = new ConcurrentHashMap<>();
 
     @Autowired
     private DoacaoRepository doacaoRepository;
@@ -54,7 +61,15 @@ public class DoacaoService {
     public DoacaoDTO criarDoacao(Integer doadorId, CriarDoacaoDTO dto, MultipartFile imagem) {
         Doacao doacao = new Doacao();
         doacao.setDoadorId(doadorId);
-        // donatarioId e localDoacaoId ficam nulos inicialmente
+        // Quando a doação é direcionada a uma campanha, vincula o donatário (instituição criadora)
+        if (dto.getDonatarioId() != null) {
+            if (dto.getDonatarioId().equals(doadorId)) {
+                throw new BusinessException("Você não pode doar para a sua própria campanha.");
+            }
+            usuarioRepository.findById(dto.getDonatarioId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Donatário", dto.getDonatarioId()));
+            doacao.setDonatarioId(dto.getDonatarioId());
+        }
         
         if (imagem != null && !imagem.isEmpty()) {
             String urlImagem = storageService.salvarImagem(imagem, "doacoes");
@@ -118,6 +133,10 @@ public class DoacaoService {
 
 
     public void registrarInteresse(Integer userId, Integer doacaoId) {
+        registrarInteresse(userId, doacaoId, null);
+    }
+
+    public void registrarInteresse(Integer userId, Integer doacaoId, String mensagem) {
         Doacao doacao = doacaoRepository.findById(doacaoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doação", doacaoId));
 
@@ -134,6 +153,13 @@ public class DoacaoService {
         interesse.setDoacaoId(doacaoId);
         interesseRepository.save(interesse);
 
+        String chave = doacaoId + ":" + userId;
+        if (mensagem != null && !mensagem.isBlank()) {
+            mensagensInteresse.put(chave, mensagem.trim());
+        } else {
+            mensagensInteresse.remove(chave);
+        }
+
         usuarioRepository.findById(userId).ifPresent(u -> {
             String msg = "O usuário " + u.getNome() + " demonstrou interesse na sua doação!";
             notificationService.notificarUsuario(doacao.getDoadorId(), "NOVO_INTERESSE", 
@@ -143,6 +169,7 @@ public class DoacaoService {
 
     public void removerInteresse(Integer userId, Integer doacaoId) {
         interesseRepository.deleteById(userId, doacaoId);
+        mensagensInteresse.remove(doacaoId + ":" + userId);
     }
 
     public List<UsuarioDTO> listarInteressados(Integer doadorId, Integer doacaoId) {
@@ -154,12 +181,18 @@ public class DoacaoService {
         }
 
         return interesseRepository.findByDoacaoId(doacaoId).stream()
-                .map(intId -> usuarioRepository.findById(intId.getUsuarioId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Usuário", intId.getUsuarioId())))
+                .map(intId -> usuarioRepository.findById(intId.getUsuarioId()))
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
                 .map(u -> UsuarioDTO.builder()
                         .id(u.getId())
-                        .nome(u.getNome())
-                        .email(u.getEmail())
+                        .nome(u.getNome() != null ? u.getNome() : "Interessado")
+                        .email(u.getEmail() != null ? u.getEmail() : "")
+                        .logradouro(u.getLogradouro())
+                        .bairro(u.getBairro())
+                        .numero(u.getNumero())
+                        .cep(u.getCep())
+                        .mensagem(mensagensInteresse.getOrDefault(doacaoId + ":" + u.getId(), MENSAGEM_INTERESSE_PADRAO))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -206,6 +239,22 @@ public class DoacaoService {
         doacaoRepository.save(doacao);
 
         return buscarPorId(doacao.getId());
+    }
+
+    public void cancelarDoacao(Integer doadorId, Integer doacaoId) {
+        Doacao doacao = doacaoRepository.findById(doacaoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Doação", doacaoId));
+
+        if (!doacao.getDoadorId().equals(doadorId)) {
+            throw new BusinessException("Apenas o proprietário pode cancelar esta doação.");
+        }
+
+        if (doacao.getDonatarioId() != null) {
+            throw new BusinessException("Não é possível cancelar uma doação que já foi efetivada.");
+        }
+
+        mensagensInteresse.keySet().removeIf(chave -> chave.startsWith(doacaoId + ":"));
+        doacaoRepository.deleteById(doacaoId);
     }
 
     public String atualizarImagem(Integer doadorId, Integer doacaoId, MultipartFile file) {

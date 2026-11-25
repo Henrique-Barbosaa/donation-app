@@ -100,7 +100,7 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
     @Override
     public List<CampanhaDoacao> findAll(int page, int size) {
         return execute(connection -> {
-            String sql = "SELECT * FROM CAMPANHA_DOACAO LIMIT ? OFFSET ?";
+            String sql = "SELECT * FROM CAMPANHA_DOACAO WHERE COALESCE(status, 'ATIVA') = 'ATIVA' ORDER BY id DESC LIMIT ? OFFSET ?";
             List<CampanhaDoacao> campanhas = new ArrayList<>();
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setInt(1, size);
@@ -118,7 +118,7 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
     @Override
     public int countAll() {
         return execute(connection -> {
-            String sql = "SELECT COUNT(*) FROM CAMPANHA_DOACAO";
+            String sql = "SELECT COUNT(*) FROM CAMPANHA_DOACAO WHERE COALESCE(status, 'ATIVA') = 'ATIVA'";
             try (PreparedStatement ps = connection.prepareStatement(sql);
                  ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -143,7 +143,7 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
     @Override
     public List<CampanhaDoacao> findByInstituicaoId(Integer instituicaoId) {
         return execute(connection -> {
-            String sql = "SELECT * FROM CAMPANHA_DOACAO WHERE INSTITUICAO_USUARIO_id = ?";
+            String sql = "SELECT * FROM CAMPANHA_DOACAO WHERE INSTITUICAO_USUARIO_id = ? ORDER BY id DESC";
             List<CampanhaDoacao> campanhas = new ArrayList<>();
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setInt(1, instituicaoId);

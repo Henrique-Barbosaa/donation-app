@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/doacoes")
@@ -74,8 +75,12 @@ public class DoacaoController {
 
 
     @PostMapping("/{id}/interesse")
-    public ResponseEntity<Void> registrarInteresse(Principal principal, @PathVariable Integer id) {
-        doacaoService.registrarInteresse(extrairUserId(principal), id);
+    public ResponseEntity<Void> registrarInteresse(
+            Principal principal,
+            @PathVariable Integer id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String mensagem = body != null ? body.get("mensagem") : null;
+        doacaoService.registrarInteresse(extrairUserId(principal), id, mensagem);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -95,6 +100,12 @@ public class DoacaoController {
     public ResponseEntity<DoacaoDTO> efetivarDoacao(Principal principal, @PathVariable Integer id, @Valid @RequestBody EfetivarDoacaoDTO dto) {
         DoacaoDTO doacao = doacaoService.efetivarDoacao(extrairUserId(principal), id, dto);
         return ResponseEntity.ok(doacao);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelarDoacao(Principal principal, @PathVariable Integer id) {
+        doacaoService.cancelarDoacao(extrairUserId(principal), id);
+        return ResponseEntity.noContent().build();
     }
 }
 

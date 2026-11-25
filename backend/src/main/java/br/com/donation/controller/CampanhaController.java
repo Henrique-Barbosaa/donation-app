@@ -70,5 +70,21 @@ public class CampanhaController {
         campanhaService.removerLocal(extrairUserId(principal), id, localId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/finalizar")
+    public ResponseEntity<CampanhaDTO> finalizarCampanha(Principal principal, @PathVariable("id") Integer id) {
+        return ResponseEntity.ok(campanhaService.finalizarCampanha(extrairUserId(principal), id));
+    }
+
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<CampanhaDTO> cancelarCampanhaComEstorno(Principal principal, @PathVariable("id") Integer id) {
+        return ResponseEntity.ok(campanhaService.cancelarCampanha(extrairUserId(principal), id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelarCampanha(Principal principal, @PathVariable("id") Integer id) {
+        campanhaService.cancelarCampanha(extrairUserId(principal), id);
+        return ResponseEntity.noContent().build();
+    }
 }
 
