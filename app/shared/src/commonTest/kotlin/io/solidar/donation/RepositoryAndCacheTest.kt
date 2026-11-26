@@ -10,11 +10,15 @@ import io.solidar.donation.data.local.InMemoryLocalCacheStorage
 import io.solidar.donation.data.remote.CampanhaRemoteDataSource
 import io.solidar.donation.data.remote.DoacaoRemoteDataSource
 import io.solidar.donation.data.remote.HttpClientFactory
+import io.solidar.donation.data.remote.PerfilRemoteDataSource
 import io.solidar.donation.data.repository.CampanhaRepositoryImpl
 import io.solidar.donation.data.repository.DoacaoRepositoryImpl
+import io.solidar.donation.data.repository.PerfilRepositoryImpl
 import io.solidar.donation.data.storage.InMemoryTokenStorage
 import io.solidar.donation.di.AppContainer
 import io.solidar.donation.domain.error.FalhaDominio
+import io.solidar.donation.domain.model.AtualizarPerfilInput
+import io.solidar.donation.model.UserSession
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,10 +39,12 @@ class RepositoryAndCacheTest {
         assertNotNull(container.authRepository)
         assertNotNull(container.campanhaRepository)
         assertNotNull(container.doacaoRepository)
+        assertNotNull(container.perfilRepository)
         assertNotNull(container.createAuthViewModel())
         assertNotNull(container.createCampanhasViewModel())
         assertNotNull(container.createHistoricoViewModel())
         assertNotNull(container.createCriarDoacaoViewModel())
+        assertNotNull(container.createPerfilViewModel())
     }
 
     @Test
@@ -271,5 +277,94 @@ class RepositoryAndCacheTest {
             val offlineRes = repo.listarHistoricoDoacoes().getOrThrow()
             assertTrue(offlineRes.desatualizado)
             assertEquals(2, offlineRes.dados.size)
+        }
+
+    @Test
+    fun perfilRepository_carregaAtualizaESuportaFallbackOffline() =
+        runTest {
+            var online = true
+            val mockEngine =
+                MockEngine { request ->
+                    if (!online) {
+                        throw IllegalStateException("Backend offline")
+                    }
+                    when {
+                        request.url.encodedPath.endsWith("/pessoa-fisica/1") ->
+                            respond(
+                                content =
+                                    """
+                                    {
+                                      "id": 1,
+                                      "nome": "Henrique Lima",
+                                      "email": "henrique@solidar.io",
+                                      "cpf": "12345678901",
+                                      "logradouro": "Av. Salgado Filho",
+                                      "numero": "3000",
+                                      "bairro": "Lagoa Nova",
+                                      "cep": "59078970"
+                                    }
+                                    """.trimIndent(),
+                                status = HttpStatusCode.OK,
+                                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                            )
+                        request.url.encodedPath.endsWith("/api/usuarios/perfil") ->
+                            respond(
+                                content = "",
+                                status = HttpStatusCode.OK,
+                            )
+                        else ->
+                            respond(
+                                content = "",
+                                status = HttpStatusCode.NotFound,
+                            )
+                    }
+                }
+
+            val tokenStorage =
+                InMemoryTokenStorage().apply {
+                    saveSession(
+                        UserSession(
+                            token = "jwt-token",
+                            tipo = "PESSOA_FISICA",
+                            id = 1,
+                            nome = "Henrique",
+                            email = "henrique@solidar.io",
+                        ),
+                    )
+                }
+            val cache = InMemoryLocalCacheStorage()
+            val repo =
+                PerfilRepositoryImpl(
+                    tokenStorage = tokenStorage,
+                    remoteDataSource =
+                        PerfilRemoteDataSource(
+                            httpClient = HttpClientFactory.create(engine = mockEngine),
+                        ),
+                    localCacheStorage = cache,
+                )
+
+            val onlinePerfil = repo.carregarPerfil().getOrThrow()
+            assertFalse(onlinePerfil.desatualizado)
+            assertEquals("Henrique Lima", onlinePerfil.dados.nome)
+            assertEquals("123.456.789-01", onlinePerfil.dados.documentoFormatado)
+
+            val atualizado =
+                repo.atualizarPerfil(
+                    AtualizarPerfilInput(
+                        nome = "Henrique Barbosa Lima",
+                        logradouro = "Rua Nova",
+                        numero = "10",
+                        bairro = "Tirol",
+                        cep = "59020000",
+                    ),
+                ).getOrThrow()
+            assertEquals("Henrique Barbosa Lima", atualizado.nome)
+            assertEquals("Henrique Barbosa Lima", tokenStorage.getSession()?.nome)
+
+            online = false
+            val offlinePerfil = repo.carregarPerfil().getOrThrow()
+            assertTrue(offlinePerfil.desatualizado)
+            assertEquals("Henrique Barbosa Lima", offlinePerfil.dados.nome)
+            assertEquals("Tirol", offlinePerfil.dados.bairro)
         }
 }

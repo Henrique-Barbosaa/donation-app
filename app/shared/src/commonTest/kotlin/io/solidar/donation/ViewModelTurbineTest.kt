@@ -2,10 +2,14 @@ package io.solidar.donation
 
 import app.cash.turbine.test
 import io.solidar.donation.domain.error.FalhaDominio
+import io.solidar.donation.domain.model.AlterarSenhaInput
+import io.solidar.donation.domain.model.AtualizarPerfilInput
 import io.solidar.donation.domain.model.NovaDoacaoInput
+import io.solidar.donation.domain.model.PerfilUsuario
 import io.solidar.donation.domain.model.ResultadoCacheado
 import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.domain.repository.DoacaoRepository
+import io.solidar.donation.domain.repository.PerfilRepository
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
@@ -15,8 +19,11 @@ import io.solidar.donation.ui.donation.CriarDoacaoViewModel
 import io.solidar.donation.ui.history.HistoricoAba
 import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.home.CampanhasViewModel
+import io.solidar.donation.ui.profile.PerfilViewModel
+import io.solidar.donation.ui.profile.SubmissaoPerfilState
 import io.solidar.donation.ui.state.TelaEstado
 import io.solidar.donation.util.DoacaoForm
+import io.solidar.donation.util.PerfilForm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -84,6 +91,39 @@ private class FakeDoacaoRepository(
     override suspend fun listarHistoricoDoacoes(): Result<ResultadoCacheado<List<Doacao>>> {
         if (atrasoMs > 0) delay(atrasoMs)
         return respostaHistorico
+    }
+}
+
+private class FakePerfilRepository(
+    var respostaPerfil: Result<ResultadoCacheado<PerfilUsuario>> =
+        Result.success(
+            ResultadoCacheado(
+                PerfilUsuario(
+                    id = 1,
+                    nome = "Henrique Lima",
+                    email = "henrique@solidar.io",
+                    tipo = "PESSOA_FISICA",
+                    documento = "12345678901",
+                ),
+            ),
+        ),
+    var respostaAtualizacao: Result<PerfilUsuario> =
+        Result.failure(FalhaDominio.SemConexao()),
+    var atrasoMs: Long = 50L,
+) : PerfilRepository {
+    override suspend fun carregarPerfil(): Result<ResultadoCacheado<PerfilUsuario>> {
+        if (atrasoMs > 0) delay(atrasoMs)
+        return respostaPerfil
+    }
+
+    override suspend fun atualizarPerfil(input: AtualizarPerfilInput): Result<PerfilUsuario> {
+        if (atrasoMs > 0) delay(atrasoMs)
+        return respostaAtualizacao
+    }
+
+    override suspend fun alterarSenha(input: AlterarSenhaInput): Result<Unit> {
+        if (atrasoMs > 0) delay(atrasoMs)
+        return Result.success(Unit)
     }
 }
 
@@ -292,6 +332,46 @@ class ViewModelTurbineTest {
                 assertEquals("Agasalho Infantil", estadoErro.form.nome)
                 assertEquals(3, estadoErro.form.quantidade)
                 assertEquals("Agasalho novo na etiqueta", estadoErro.form.descricao)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun perfilViewModel_carregaPerfilEMantemDadosDoFormularioQuandoSalvarFalha() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val fakeRepo = FakePerfilRepository()
+            val viewModel = PerfilViewModel(fakeRepo)
+
+            viewModel.uiState.test {
+                assertIs<TelaEstado.Carregando>(awaitItem().estadoPerfil)
+
+                val carregado = awaitItem()
+                val sucesso = assertIs<TelaEstado.Sucesso<PerfilUsuario>>(carregado.estadoPerfil)
+                assertEquals("Henrique Lima", sucesso.dados.nome)
+                assertEquals("Henrique Lima", carregado.formPerfil.nome)
+
+                // Altera os dados no formulário e tenta salvar sem conexão
+                viewModel.atualizarFormPerfil(
+                    PerfilForm(
+                        nome = "Henrique Barbosa",
+                        cep = "59078970",
+                        logradouro = "Av. Salgado Filho",
+                        numero = "3000",
+                        bairro = "Lagoa Nova",
+                    ),
+                )
+                assertEquals("Henrique Barbosa", awaitItem().formPerfil.nome)
+
+                viewModel.salvarPerfil()
+                assertIs<SubmissaoPerfilState.Loading>(awaitItem().submissaoPerfil)
+
+                val aposFalha = awaitItem()
+                val erro = assertIs<SubmissaoPerfilState.Error>(aposFalha.submissaoPerfil)
+                assertTrue(erro.mensagem.contains("Sem conexão", ignoreCase = true))
+                // Requisito T6: mantém os dados digitados no formulário
+                assertEquals("Henrique Barbosa", aposFalha.formPerfil.nome)
+                assertEquals("Lagoa Nova", aposFalha.formPerfil.bairro)
                 cancelAndIgnoreRemainingEvents()
             }
         }

@@ -1,6 +1,7 @@
 package io.solidar.donation.data.local
 
 import io.solidar.donation.data.remote.HttpClientFactory
+import io.solidar.donation.domain.model.PerfilUsuario
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.model.Doacao
@@ -28,6 +29,10 @@ interface LocalCacheStorage {
     fun salvarFavoritos(ids: Set<String>)
 
     fun lerFavoritos(): Set<String>
+
+    fun salvarPerfil(perfil: PerfilUsuario?)
+
+    fun lerPerfil(): PerfilUsuario?
 }
 
 @Serializable
@@ -58,6 +63,21 @@ internal data class DoacaoCacheDto(
     val direction: String,
     val status: String,
     val dateLabel: String,
+)
+
+@Serializable
+internal data class PerfilCacheDto(
+    val id: Int,
+    val nome: String,
+    val email: String,
+    val tipo: String,
+    val documento: String = "",
+    val dataNascimento: String? = null,
+    val site: String? = null,
+    val logradouro: String = "",
+    val numero: String = "",
+    val bairro: String = "",
+    val cep: String = "",
 )
 
 /**
@@ -172,10 +192,55 @@ class FileLocalCacheStorage(
         }.getOrDefault(emptySet())
     }
 
+    override fun salvarPerfil(perfil: PerfilUsuario?) {
+        runCatching {
+            if (perfil == null) {
+                writer(ARQUIVO_PERFIL, "")
+            } else {
+                val dto =
+                    PerfilCacheDto(
+                        id = perfil.id,
+                        nome = perfil.nome,
+                        email = perfil.email,
+                        tipo = perfil.tipo,
+                        documento = perfil.documento,
+                        dataNascimento = perfil.dataNascimento,
+                        site = perfil.site,
+                        logradouro = perfil.logradouro,
+                        numero = perfil.numero,
+                        bairro = perfil.bairro,
+                        cep = perfil.cep,
+                    )
+                writer(ARQUIVO_PERFIL, json.encodeToString(dto))
+            }
+        }
+    }
+
+    override fun lerPerfil(): PerfilUsuario? {
+        val raw = reader(ARQUIVO_PERFIL)?.takeIf { it.isNotBlank() } ?: return null
+        return runCatching {
+            val dto = json.decodeFromString<PerfilCacheDto>(raw)
+            PerfilUsuario(
+                id = dto.id,
+                nome = dto.nome,
+                email = dto.email,
+                tipo = dto.tipo,
+                documento = dto.documento,
+                dataNascimento = dto.dataNascimento,
+                site = dto.site,
+                logradouro = dto.logradouro,
+                numero = dto.numero,
+                bairro = dto.bairro,
+                cep = dto.cep,
+            )
+        }.getOrNull()
+    }
+
     companion object {
         const val ARQUIVO_CAMPANHAS = "campanhas_cache.json"
         const val ARQUIVO_DOACOES = "doacoes_cache.json"
         const val ARQUIVO_FAVORITOS = "favoritos_cache.json"
+        const val ARQUIVO_PERFIL = "perfil_cache.json"
     }
 }
 
@@ -184,6 +249,7 @@ class InMemoryLocalCacheStorage : LocalCacheStorage {
     private var campanhas: List<Campaign>? = null
     private var doacoes: List<Doacao>? = null
     private var favoritos: Set<String> = emptySet()
+    private var perfil: PerfilUsuario? = null
 
     override fun salvarCampanhas(campanhas: List<Campaign>) {
         this.campanhas = campanhas
@@ -202,4 +268,10 @@ class InMemoryLocalCacheStorage : LocalCacheStorage {
     }
 
     override fun lerFavoritos(): Set<String> = favoritos
+
+    override fun salvarPerfil(perfil: PerfilUsuario?) {
+        this.perfil = perfil
+    }
+
+    override fun lerPerfil(): PerfilUsuario? = perfil
 }
