@@ -20,7 +20,7 @@ class AndroidPlatform : Platform {
 
 actual fun getPlatform(): Platform = AndroidPlatform()
 
-actual fun platformDefaultBackendUrl(): String = "http://${GeneratedBackendConfig.ANDROID_DEFAULT_HOST}"
+actual fun platformDefaultBackendUrl(): String = GeneratedBackendConfig.DEFAULT_BASE_URL
 
 actual fun platformStorageDir(): String {
     val dirPath =

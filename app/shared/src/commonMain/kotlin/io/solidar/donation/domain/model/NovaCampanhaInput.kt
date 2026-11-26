@@ -14,8 +14,9 @@ data class ItemCampanhaInput(
 data class NovaCampanhaInput(
     val titulo: String,
     val descricao: String,
-    val itens: List<ItemCampanhaInput>,
-    val metaVoluntarios: Int = itens.sumOf { it.quantidade.coerceAtLeast(1) }.coerceAtLeast(1),
+    val itens: List<ItemCampanhaInput> = emptyList(),
+    val metaEmCentavos: Long = 0L,
+    val metaVoluntarios: Int = itens.sumOf { it.quantidade.coerceAtLeast(1) },
 ) {
     val itensFocoFormatado: String
         get() =

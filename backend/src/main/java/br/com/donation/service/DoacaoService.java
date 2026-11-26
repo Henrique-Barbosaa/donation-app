@@ -8,12 +8,14 @@ import br.com.donation.dto.common.PaginaDTO;
 import br.com.donation.dto.doacao.CriarDoacaoDTO;
 
 
+import br.com.donation.exception.AuthenticationException;
 import br.com.donation.exception.BusinessException;
 import br.com.donation.exception.ResourceNotFoundException;
 import br.com.donation.model.Doacao;
 import br.com.donation.model.Interesse;
 import br.com.donation.model.Item;
 import br.com.donation.model.LocalDoacao;
+import br.com.donation.repository.CampanhaDoacaoRepository;
 import br.com.donation.repository.DoacaoRepository;
 import br.com.donation.repository.InteresseRepository;
 import br.com.donation.repository.ItemRepository;
@@ -40,6 +42,9 @@ public class DoacaoService {
     private DoacaoRepository doacaoRepository;
 
     @Autowired
+    private CampanhaDoacaoRepository campanhaRepository;
+
+    @Autowired
     private ItemRepository itemRepository;
 
     @Autowired
@@ -59,6 +64,9 @@ public class DoacaoService {
     private NotificationService notificationService;
 
     public DoacaoDTO criarDoacao(Integer doadorId, CriarDoacaoDTO dto, MultipartFile imagem) {
+        usuarioRepository.findById(doadorId)
+                .orElseThrow(() -> new AuthenticationException("Sessão expirada ou usuário não encontrado. Faça login novamente."));
+
         Doacao doacao = new Doacao();
         doacao.setDoadorId(doadorId);
         // Quando a doação é direcionada a uma campanha, vincula o donatário (instituição criadora)
@@ -88,6 +96,10 @@ public class DoacaoService {
             item.setENovo(itemDto.getENovo());
             item.setCategoria(itemDto.getCategoria());
             itemRepository.save(item);
+        }
+
+        if (dto.getCampanhaId() != null && dto.getValorEmCentavos() != null && dto.getValorEmCentavos() > 0L) {
+            campanhaRepository.adicionarArrecadacao(dto.getCampanhaId(), dto.getValorEmCentavos());
         }
 
         return buscarPorId(doacao.getId());

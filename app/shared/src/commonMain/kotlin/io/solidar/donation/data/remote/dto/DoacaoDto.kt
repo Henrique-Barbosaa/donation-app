@@ -23,6 +23,8 @@ data class ItemRequest(
 data class CriarDoacaoRequest(
     val itens: List<ItemRequest>,
     val donatarioId: Int? = null,
+    val campanhaId: Int? = null,
+    val valorEmCentavos: Long? = null,
 )
 
 @Serializable
@@ -61,7 +63,12 @@ fun NovaDoacaoInput.toCriarDoacaoRequest(): CriarDoacaoRequest {
             eNovo = if (eNovo) "S" else "N",
             categoria = categoria.uppercase(),
         )
-    return CriarDoacaoRequest(itens = listOf(item), donatarioId = donatarioId)
+    return CriarDoacaoRequest(
+        itens = listOf(item),
+        donatarioId = donatarioId,
+        campanhaId = campanhaId,
+        valorEmCentavos = valorEmCentavos,
+    )
 }
 
 /**

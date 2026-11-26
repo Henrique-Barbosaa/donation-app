@@ -20,6 +20,12 @@ data class Campaign(
     val instituicaoId: Int? = null,
     val status: String = "ATIVA",
 ) {
+    val aceitaDinheiro: Boolean
+        get() = goalInCents > 0L
+
+    val aceitaItens: Boolean
+        get() = itensNecessarios.isNotEmpty()
+
     val progress: Float
         get() =
             if (goalInCents <= 0L) {

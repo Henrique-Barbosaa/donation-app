@@ -3,6 +3,7 @@ package io.solidar.donation.ui.campaign
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,21 +34,27 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -166,6 +173,8 @@ fun CriarCampanhaContent(
                 }
             }
 
+            CardFotoCapaCampanha()
+
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "Título da campanha *",
@@ -250,11 +259,20 @@ fun CriarCampanhaContent(
                 )
             }
 
-            SecaoItensCampanha(
+            SecaoModalidadesCampanha(
                 form = form,
-                erroItens = erros.itens,
+                erroTipo = erros.tipoArrecadacao,
+                erroMetaDinheiro = erros.metaDinheiro,
                 onFormChange = onFormChange,
             )
+
+            if (form.pedirItens) {
+                SecaoItensCampanha(
+                    form = form,
+                    erroItens = erros.itens,
+                    onFormChange = onFormChange,
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -292,6 +310,235 @@ fun CriarCampanhaContent(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun CardFotoCapaCampanha() {
+    var exibiuAvisoUpload by remember { mutableStateOf(false) }
+
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .clickable(role = Role.Button) { exibiuAvisoUpload = !exibiuAvisoUpload },
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = AppIcons.Camera,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(32.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Foto de capa da campanha",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() },
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text =
+                    if (exibiuAvisoUpload) {
+                        "O envio de fotos pela galeria/câmera será liberado na próxima versão."
+                    } else {
+                        "Toque para adicionar uma foto de capa (opcional)."
+                    },
+                style = MaterialTheme.typography.bodySmall,
+                color =
+                    if (exibiuAvisoUpload) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SecaoModalidadesCampanha(
+    form: CampanhaForm,
+    erroTipo: String?,
+    erroMetaDinheiro: String?,
+    onFormChange: (CampanhaForm) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "O que esta campanha vai arrecadar? *",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() },
+        )
+
+        ModalidadeToggleCard(
+            titulo = "Pedir objetos / itens físicos",
+            subtitulo = "Permite listar os itens necessários e a quantidade de cada um.",
+            checked = form.pedirItens,
+            switchDescription = "Ativar pedido de objetos",
+            onCheckedChange = { ativo -> onFormChange(form.copy(pedirItens = ativo)) },
+        )
+
+        ModalidadeToggleCard(
+            titulo = "Pedir arrecadação em dinheiro (PIX)",
+            subtitulo = "Define uma meta financeira real (inicia em R$ 0,00 arrecadados).",
+            checked = form.pedirDinheiro,
+            switchDescription = "Ativar pedido de dinheiro",
+            onCheckedChange = { ativo ->
+                onFormChange(
+                    form.copy(
+                        pedirDinheiro = ativo,
+                        metaReaisTexto = if (ativo) form.metaReaisTexto else "",
+                    ),
+                )
+            },
+        )
+
+        if (form.pedirDinheiro) {
+            val showMetaError = erroMetaDinheiro != null && form.metaReaisTexto.isNotBlank()
+            OutlinedTextField(
+                value = form.metaReaisTexto,
+                onValueChange = { novo ->
+                    val digitos = novo.filter { it.isDigit() }.take(7)
+                    onFormChange(form.copy(metaReaisTexto = digitos))
+                },
+                label = { Text("Meta financeira (em reais) *") },
+                placeholder = { Text("Ex: 500") },
+                prefix = { Text("R$ ") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                isError = showMetaError,
+                supportingText = {
+                    if (showMetaError) {
+                        Text(
+                            text = erroMetaDinheiro.orEmpty(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    } else {
+                        Text(
+                            text = "A campanha começa com R$ 0,00 arrecadados e atualiza a cada contribuição.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next,
+                    ),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    ),
+            )
+        }
+
+        if (erroTipo != null) {
+            Text(
+                text = erroTipo,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModalidadeToggleCard(
+    titulo: String,
+    subtitulo: String,
+    checked: Boolean,
+    switchDescription: String,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (checked) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color =
+                        if (checked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                ),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = subtitulo,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                modifier = Modifier.semantics { contentDescription = switchDescription },
+            )
         }
     }
 }

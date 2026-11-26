@@ -25,6 +25,12 @@ public class CriarDoacaoDTO {
      * o usuário/instituição criador da campanha para constar nas doações recebidas.
      */
     private Integer donatarioId;
+
+    /** Opcional: ID da campanha para atualizar o valor arrecadado em doações financeiras. */
+    private Integer campanhaId;
+
+    /** Opcional: valor em centavos de uma contribuição financeira (PIX) para a campanha. */
+    private Long valorEmCentavos;
 }
 
 

@@ -33,6 +33,7 @@ data class HistoricoUiState(
 class HistoricoViewModel(
     private val repository: DoacaoRepository,
     private val campanhaRepository: CampanhaRepository? = null,
+    carregarAoIniciar: Boolean = true,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoricoUiState())
     val uiState: StateFlow<HistoricoUiState> = _uiState.asStateFlow()
@@ -41,8 +42,13 @@ class HistoricoViewModel(
     private var dadosDesatualizados: Boolean = false
 
     init {
-        carregarHistorico(carregarCampanhas = false)
+        if (carregarAoIniciar) {
+            carregarHistorico(carregarCampanhas = false)
+        }
     }
+
+    fun buscarMinhaCampanhaPorId(id: String): Campaign? =
+        (_uiState.value.estadoMinhasCampanhas as? TelaEstado.Sucesso)?.dados?.firstOrNull { it.id == id }
 
     fun carregarHistorico(carregarCampanhas: Boolean = false) {
         viewModelScope.launch {

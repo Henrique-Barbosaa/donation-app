@@ -26,7 +26,7 @@ flowchart TD
         RepoImpl["Implementações de Repositório\n(CampanhaRepositoryImpl, DoacaoRepositoryImpl, AuthRepositoryImpl)"]
         RemoteDS["Fontes Remotas (Ktor Client)\n(CampanhaRemoteDataSource, DoacaoRemoteDataSource, AuthRemoteDataSource)"]
         DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain, InteressadoResponseDto.toDomain)"]
-        LocalCache["Persistência Local em Disco\n(FileLocalCacheStorage via expect/actual filesDir)"]
+        LocalCache["Persistência Local em Disco\n(FileLocalCacheStorage + PersistentTokenStorage via expect/actual filesDir)"]
     end
 
     subgraph DI["Injeção de Dependências (di)"]
@@ -111,7 +111,7 @@ sequenceDiagram
 * **Por que essa abordagem para o MVP:**
   1. **Zero sobrecarga de geração de código nativo:** Como os payloads de campanhas, doações disponíveis, histórico de doações, quantidades doadas por item e IDs de favoritos/interesses (isolados por `userId`) já são coleções estruturadas consumidas via `kotlinx.serialization`, a gravação atômica em arquivos JSON na pasta `filesDir` do dispositivo persiste os dados entre fechamentos do app sem exigir schemas SQL complexos.
   2. **Suporte completo a todos os alvos KMP (Android, Desktop JVM e iOS):** Funciona de forma uniforme nos três alvos configurados no projeto e permite injeção direta de leitores/escritores em memória nos testes automatizados (`RepositoryAndCacheTest` e `ExplorarECriarCampanhaTest`).
-  3. **Experiência Offline Transparente:** A cada resposta bem-sucedida do backend, a cópia local é atualizada (incluindo campanhas e doações disponíveis). Quando o dispositivo abre o aplicativo sem rede, o repositório recupera imediatamente os dados persistidos com `desatualizado = true`, permitindo que a tela exiba o conteúdo acompanhado do banner de aviso de modo offline.
+  3. **Experiência Offline Transparente:** A sessão autenticada é persistida em disco (`PersistentTokenStorage` em `sessao_usuario_cache.json`) e, a cada resposta bem-sucedida do backend, a cópia local é atualizada (campanhas, minhas campanhas por instituição, doações disponíveis e histórico isolado por `userId`). Quando o dispositivo fecha e reabre o aplicativo sem rede, o `NavHost` restaura a sessão persistida, entra diretamente na tela principal e recupera imediatamente os dados locais com `desatualizado = true`, exibindo o banner de modo offline.
 
 ---
 
@@ -119,8 +119,10 @@ sequenceDiagram
 
 | Fluxo | Telas / ViewModels | Endpoints REST |
 | :--- | :--- | :--- |
-| **Feed de Campanhas & Favoritos** | `HomeScreen`, `CampanhaDetalheScreen`, `CampanhasViewModel` | `GET /api/campanhas` |
-| **Criação e Gestão de Campanhas** | `CriarCampanhaScreen`, `CriarCampanhaViewModel`, `HistoricoScreen` (aba `Campanhas`), `CampanhaDetalheScreen` | `POST /api/campanhas`, `GET /api/campanhas/minhas`, `PUT /api/campanhas/{id}/finalizar`, `PUT /api/campanhas/{id}/cancelar` |
-| **Doação em Campanha (Itens e PIX)** | `OpcoesDoacaoScreen`, `DoarItensCampanhaScreen`, `DoarDinheiroScreen` | `POST /api/doacoes` |
+| **Autenticação e Sessão Persistente** | `LoginScreen`, `SignUpScreen`, `AuthViewModel` | `POST /api/auth/login`, `POST /api/auth/registro/pessoa-fisica`, `POST /api/auth/registro/instituicao`, `GET /api/auth/verify` |
+| **Feed de Campanhas & Favoritos** | `HomeScreen`, `CampanhaDetalheScreen`, `CampanhasViewModel` | `GET /api/campanhas`, `GET /api/campanhas/{id}` |
+| **Criação e Gestão de Campanhas (Itens e/ou PIX com Meta Real)** | `CriarCampanhaScreen`, `CriarCampanhaViewModel`, `HistoricoScreen` (aba `Campanhas`), `CampanhaDetalheScreen` | `POST /api/campanhas` (multipart), `GET /api/campanhas/minhas`, `PUT /api/campanhas/{id}/finalizar`, `PUT /api/campanhas/{id}/cancelar` |
+| **Doação em Campanha (Itens e PIX)** | `OpcoesDoacaoScreen`, `DoarItensCampanhaScreen`, `DoarDinheiroScreen`, `DoarItensCampanhaViewModel`, `DoarDinheiroViewModel` | `POST /api/doacoes` (multipart, atualizando `arrecadado_em_centavos` quando há contribuição PIX) |
+| **Publicação de Doações** | `CriarDoacaoScreen`, `CriarDoacaoViewModel` | `POST /api/doacoes` (multipart) |
 | **Feed de Doações Disponíveis e Interesse** | `ExplorarScreen`, `HomeScreen` (aba `Oferecem doações`), `ExplorarViewModel` | `GET /api/doacoes/disponiveis`, `POST /api/doacoes/{id}/interesse`, `DELETE /api/doacoes/{id}/interesse` |
 | **Efetivação e Histórico de Doações** | `HistoricoScreen` (`Feitas`, `Interessados`, `Recebidas`, `Campanhas`), `EfetivarDoacaoScreen`, `HistoricoViewModel`, `EfetivarDoacaoViewModel` | `GET /api/doacoes/minhas`, `GET /api/doacoes/recebidas`, `GET /api/doacoes/{id}/interessados`, `PUT /api/doacoes/{id}/efetivar`, `DELETE /api/doacoes/{id}` |

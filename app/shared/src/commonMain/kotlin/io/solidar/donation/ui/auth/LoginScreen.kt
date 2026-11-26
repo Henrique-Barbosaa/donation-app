@@ -243,19 +243,7 @@ fun LoginContent(
                 singleLine = true,
             )
 
-            TextButton(
-                onClick = { /* TODO: Forgot Password API */ },
-                modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp),
-            ) {
-                Text(
-                    text = "Esqueci minha senha",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (loginState is AuthState.Error) {
                 Row(

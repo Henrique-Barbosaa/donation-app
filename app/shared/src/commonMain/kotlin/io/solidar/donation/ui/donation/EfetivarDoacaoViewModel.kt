@@ -8,6 +8,7 @@ import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.Interessado
 import io.solidar.donation.ui.state.TelaEstado
 import io.solidar.donation.ui.state.mapearMensagemDeErro
+import io.solidar.donation.util.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,7 +93,7 @@ class EfetivarDoacaoViewModel(
     fun onNomeLocalChange(valor: String) {
         _uiState.update {
             it.copy(
-                nomeLocal = valor,
+                nomeLocal = valor.take(Validators.NOME_LOCAL_MAX),
                 envioState = if (it.envioState is EfetivarEnvioState.Error) EfetivarEnvioState.Idle else it.envioState,
             )
         }

@@ -497,9 +497,19 @@ private fun EmptyOfertasMessage(
 @Preview
 @Composable
 private fun HomeScreenFilledPreview() {
+    val previewCampanhas =
+        listOf(
+            Campaign(
+                id = "preview-1",
+                title = "Campanha de Exemplo",
+                organizer = "Instituição Parceira",
+                goalInCents = 100_000L,
+                raisedInCents = 50_000L,
+            ),
+        )
     DonationTheme {
         HomeScreen(
-            estado = TelaEstado.Sucesso(dados = sampleCampaigns),
+            estado = TelaEstado.Sucesso(dados = previewCampanhas),
             onCampaignClick = {},
             onTentarDeNovo = {},
             exibirAbasTipo = true,
@@ -510,9 +520,19 @@ private fun HomeScreenFilledPreview() {
 @Preview(widthDp = 840, heightDp = 600)
 @Composable
 private fun HomeScreenWidePreview() {
+    val previewCampanhas =
+        listOf(
+            Campaign(
+                id = "preview-1",
+                title = "Campanha de Exemplo",
+                organizer = "Instituição Parceira",
+                goalInCents = 100_000L,
+                raisedInCents = 50_000L,
+            ),
+        )
     DonationTheme {
         HomeScreen(
-            estado = TelaEstado.Sucesso(dados = sampleCampaigns),
+            estado = TelaEstado.Sucesso(dados = previewCampanhas),
             onCampaignClick = {},
             onTentarDeNovo = {},
             wide = true,

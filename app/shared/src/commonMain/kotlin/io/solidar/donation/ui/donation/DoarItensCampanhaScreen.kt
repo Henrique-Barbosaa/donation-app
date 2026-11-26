@@ -59,7 +59,6 @@ import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
-import io.solidar.donation.ui.home.sampleCampaigns
 
 /**
  * Tela para o usuário selecionar os itens solicitados por uma campanha que ainda não foram doados.
@@ -474,7 +473,18 @@ private fun ItemCampanhaSelecionavelCard(
 @Composable
 private fun DoarItensCampanhaPreview() {
     DonationTheme {
-        val campanha = sampleCampaigns.first()
+        val campanha =
+            Campaign(
+                id = "preview-1",
+                title = "Campanha de Exemplo",
+                organizer = "Instituição Parceira",
+                goalInCents = 100_000L,
+                raisedInCents = 50_000L,
+                itensNecessarios =
+                    listOf(
+                        CampaignItem(id = "item-1", nome = "Alimentos", quantidadeDescricao = "5 unidades", iconeRef = "check"),
+                    ),
+            )
         DoarItensCampanhaContent(
             campaign = campanha,
             uiState =

@@ -19,6 +19,8 @@ data class CampanhasUiState(
     val favoritosIds: Set<String> = emptySet(),
     val cancelandoCampanha: Boolean = false,
     val erroCancelamento: String? = null,
+    val campanhaDetalheCarregada: Campaign? = null,
+    val carregandoDetalhe: Boolean = false,
 ) {
     val campanhasAtuais: List<Campaign>
         get() = (estadoLista as? TelaEstado.Sucesso)?.dados.orEmpty()
@@ -32,6 +34,7 @@ data class CampanhasUiState(
  */
 class CampanhasViewModel(
     private val repository: CampanhaRepository,
+    carregarAoIniciar: Boolean = true,
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
@@ -42,7 +45,9 @@ class CampanhasViewModel(
     val uiState: StateFlow<CampanhasUiState> = _uiState.asStateFlow()
 
     init {
-        carregarCampanhas()
+        if (carregarAoIniciar) {
+            carregarCampanhas()
+        }
     }
 
     fun carregarCampanhas() {
@@ -177,12 +182,28 @@ class CampanhasViewModel(
                 abaInicio = InicioAba.PEDIDOS,
                 favoritosIds = emptySet(),
                 erroCancelamento = null,
+                campanhaDetalheCarregada = null,
+                carregandoDetalhe = false,
             )
         }
     }
 
     fun buscarCampanhaPorId(id: String): Campaign? {
         return _uiState.value.campanhasAtuais.firstOrNull { it.id == id }
-            ?: sampleCampaigns.firstOrNull { it.id == id }
+            ?: _uiState.value.campanhaDetalheCarregada?.takeIf { it.id == id }
+    }
+
+    fun carregarCampanhaPorId(id: String) {
+        if (buscarCampanhaPorId(id) != null || _uiState.value.carregandoDetalhe) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(carregandoDetalhe = true) }
+            val result = repository.obterCampanhaPorId(id)
+            _uiState.update { atual ->
+                atual.copy(
+                    campanhaDetalheCarregada = result.getOrNull(),
+                    carregandoDetalhe = false,
+                )
+            }
+        }
     }
 }

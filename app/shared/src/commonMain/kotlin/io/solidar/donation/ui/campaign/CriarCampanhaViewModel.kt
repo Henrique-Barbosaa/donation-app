@@ -57,7 +57,13 @@ class CriarCampanhaViewModel(
         val formAtual = _uiState.value.form
         val erros = validarCampanha(formAtual)
         if (!erros.valido) {
-            val mensagem = erros.titulo ?: erros.descricao ?: erros.itens ?: "Dados da campanha inválidos."
+            val mensagem =
+                erros.titulo
+                    ?: erros.descricao
+                    ?: erros.tipoArrecadacao
+                    ?: erros.itens
+                    ?: erros.metaDinheiro
+                    ?: "Dados da campanha inválidos."
             _uiState.update { it.copy(envioState = CriarCampanhaState.Error(mensagem)) }
             return
         }
@@ -65,18 +71,23 @@ class CriarCampanhaViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(envioState = CriarCampanhaState.Loading) }
             val itensInput =
-                formAtual.itensPreenchidos.map { item ->
-                    ItemCampanhaInput(
-                        nome = item.nome.trim(),
-                        quantidade = item.quantidade.coerceAtLeast(1),
-                    )
+                if (formAtual.pedirItens) {
+                    formAtual.itensPreenchidos.map { item ->
+                        ItemCampanhaInput(
+                            nome = item.nome.trim(),
+                            quantidade = item.quantidade.coerceAtLeast(1),
+                        )
+                    }
+                } else {
+                    emptyList()
                 }
             val input =
                 NovaCampanhaInput(
                     titulo = formAtual.titulo.trim(),
                     descricao = formAtual.descricao.trim(),
                     itens = itensInput,
-                    metaVoluntarios = itensInput.sumOf { it.quantidade }.coerceAtLeast(1),
+                    metaEmCentavos = formAtual.metaEmCentavos,
+                    metaVoluntarios = itensInput.sumOf { it.quantidade },
                 )
             val result = repository.criarCampanha(input)
             result.fold(

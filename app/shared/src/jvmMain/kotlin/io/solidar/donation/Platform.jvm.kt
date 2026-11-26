@@ -12,7 +12,7 @@ actual fun getPlatform(): Platform = JVMPlatform()
 actual fun platformDefaultBackendUrl(): String =
     System.getenv("SOLIDAR_API_URL")?.trim()?.removeSuffix("/")
         ?: if (GeneratedBackendConfig.IS_CUSTOM_HOST) {
-            "http://${GeneratedBackendConfig.ANDROID_DEFAULT_HOST}"
+            GeneratedBackendConfig.DEFAULT_BASE_URL
         } else {
             "http://localhost:8080"
         }

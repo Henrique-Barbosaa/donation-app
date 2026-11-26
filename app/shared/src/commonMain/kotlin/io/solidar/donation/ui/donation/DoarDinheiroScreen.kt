@@ -58,7 +58,6 @@ import io.solidar.donation.di.AppContainer
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
-import io.solidar.donation.ui.home.sampleCampaigns
 import io.solidar.donation.util.formatBrl
 
 private val VALORES_PIX_SUGERIDOS = listOf(20, 50, 100, 200)
@@ -382,8 +381,15 @@ private fun gerarChavePixCampanha(campaign: Campaign): String {
 private fun DoarDinheiroPreview() {
     DonationTheme {
         DoarDinheiroContent(
-            campaign = sampleCampaigns.first(),
-            chavePix = "institutomaossolid@solidar.io",
+            campaign =
+                Campaign(
+                    id = "preview-1",
+                    title = "Campanha de Exemplo",
+                    organizer = "Instituição Parceira",
+                    goalInCents = 100_000L,
+                    raisedInCents = 50_000L,
+                ),
+            chavePix = "instituicao@solidar.io",
             uiState = DoarDinheiroUiState(valorReaisTexto = "50"),
             onNavigateBack = {},
             onValorChange = {},

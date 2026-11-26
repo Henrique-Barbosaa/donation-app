@@ -24,6 +24,7 @@ public class CriarCampanhaDTO {
     private LocalDate dataFim;
     private String itensFoco;
     private Integer metaVoluntarios;
+    private Long metaEmCentavos;
 
     @Valid
     private List<LocalDoacaoDTO> locais;

@@ -67,7 +67,6 @@ import io.solidar.donation.ui.home.HomeScreen
 import io.solidar.donation.ui.home.InicioAba
 import io.solidar.donation.ui.home.MainNavigationContent
 import io.solidar.donation.ui.home.MainTab
-import io.solidar.donation.ui.home.sampleCampaigns
 import io.solidar.donation.ui.state.TelaEstado
 import io.solidar.donation.util.CampanhaForm
 import io.solidar.donation.util.ItemCampanhaForm
@@ -335,7 +334,52 @@ class ExplorarECriarCampanhaTest {
             assertEquals("15 unidades", criada.itensNecessarios[0].quantidadeDescricao)
             assertEquals("Cobertores", criada.itensNecessarios[1].nome)
             assertEquals("10 unidades", criada.itensNecessarios[1].quantidadeDescricao)
+            assertEquals(0L, criada.goalInCents)
+            assertEquals(0L, criada.raisedInCents)
+            assertFalse(criada.aceitaDinheiro)
+            assertTrue(criada.aceitaItens)
             assertEquals(1, cache.lerCampanhas()?.size)
+        }
+
+    @Test
+    fun criarCampanhaScreen_permiteAlternarEntrePedidoDeObjetosEDinheiro() =
+        runComposeUiTest {
+            var form by mutableStateOf(
+                CampanhaForm(
+                    titulo = "Campanha Financeira Real",
+                    pedirItens = true,
+                    pedirDinheiro = false,
+                ),
+            )
+            var submetido = false
+
+            setContent {
+                DonationTheme {
+                    CriarCampanhaContent(
+                        state = CriarCampanhaState.Idle,
+                        form = form,
+                        onFormChange = { form = it },
+                        onNavigateBack = {},
+                        onSubmit = { submetido = true },
+                    )
+                }
+            }
+
+            // Desativa objetos sem ativar dinheiro -> mostra erro de modalidade e desabilita publicar
+            onNodeWithContentDescription("Ativar pedido de objetos").performScrollTo().performClick()
+            waitForIdle()
+            onNodeWithText("Ative pelo menos um tipo de arrecadação (objetos ou dinheiro).").performScrollTo().assertIsDisplayed()
+            onNodeWithText("Publicar Campanha").performScrollTo().assertIsNotEnabled()
+
+            // Ativa pedido de dinheiro e informa meta real de R$ 500
+            onNodeWithContentDescription("Ativar pedido de dinheiro").performScrollTo().performClick()
+            waitForIdle()
+            onNodeWithText("Meta financeira (em reais) *").performScrollTo().performTextInput("500")
+            waitForIdle()
+
+            assertEquals(50_000L, form.metaEmCentavos)
+            onNodeWithText("Publicar Campanha").performScrollTo().assertIsEnabled().performClick()
+            assertTrue(submetido)
         }
 
     @Test
@@ -728,7 +772,7 @@ class ExplorarECriarCampanhaTest {
             setContent {
                 DonationTheme {
                     HomeScreen(
-                        estado = TelaEstado.Sucesso(sampleCampaigns),
+                        estado = TelaEstado.Sucesso(testCampaigns),
                         onCampaignClick = {},
                         onTentarDeNovo = {},
                         exibirAbasTipo = true,
@@ -743,7 +787,7 @@ class ExplorarECriarCampanhaTest {
 
             onNodeWithText("Pedem doações").assertIsDisplayed()
             onNodeWithText("Oferecem doações").assertIsDisplayed()
-            onNodeWithText(sampleCampaigns.first().title).assertIsDisplayed()
+            onNodeWithText(testCampaigns.first().title).assertIsDisplayed()
 
             onNodeWithText("Oferecem doações").performClick()
             waitForIdle()
@@ -769,7 +813,7 @@ class ExplorarECriarCampanhaTest {
                         onTabSelected = { abaAtual = it },
                         onTentarDeNovo = {},
                         exibirAbaCampanhas = true,
-                        estadoMinhasCampanhas = TelaEstado.Sucesso(sampleCampaigns.take(1)),
+                        estadoMinhasCampanhas = TelaEstado.Sucesso(testCampaigns.take(1)),
                         onCampaignClick = { campanhaClicada = it.id },
                     )
                 }
@@ -779,8 +823,8 @@ class ExplorarECriarCampanhaTest {
             waitForIdle()
 
             assertEquals(HistoricoAba.CAMPANHAS, abaAtual)
-            onNodeWithText(sampleCampaigns.first().title).assertIsDisplayed().performClick()
-            assertEquals(sampleCampaigns.first().id, campanhaClicada)
+            onNodeWithText(testCampaigns.first().title).assertIsDisplayed().performClick()
+            assertEquals(testCampaigns.first().id, campanhaClicada)
         }
 
     @Test
@@ -841,7 +885,7 @@ class ExplorarECriarCampanhaTest {
             setContent {
                 DonationTheme {
                     CampanhaDetalheScreen(
-                        campaign = sampleCampaigns.first(),
+                        campaign = testCampaigns.first(),
                         onBack = {},
                         onQueroDoar = {},
                         ehOrganizador = true,
@@ -1027,7 +1071,7 @@ class ExplorarECriarCampanhaTest {
             setContent {
                 DonationTheme {
                     CampanhaDetalheScreen(
-                        campaign = sampleCampaigns.first(),
+                        campaign = testCampaigns.first(),
                         onBack = {},
                         onQueroDoar = {},
                         ehOrganizador = true,
@@ -1101,7 +1145,7 @@ class ExplorarECriarCampanhaTest {
         runComposeUiTest {
             var finalizouId by mutableStateOf<String?>(null)
             var cancelouId by mutableStateOf<String?>(null)
-            val campanha = sampleCampaigns.first()
+            val campanha = testCampaigns.first()
 
             setContent {
                 DonationTheme {

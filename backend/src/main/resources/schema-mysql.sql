@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS CAMPANHA_DOACAO (
     status VARCHAR(20) DEFAULT 'ATIVA',
     itens_foco VARCHAR(200),
     meta_voluntarios INT,
+    meta_em_centavos BIGINT DEFAULT 0,
+    arrecadado_em_centavos BIGINT DEFAULT 0,
     CONSTRAINT fk_campanha_instituicao FOREIGN KEY (INSTITUICAO_USUARIO_id) REFERENCES INSTITUICAO(USUARIO_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

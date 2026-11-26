@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,35 +69,25 @@ fun DonationNavHost(
     appContainer: AppContainer = AppContainer.default,
 ) {
     val authViewModel = viewModel { appContainer.createAuthViewModel() }
-    val campanhasViewModel: CampanhasViewModel = viewModel { appContainer.createCampanhasViewModel() }
-    val historicoViewModel = viewModel { appContainer.createHistoricoViewModel() }
-    val explorarViewModel = viewModel { appContainer.createExplorarViewModel() }
+    val campanhasViewModel: CampanhasViewModel = viewModel { appContainer.createCampanhasViewModel(carregarAoIniciar = false) }
+    val historicoViewModel = viewModel { appContainer.createHistoricoViewModel(carregarAoIniciar = false) }
+    val explorarViewModel = viewModel { appContainer.createExplorarViewModel(carregarAoIniciar = false) }
+    val sessaoInicial = remember(appContainer) { appContainer.authRepository.getActiveSession() }
+    val destinoInicial: Any = if (sessaoInicial != null) MainRoute else AuthGraph
 
-    NavHost(navController = navController, startDestination = AuthGraph) {
+    NavHost(navController = navController, startDestination = destinoInicial) {
         navigation<AuthGraph>(startDestination = LoginRoute) {
             composable<LoginRoute> {
                 LoginScreen(
                     onNavigateToSignUp = { navController.navigate(SignUpRoute) },
-                    onLoginSuccess = {
-                        val ehInst = appContainer.authRepository.getActiveSession()?.tipo == "INSTITUICAO"
-                        campanhasViewModel.carregarCampanhas()
-                        historicoViewModel.carregarHistorico(carregarCampanhas = ehInst)
-                        explorarViewModel.carregarDoacoes()
-                        navController.irParaMain()
-                    },
+                    onLoginSuccess = { navController.irParaMain() },
                     viewModel = authViewModel,
                 )
             }
             composable<SignUpRoute> {
                 SignUpScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onSignUpSuccess = {
-                        val ehInst = appContainer.authRepository.getActiveSession()?.tipo == "INSTITUICAO"
-                        campanhasViewModel.carregarCampanhas()
-                        historicoViewModel.carregarHistorico(carregarCampanhas = ehInst)
-                        explorarViewModel.carregarDoacoes()
-                        navController.irParaMain()
-                    },
+                    onSignUpSuccess = { navController.irParaMain() },
                     viewModel = authViewModel,
                 )
             }
@@ -103,6 +95,14 @@ fun DonationNavHost(
 
         composable<MainRoute> {
             val activeSession = appContainer.authRepository.getActiveSession()
+            val ehInstituicao = activeSession?.tipo == "INSTITUICAO"
+
+            LaunchedEffect(activeSession?.id) {
+                campanhasViewModel.carregarCampanhas()
+                historicoViewModel.carregarHistorico(carregarCampanhas = ehInstituicao)
+                explorarViewModel.carregarDoacoes()
+            }
+
             MainNavigationScaffold(
                 campanhasViewModel = campanhasViewModel,
                 historicoViewModel = historicoViewModel,
@@ -110,7 +110,7 @@ fun DonationNavHost(
                 activeSession = activeSession,
                 onNavigateToCreateDonation = { navController.navigate(CriarDoacaoRoute) },
                 onNavigateToCreateCampaign =
-                    if (activeSession?.tipo == "INSTITUICAO") {
+                    if (ehInstituicao) {
                         { navController.navigate(CriarCampanhaRoute) }
                     } else {
                         null
@@ -137,7 +137,8 @@ fun DonationNavHost(
                 viewModel = criarDoacaoViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onDonationCreated = {
-                    historicoViewModel.carregarHistorico()
+                    val ehInst = appContainer.authRepository.getActiveSession()?.tipo == "INSTITUICAO"
+                    historicoViewModel.carregarHistorico(carregarCampanhas = ehInst)
                     explorarViewModel.carregarDoacoes()
                     navController.popBackStack()
                 },
@@ -162,9 +163,17 @@ fun DonationNavHost(
         ) { entry ->
             val route = entry.toRoute<CampanhaDetalheRoute>()
             val campanhasUiState by campanhasViewModel.uiState.collectAsStateWithLifecycle()
-            val campaign = campanhasViewModel.buscarCampanhaPorId(route.id)
+            val campaign =
+                campanhasViewModel.buscarCampanhaPorId(route.id)
+                    ?: historicoViewModel.buscarMinhaCampanhaPorId(route.id)
             val activeSession = appContainer.authRepository.getActiveSession()
             val ehOrganizador = activeSession?.id != null && campaign?.instituicaoId == activeSession.id
+
+            LaunchedEffect(route.id, campaign?.id) {
+                if (campaign == null) {
+                    campanhasViewModel.carregarCampanhaPorId(route.id)
+                }
+            }
 
             CampanhaDetalheScreen(
                 campaign = campaign,
@@ -195,13 +204,27 @@ fun DonationNavHost(
                     },
                 cancelandoCampanha = campanhasUiState.cancelandoCampanha,
                 erroCancelamento = campanhasUiState.erroCancelamento,
+                carregando = campanhasUiState.carregandoDetalhe,
                 onBack = {
                     campanhasViewModel.limparErroCancelamento()
-                    if (!navController.popBackStack()) navController.navigate(AuthGraph)
+                    if (!navController.popBackStack()) {
+                        val fallback: Any =
+                            if (appContainer.authRepository.getActiveSession() != null) MainRoute else AuthGraph
+                        navController.navigate(fallback)
+                    }
                 },
                 onQueroDoar = {
                     if (campaign != null && !ehOrganizador) {
-                        navController.navigate(OpcoesDoacaoRoute(campaign.id))
+                        when {
+                            campaign.aceitaDinheiro && campaign.aceitaItens ->
+                                navController.navigate(OpcoesDoacaoRoute(campaign.id))
+                            campaign.aceitaDinheiro ->
+                                navController.navigate(DoarDinheiroRoute(campaign.id))
+                            campaign.aceitaItens ->
+                                navController.navigate(DoarItensCampanhaRoute(campaign.id))
+                            else ->
+                                navController.navigate(OpcoesDoacaoRoute(campaign.id))
+                        }
                     }
                 },
             )
@@ -209,7 +232,9 @@ fun DonationNavHost(
 
         composable<OpcoesDoacaoRoute> { entry ->
             val route = entry.toRoute<OpcoesDoacaoRoute>()
-            val campaign = campanhasViewModel.buscarCampanhaPorId(route.id)
+            val campaign =
+                campanhasViewModel.buscarCampanhaPorId(route.id)
+                    ?: historicoViewModel.buscarMinhaCampanhaPorId(route.id)
 
             if (campaign != null) {
                 OpcoesDoacaoScreen(
@@ -218,12 +243,16 @@ fun DonationNavHost(
                     onDoarDinheiro = { navController.navigate(DoarDinheiroRoute(campaign.id)) },
                     onDoarItens = { navController.navigate(DoarItensCampanhaRoute(campaign.id)) },
                 )
+            } else {
+                LaunchedEffect(route.id) { navController.popBackStack() }
             }
         }
 
         composable<DoarItensCampanhaRoute> { entry ->
             val route = entry.toRoute<DoarItensCampanhaRoute>()
-            val campaign = campanhasViewModel.buscarCampanhaPorId(route.id)
+            val campaign =
+                campanhasViewModel.buscarCampanhaPorId(route.id)
+                    ?: historicoViewModel.buscarMinhaCampanhaPorId(route.id)
             val doarItensViewModel = viewModel { appContainer.createDoarItensCampanhaViewModel() }
 
             if (campaign != null) {
@@ -232,17 +261,22 @@ fun DonationNavHost(
                     viewModel = doarItensViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onDoacaoConcluida = {
-                        historicoViewModel.carregarHistorico()
+                        val ehInst = appContainer.authRepository.getActiveSession()?.tipo == "INSTITUICAO"
+                        historicoViewModel.carregarHistorico(carregarCampanhas = ehInst)
                         explorarViewModel.carregarDoacoes()
                         navController.popBackStack()
                     },
                 )
+            } else {
+                LaunchedEffect(route.id) { navController.popBackStack() }
             }
         }
 
         composable<DoarDinheiroRoute> { entry ->
             val route = entry.toRoute<DoarDinheiroRoute>()
-            val campaign = campanhasViewModel.buscarCampanhaPorId(route.id)
+            val campaign =
+                campanhasViewModel.buscarCampanhaPorId(route.id)
+                    ?: historicoViewModel.buscarMinhaCampanhaPorId(route.id)
             val doarDinheiroViewModel = viewModel { appContainer.createDoarDinheiroViewModel() }
 
             if (campaign != null) {
@@ -251,10 +285,14 @@ fun DonationNavHost(
                     viewModel = doarDinheiroViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onContribuicaoConcluida = {
-                        historicoViewModel.carregarHistorico()
+                        val ehInst = appContainer.authRepository.getActiveSession()?.tipo == "INSTITUICAO"
+                        campanhasViewModel.carregarCampanhas()
+                        historicoViewModel.carregarHistorico(carregarCampanhas = ehInst)
                         navController.popBackStack()
                     },
                 )
+            } else {
+                LaunchedEffect(route.id) { navController.popBackStack() }
             }
         }
 
@@ -268,7 +306,8 @@ fun DonationNavHost(
                 viewModel = efetivarViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEfetivadaComSucesso = {
-                    historicoViewModel.carregarHistorico()
+                    val ehInst = appContainer.authRepository.getActiveSession()?.tipo == "INSTITUICAO"
+                    historicoViewModel.carregarHistorico(carregarCampanhas = ehInst)
                     explorarViewModel.carregarDoacoes()
                     navController.popBackStack()
                 },

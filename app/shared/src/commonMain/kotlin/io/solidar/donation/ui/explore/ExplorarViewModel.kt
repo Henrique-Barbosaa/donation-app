@@ -27,6 +27,7 @@ data class ExplorarUiState(
  */
 class ExplorarViewModel(
     private val repository: DoacaoRepository,
+    carregarAoIniciar: Boolean = true,
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
@@ -37,7 +38,9 @@ class ExplorarViewModel(
     val uiState: StateFlow<ExplorarUiState> = _uiState.asStateFlow()
 
     init {
-        carregarDoacoes()
+        if (carregarAoIniciar) {
+            carregarDoacoes()
+        }
     }
 
     fun onBuscaChange(texto: String) {

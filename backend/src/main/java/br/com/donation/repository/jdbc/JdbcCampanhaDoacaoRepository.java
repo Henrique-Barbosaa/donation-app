@@ -28,7 +28,7 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
 
     private CampanhaDoacao insert(CampanhaDoacao campanha) {
         return execute(connection -> {
-            String sql = "INSERT INTO CAMPANHA_DOACAO (INSTITUICAO_USUARIO_id, titulo, descricao, url_imagem_capa, data_inicio, data_fim, status, itens_foco, meta_voluntarios) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO CAMPANHA_DOACAO (INSTITUICAO_USUARIO_id, titulo, descricao, url_imagem_capa, data_inicio, data_fim, status, itens_foco, meta_voluntarios, meta_em_centavos, arrecadado_em_centavos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, campanha.getInstituicaoUsuarioId());
                 ps.setString(2, campanha.getTitulo());
@@ -43,6 +43,8 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
                 } else {
                     ps.setNull(9, Types.INTEGER);
                 }
+                ps.setLong(10, campanha.getMetaEmCentavos() != null ? campanha.getMetaEmCentavos() : 0L);
+                ps.setLong(11, campanha.getArrecadadoEmCentavos() != null ? campanha.getArrecadadoEmCentavos() : 0L);
                 
                 ps.executeUpdate();
                 
@@ -58,7 +60,7 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
 
     private CampanhaDoacao update(CampanhaDoacao campanha) {
         return execute(connection -> {
-            String sql = "UPDATE CAMPANHA_DOACAO SET INSTITUICAO_USUARIO_id = ?, titulo = ?, descricao = ?, url_imagem_capa = ?, data_inicio = ?, data_fim = ?, status = ?, itens_foco = ?, meta_voluntarios = ? WHERE id = ?";
+            String sql = "UPDATE CAMPANHA_DOACAO SET INSTITUICAO_USUARIO_id = ?, titulo = ?, descricao = ?, url_imagem_capa = ?, data_inicio = ?, data_fim = ?, status = ?, itens_foco = ?, meta_voluntarios = ?, meta_em_centavos = ?, arrecadado_em_centavos = ? WHERE id = ?";
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setInt(1, campanha.getInstituicaoUsuarioId());
                 ps.setString(2, campanha.getTitulo());
@@ -73,7 +75,9 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
                 } else {
                     ps.setNull(9, Types.INTEGER);
                 }
-                ps.setInt(10, campanha.getId());
+                ps.setLong(10, campanha.getMetaEmCentavos() != null ? campanha.getMetaEmCentavos() : 0L);
+                ps.setLong(11, campanha.getArrecadadoEmCentavos() != null ? campanha.getArrecadadoEmCentavos() : 0L);
+                ps.setInt(12, campanha.getId());
                 ps.executeUpdate();
             }
             return campanha;
@@ -157,6 +161,18 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
         });
     }
 
+    @Override
+    public void adicionarArrecadacao(Integer campanhaId, long valorEmCentavos) {
+        executeWithoutResult(connection -> {
+            String sql = "UPDATE CAMPANHA_DOACAO SET arrecadado_em_centavos = COALESCE(arrecadado_em_centavos, 0) + ? WHERE id = ?";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setLong(1, valorEmCentavos);
+                ps.setInt(2, campanhaId);
+                ps.executeUpdate();
+            }
+        });
+    }
+
     private CampanhaDoacao mapRow(ResultSet rs) throws SQLException {
         CampanhaDoacao campanha = new CampanhaDoacao();
         campanha.setId(rs.getInt("id"));
@@ -178,6 +194,12 @@ public class JdbcCampanhaDoacaoRepository extends AbstractJdbcRepository impleme
         if (!rs.wasNull()) {
             campanha.setMetaVoluntarios(meta);
         }
+
+        long metaCentavos = rs.getLong("meta_em_centavos");
+        campanha.setMetaEmCentavos(rs.wasNull() ? 0L : metaCentavos);
+
+        long arrecadadoCentavos = rs.getLong("arrecadado_em_centavos");
+        campanha.setArrecadadoEmCentavos(rs.wasNull() ? 0L : arrecadadoCentavos);
         
         return campanha;
     }

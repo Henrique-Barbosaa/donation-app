@@ -26,6 +26,22 @@ interface LocalCacheStorage {
 
     fun lerDoacoes(): List<Doacao>?
 
+    fun salvarDoacoesUsuario(
+        usuarioChave: String,
+        doacoes: List<Doacao>,
+    ) {
+        salvarDoacoes(doacoes)
+    }
+
+    fun lerDoacoesUsuario(usuarioChave: String): List<Doacao>? = lerDoacoes()
+
+    fun salvarMinhasCampanhasUsuario(
+        usuarioChave: String,
+        campanhas: List<Campaign>,
+    ) {}
+
+    fun lerMinhasCampanhasUsuario(usuarioChave: String): List<Campaign>? = null
+
     fun salvarDoacoesDisponiveis(doacoes: List<DoacaoDisponivel>) {}
 
     fun lerDoacoesDisponiveis(): List<DoacaoDisponivel>? = null
@@ -206,22 +222,36 @@ class FileLocalCacheStorage(
     override fun lerDoacoes(): List<Doacao>? {
         val raw = reader(ARQUIVO_DOACOES) ?: return null
         return runCatching {
-            json.decodeFromString<List<DoacaoCacheDto>>(raw).map { dto ->
-                Doacao(
-                    id = dto.id,
-                    itemTitle = dto.itemTitle,
-                    counterpartName = dto.counterpartName,
-                    direction =
-                        runCatching { DoacaoDirecao.valueOf(dto.direction) }
-                            .getOrDefault(DoacaoDirecao.FEITA),
-                    status =
-                        runCatching { DoacaoStatus.valueOf(dto.status) }
-                            .getOrDefault(DoacaoStatus.PENDENTE),
-                    dateLabel = dto.dateLabel,
-                )
-            }
+            json.decodeFromString<List<DoacaoCacheDto>>(raw).map { it.toDomain() }
         }.getOrNull()
     }
+
+    override fun salvarDoacoesUsuario(
+        usuarioChave: String,
+        doacoes: List<Doacao>,
+    ) {
+        val mapa = lerMapaDoacoes().toMutableMap()
+        mapa[usuarioChave] = doacoes.map { it.toCacheDto() }
+        runCatching {
+            writer(ARQUIVO_DOACOES_USUARIO, json.encodeToString(mapa))
+        }
+    }
+
+    override fun lerDoacoesUsuario(usuarioChave: String): List<Doacao>? = lerMapaDoacoes()[usuarioChave]?.map { it.toDomain() }
+
+    override fun salvarMinhasCampanhasUsuario(
+        usuarioChave: String,
+        campanhas: List<Campaign>,
+    ) {
+        val mapa = lerMapaMinhasCampanhas().toMutableMap()
+        mapa[usuarioChave] = campanhas.map { it.toCacheDto() }
+        runCatching {
+            writer(ARQUIVO_MINHAS_CAMPANHAS_USUARIO, json.encodeToString(mapa))
+        }
+    }
+
+    override fun lerMinhasCampanhasUsuario(usuarioChave: String): List<Campaign>? =
+        lerMapaMinhasCampanhas()[usuarioChave]?.map { it.toDomain() }
 
     override fun salvarDoacoesDisponiveis(doacoes: List<DoacaoDisponivel>) {
         val dtos =
@@ -359,9 +389,95 @@ class FileLocalCacheStorage(
         }.getOrDefault(emptyMap())
     }
 
+    private fun lerMapaDoacoes(): Map<String, List<DoacaoCacheDto>> {
+        val raw = reader(ARQUIVO_DOACOES_USUARIO) ?: return emptyMap()
+        return runCatching {
+            json.decodeFromString<Map<String, List<DoacaoCacheDto>>>(raw)
+        }.getOrDefault(emptyMap())
+    }
+
+    private fun lerMapaMinhasCampanhas(): Map<String, List<CampaignCacheDto>> {
+        val raw = reader(ARQUIVO_MINHAS_CAMPANHAS_USUARIO) ?: return emptyMap()
+        return runCatching {
+            json.decodeFromString<Map<String, List<CampaignCacheDto>>>(raw)
+        }.getOrDefault(emptyMap())
+    }
+
+    private fun Doacao.toCacheDto(): DoacaoCacheDto =
+        DoacaoCacheDto(
+            id = id,
+            itemTitle = itemTitle,
+            counterpartName = counterpartName,
+            direction = direction.name,
+            status = status.name,
+            dateLabel = dateLabel,
+        )
+
+    private fun DoacaoCacheDto.toDomain(): Doacao =
+        Doacao(
+            id = id,
+            itemTitle = itemTitle,
+            counterpartName = counterpartName,
+            direction =
+                runCatching { DoacaoDirecao.valueOf(direction) }
+                    .getOrDefault(DoacaoDirecao.FEITA),
+            status =
+                runCatching { DoacaoStatus.valueOf(status) }
+                    .getOrDefault(DoacaoStatus.PENDENTE),
+            dateLabel = dateLabel,
+        )
+
+    private fun Campaign.toCacheDto(): CampaignCacheDto =
+        CampaignCacheDto(
+            id = id,
+            title = title,
+            organizer = organizer,
+            goalInCents = goalInCents,
+            raisedInCents = raisedInCents,
+            descricao = descricao,
+            imageUrl = imageUrl,
+            instituicaoId = instituicaoId,
+            status = status,
+            itensNecessarios =
+                itensNecessarios.map { item ->
+                    CampaignItemCacheDto(
+                        id = item.id,
+                        nome = item.nome,
+                        quantidadeDescricao = item.quantidadeDescricao,
+                        iconeRef = item.iconeRef,
+                        quantidadeAlvo = item.quantidadeAlvo,
+                    )
+                },
+        )
+
+    private fun CampaignCacheDto.toDomain(): Campaign =
+        Campaign(
+            id = id,
+            title = title,
+            organizer = organizer,
+            goalInCents = goalInCents,
+            raisedInCents = raisedInCents,
+            descricao = descricao,
+            imageUrl = imageUrl,
+            instituicaoId = instituicaoId,
+            status = status,
+            itensNecessarios =
+                itensNecessarios.map { item ->
+                    CampaignItem(
+                        id = item.id,
+                        nome = item.nome,
+                        quantidadeDescricao = item.quantidadeDescricao,
+                        iconeRef = item.iconeRef,
+                        quantidadeAlvo = item.quantidadeAlvo,
+                    )
+                },
+        )
+
     companion object {
         const val ARQUIVO_CAMPANHAS = "campanhas_cache.json"
         const val ARQUIVO_DOACOES = "doacoes_cache.json"
+        const val ARQUIVO_DOACOES_USUARIO = "doacoes_por_usuario_cache.json"
+        const val ARQUIVO_MINHAS_CAMPANHAS_USUARIO = "minhas_campanhas_por_usuario_cache.json"
         const val ARQUIVO_DOACOES_DISPONIVEIS = "doacoes_disponiveis_cache.json"
         const val ARQUIVO_FAVORITOS = "favoritos_cache.json"
         const val ARQUIVO_FAVORITOS_USUARIO = "favoritos_por_usuario_cache.json"
@@ -376,6 +492,8 @@ class FileLocalCacheStorage(
 class InMemoryLocalCacheStorage : LocalCacheStorage {
     private var campanhas: List<Campaign>? = null
     private var doacoes: List<Doacao>? = null
+    private val doacoesPorUsuario = mutableMapOf<String, List<Doacao>>()
+    private val minhasCampanhasPorUsuario = mutableMapOf<String, List<Campaign>>()
     private var doacoesDisponiveis: List<DoacaoDisponivel>? = null
     private var favoritos: Set<String> = emptySet()
     private val favoritosPorUsuario = mutableMapOf<String, Set<String>>()
@@ -395,6 +513,24 @@ class InMemoryLocalCacheStorage : LocalCacheStorage {
     }
 
     override fun lerDoacoes(): List<Doacao>? = doacoes
+
+    override fun salvarDoacoesUsuario(
+        usuarioChave: String,
+        doacoes: List<Doacao>,
+    ) {
+        doacoesPorUsuario[usuarioChave] = doacoes
+    }
+
+    override fun lerDoacoesUsuario(usuarioChave: String): List<Doacao>? = doacoesPorUsuario[usuarioChave]
+
+    override fun salvarMinhasCampanhasUsuario(
+        usuarioChave: String,
+        campanhas: List<Campaign>,
+    ) {
+        minhasCampanhasPorUsuario[usuarioChave] = campanhas
+    }
+
+    override fun lerMinhasCampanhasUsuario(usuarioChave: String): List<Campaign>? = minhasCampanhasPorUsuario[usuarioChave]
 
     override fun salvarDoacoesDisponiveis(doacoes: List<DoacaoDisponivel>) {
         this.doacoesDisponiveis = doacoes

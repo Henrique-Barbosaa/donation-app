@@ -55,7 +55,7 @@ import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
-import io.solidar.donation.ui.home.sampleCampaigns
+import io.solidar.donation.ui.components.EstadoCarregandoView
 import io.solidar.donation.util.formatBrl
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +72,7 @@ fun CampanhaDetalheScreen(
     onCancelarCampanha: (() -> Unit)? = null,
     cancelandoCampanha: Boolean = false,
     erroCancelamento: String? = null,
+    carregando: Boolean = false,
 ) {
     var confirmarCancelamento by rememberSaveable { mutableStateOf(false) }
     var confirmarFinalizacao by rememberSaveable { mutableStateOf(false) }
@@ -304,16 +305,23 @@ fun CampanhaDetalheScreen(
         },
     ) { padding ->
         if (campaign == null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Campanha não encontrada.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
+            if (carregando) {
+                EstadoCarregandoView(
+                    descricao = "Carregando campanha",
+                    modifier = Modifier.fillMaxSize().padding(padding),
                 )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Campanha não encontrada.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
             return@Scaffold
         }
@@ -367,28 +375,30 @@ fun CampanhaDetalheScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    if (campaign.aceitaDinheiro) {
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    val percentualArrecadado = (campaign.progress * 100).toInt()
-                    LinearProgressIndicator(
-                        progress = { campaign.progress },
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(10.dp)
-                                .clip(RoundedCornerShape(5.dp))
-                                .semantics {
-                                    contentDescription = "Progresso da campanha: $percentualArrecadado por cento"
-                                },
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                    Text(
-                        text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
+                        val percentualArrecadado = (campaign.progress * 100).toInt()
+                        LinearProgressIndicator(
+                            progress = { campaign.progress },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .semantics {
+                                        contentDescription = "Progresso da campanha: $percentualArrecadado por cento"
+                                    },
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                        Text(
+                            text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                    }
 
                     if (campaign.descricao.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -490,7 +500,18 @@ private fun CampaignItemCard(
 @Composable
 private fun CampanhaDetalhePreview() {
     DonationTheme {
-        CampanhaDetalheScreen(campaign = sampleCampaigns.first(), onBack = {}, onQueroDoar = {})
+        CampanhaDetalheScreen(
+            campaign =
+                Campaign(
+                    id = "preview-1",
+                    title = "Campanha de Exemplo",
+                    organizer = "Instituição Parceira",
+                    goalInCents = 100_000L,
+                    raisedInCents = 50_000L,
+                ),
+            onBack = {},
+            onQueroDoar = {},
+        )
     }
 }
 
@@ -498,6 +519,17 @@ private fun CampanhaDetalhePreview() {
 @Composable
 private fun CampanhaDetalheDarkPreview() {
     DonationTheme(darkTheme = true) {
-        CampanhaDetalheScreen(campaign = sampleCampaigns.first(), onBack = {}, onQueroDoar = {})
+        CampanhaDetalheScreen(
+            campaign =
+                Campaign(
+                    id = "preview-1",
+                    title = "Campanha de Exemplo",
+                    organizer = "Instituição Parceira",
+                    goalInCents = 100_000L,
+                    raisedInCents = 50_000L,
+                ),
+            onBack = {},
+            onQueroDoar = {},
+        )
     }
 }

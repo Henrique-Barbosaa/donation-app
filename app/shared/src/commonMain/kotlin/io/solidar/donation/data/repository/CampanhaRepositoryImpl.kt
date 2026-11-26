@@ -56,6 +56,13 @@ class CampanhaRepositoryImpl(
             val criada = remoteDataSource.criarCampanha(input.toCriarCampanhaRequest()).toDomain()
             val atuais = localCacheStorage.lerCampanhas().orEmpty()
             localCacheStorage.salvarCampanhas(listOf(criada) + atuais.filterNot { it.id == criada.id })
+            tokenStorage.getSession()?.id?.toString()?.let { chave ->
+                val minhasAtuais = localCacheStorage.lerMinhasCampanhasUsuario(chave).orEmpty()
+                localCacheStorage.salvarMinhasCampanhasUsuario(
+                    chave,
+                    listOf(criada) + minhasAtuais.filterNot { it.id == criada.id },
+                )
+            }
             Result.success(criada)
         } catch (t: Throwable) {
             Result.failure(NetworkErrorMapper.mapear(t))
@@ -63,11 +70,22 @@ class CampanhaRepositoryImpl(
     }
 
     override suspend fun listarMinhasCampanhas(): Result<ResultadoCacheado<List<Campaign>>> {
+        val chaveUsuario = tokenStorage.getSession()?.id?.toString()
         return try {
             val minhas = remoteDataSource.listarMinhasCampanhas().map { it.toDomain() }
+            if (chaveUsuario != null) {
+                localCacheStorage.salvarMinhasCampanhasUsuario(chaveUsuario, minhas)
+            }
             Result.success(ResultadoCacheado(dados = minhas, desatualizado = false))
         } catch (t: Throwable) {
-            Result.failure(NetworkErrorMapper.mapear(t))
+            val falha = NetworkErrorMapper.mapear(t)
+            if (falha is FalhaDominio.SemConexao && chaveUsuario != null) {
+                val cache = localCacheStorage.lerMinhasCampanhasUsuario(chaveUsuario)
+                if (cache != null) {
+                    return Result.success(ResultadoCacheado(dados = cache, desatualizado = true))
+                }
+            }
+            Result.failure(falha)
         }
     }
 
@@ -77,6 +95,7 @@ class CampanhaRepositoryImpl(
             localCacheStorage.lerCampanhas()?.let { atuais ->
                 localCacheStorage.salvarCampanhas(atuais.filterNot { it.id == id })
             }
+            atualizarStatusMinhasCampanhasCache(id, "FINALIZADA")
             Result.success(Unit)
         } catch (t: Throwable) {
             Result.failure(NetworkErrorMapper.mapear(t))
@@ -89,6 +108,7 @@ class CampanhaRepositoryImpl(
             localCacheStorage.lerCampanhas()?.let { atuais ->
                 localCacheStorage.salvarCampanhas(atuais.filterNot { it.id == id })
             }
+            atualizarStatusMinhasCampanhasCache(id, "CANCELADA")
             val chaveUsuario = tokenStorage.getSession()?.id?.toString()
             if (chaveUsuario != null) {
                 val favs = localCacheStorage.lerFavoritosUsuario(chaveUsuario) - id
@@ -97,6 +117,19 @@ class CampanhaRepositoryImpl(
             Result.success(Unit)
         } catch (t: Throwable) {
             Result.failure(NetworkErrorMapper.mapear(t))
+        }
+    }
+
+    private fun atualizarStatusMinhasCampanhasCache(
+        id: String,
+        novoStatus: String,
+    ) {
+        val chaveUsuario = tokenStorage.getSession()?.id?.toString() ?: return
+        localCacheStorage.lerMinhasCampanhasUsuario(chaveUsuario)?.let { minhas ->
+            localCacheStorage.salvarMinhasCampanhasUsuario(
+                chaveUsuario,
+                minhas.map { if (it.id == id) it.copy(status = novoStatus) else it },
+            )
         }
     }
 

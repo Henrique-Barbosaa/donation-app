@@ -44,8 +44,8 @@ class DoacaoRepositoryImpl(
                     imagemNome = imagemNome,
                 )
             val doacao = response.toDomain(DoacaoDirecao.FEITA)
-            val atuais = localCacheStorage.lerDoacoes().orEmpty()
-            localCacheStorage.salvarDoacoes(listOf(doacao) + atuais)
+            val atuais = lerDoacoesEscopadas().orEmpty()
+            salvarDoacoesEscopadas(listOf(doacao) + atuais)
             Result.success(doacao)
         } catch (t: Throwable) {
             Result.failure(NetworkErrorMapper.mapear(t))
@@ -57,12 +57,12 @@ class DoacaoRepositoryImpl(
             val feitas = remoteDataSource.listarMinhasDoacoes().map { it.toDomain(DoacaoDirecao.FEITA) }
             val recebidas = remoteDataSource.listarDoacoesRecebidas().map { it.toDomain(DoacaoDirecao.RECEBIDA) }
             val todas = feitas + recebidas
-            localCacheStorage.salvarDoacoes(todas)
+            salvarDoacoesEscopadas(todas)
             Result.success(ResultadoCacheado(dados = todas, desatualizado = false))
         } catch (t: Throwable) {
             val falha = NetworkErrorMapper.mapear(t)
             if (falha is FalhaDominio.SemConexao) {
-                val cache = localCacheStorage.lerDoacoes()
+                val cache = lerDoacoesEscopadas()
                 if (cache != null) {
                     return Result.success(ResultadoCacheado(dados = cache, desatualizado = true))
                 }
@@ -158,8 +158,8 @@ class DoacaoRepositoryImpl(
         return try {
             val response = remoteDataSource.efetivarDoacao(doacaoId, input.toEfetivarRequest())
             val efetivada = response.toDomain(DoacaoDirecao.FEITA)
-            val historicoAtual = localCacheStorage.lerDoacoes().orEmpty()
-            localCacheStorage.salvarDoacoes(
+            val historicoAtual = lerDoacoesEscopadas().orEmpty()
+            salvarDoacoesEscopadas(
                 historicoAtual.map { if (it.id == efetivada.id) efetivada else it },
             )
             localCacheStorage.lerDoacoesDisponiveis()?.let { disponiveis ->
@@ -174,8 +174,8 @@ class DoacaoRepositoryImpl(
     override suspend fun cancelarDoacao(doacaoId: String): Result<Unit> {
         return try {
             remoteDataSource.cancelarDoacao(doacaoId)
-            localCacheStorage.lerDoacoes()?.let { historico ->
-                localCacheStorage.salvarDoacoes(historico.filterNot { it.id == doacaoId })
+            lerDoacoesEscopadas()?.let { historico ->
+                salvarDoacoesEscopadas(historico.filterNot { it.id == doacaoId })
             }
             localCacheStorage.lerDoacoesDisponiveis()?.let { disponiveis ->
                 localCacheStorage.salvarDoacoesDisponiveis(disponiveis.filterNot { it.id == doacaoId })
@@ -212,8 +212,8 @@ class DoacaoRepositoryImpl(
                 )
             val response = remoteDataSource.criarDoacao(request = request)
             val doacao = response.toDomain(DoacaoDirecao.FEITA)
-            val atuais = localCacheStorage.lerDoacoes().orEmpty()
-            localCacheStorage.salvarDoacoes(listOf(doacao) + atuais)
+            val atuais = lerDoacoesEscopadas().orEmpty()
+            salvarDoacoesEscopadas(listOf(doacao) + atuais)
             val jaDoados = localCacheStorage.lerItensDoadosCampanha(campanhaId)
             localCacheStorage.salvarItensDoadosCampanha(campanhaId, jaDoados + itensIds)
             if (quantidadesPorItemId.isNotEmpty()) {
@@ -226,6 +226,24 @@ class DoacaoRepositoryImpl(
             Result.success(doacao)
         } catch (t: Throwable) {
             Result.failure(NetworkErrorMapper.mapear(t))
+        }
+    }
+
+    private fun lerDoacoesEscopadas(): List<Doacao>? {
+        val chaveUsuario = tokenStorage.getSession()?.id?.toString()
+        return if (chaveUsuario != null) {
+            localCacheStorage.lerDoacoesUsuario(chaveUsuario)
+        } else {
+            localCacheStorage.lerDoacoes()
+        }
+    }
+
+    private fun salvarDoacoesEscopadas(doacoes: List<Doacao>) {
+        val chaveUsuario = tokenStorage.getSession()?.id?.toString()
+        if (chaveUsuario != null) {
+            localCacheStorage.salvarDoacoesUsuario(chaveUsuario, doacoes)
+        } else {
+            localCacheStorage.salvarDoacoes(doacoes)
         }
     }
 

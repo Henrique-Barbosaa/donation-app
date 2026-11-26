@@ -11,6 +11,7 @@ data class CriarCampanhaRequest(
     val descricao: String? = null,
     val itensFoco: String? = null,
     val metaVoluntarios: Int? = null,
+    val metaEmCentavos: Long? = null,
 )
 
 fun NovaCampanhaInput.toCriarCampanhaRequest(): CriarCampanhaRequest =
@@ -18,7 +19,8 @@ fun NovaCampanhaInput.toCriarCampanhaRequest(): CriarCampanhaRequest =
         titulo = titulo.trim(),
         descricao = descricao.trim().ifBlank { null },
         itensFoco = itensFocoFormatado.ifBlank { null },
-        metaVoluntarios = metaVoluntarios.coerceAtLeast(1),
+        metaVoluntarios = metaVoluntarios.takeIf { it > 0 },
+        metaEmCentavos = metaEmCentavos.takeIf { it > 0L },
     )
 
 @Serializable
@@ -67,12 +69,8 @@ fun CampanhaResponseDto.toDomain(): Campaign {
     val idStr = (id ?: 0).toString()
     val tituloFinal = titulo?.takeIf { it.isNotBlank() } ?: "Campanha Solidária #$idStr"
     val organizadorFinal = nomeInstituicao?.takeIf { it.isNotBlank() } ?: "Instituição Parceira"
-    val metaCentavos =
-        metaEmCentavos
-            ?: ((metaVoluntarios ?: 50).toLong().coerceAtLeast(1L) * 10_000L)
-    val arrecadadoCentavos =
-        arrecadadoEmCentavos
-            ?: (metaCentavos * 60L / 100L)
+    val metaCentavos = (metaEmCentavos ?: 0L).coerceAtLeast(0L)
+    val arrecadadoCentavos = (arrecadadoEmCentavos ?: 0L).coerceAtLeast(0L)
 
     val itens =
         itensFoco

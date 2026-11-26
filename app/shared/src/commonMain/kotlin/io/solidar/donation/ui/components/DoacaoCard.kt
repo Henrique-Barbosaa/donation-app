@@ -187,7 +187,7 @@ private fun DoacaoCardFeitaPreview() {
                 Doacao(
                     id = "1",
                     itemTitle = "Cesta básica",
-                    counterpartName = "Instituto Mãos Solidárias",
+                    counterpartName = "Instituição Parceira",
                     direction = DoacaoDirecao.FEITA,
                     status = DoacaoStatus.CONCLUIDA,
                     dateLabel = "12 de setembro de 2026",
@@ -225,7 +225,7 @@ private fun DoacaoCardDarkPreview() {
                 Doacao(
                     id = "3",
                     itemTitle = "Cesta básica",
-                    counterpartName = "Instituto Mãos Solidárias",
+                    counterpartName = "Instituição Parceira",
                     direction = DoacaoDirecao.FEITA,
                     status = DoacaoStatus.CONCLUIDA,
                     dateLabel = "12 de setembro de 2026",

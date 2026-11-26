@@ -65,7 +65,6 @@ import io.solidar.donation.ui.explore.ExplorarViewModel
 import io.solidar.donation.ui.history.HistoricoAba
 import io.solidar.donation.ui.history.HistoricoScreen
 import io.solidar.donation.ui.history.HistoricoViewModel
-import io.solidar.donation.ui.history.sampleDoacoes
 import io.solidar.donation.ui.state.TelaEstado
 
 enum class MainTab(
@@ -182,10 +181,10 @@ fun MainNavigationContent(
     modifier: Modifier = Modifier,
     inicioTab: InicioAba = InicioAba.PEDIDOS,
     onInicioTabSelected: (InicioAba) -> Unit = {},
-    estadoCampanhas: TelaEstado<List<Campaign>> = TelaEstado.Sucesso(sampleCampaigns),
+    estadoCampanhas: TelaEstado<List<Campaign>> = TelaEstado.Vazio,
     favoritosIds: Set<String> = emptySet(),
     onRecarregarCampanhas: () -> Unit = {},
-    estadoHistorico: TelaEstado<List<Doacao>> = TelaEstado.Sucesso(sampleDoacoes),
+    estadoHistorico: TelaEstado<List<Doacao>> = TelaEstado.Vazio,
     estadoMinhasCampanhas: TelaEstado<List<Campaign>> = TelaEstado.Vazio,
     cancelandoDoacaoId: String? = null,
     processandoCampanhaId: String? = null,
@@ -434,10 +433,25 @@ private fun TabContent(
                     usuarioLogadoId = activeSession?.id,
                 )
             MainTab.FAVORITES -> {
-                val campanhasAtuais = (estadoCampanhas as? TelaEstado.Sucesso)?.dados.orEmpty()
-                val campanhasFavoritas = campanhasAtuais.filter { favoritosIds.contains(it.id) }
+                val estadoFavoritas: TelaEstado<List<Campaign>> =
+                    when (estadoCampanhas) {
+                        is TelaEstado.Carregando -> TelaEstado.Carregando
+                        is TelaEstado.Erro -> estadoCampanhas
+                        is TelaEstado.Vazio -> TelaEstado.Vazio
+                        is TelaEstado.Sucesso -> {
+                            val filtradas = estadoCampanhas.dados.filter { favoritosIds.contains(it.id) }
+                            if (filtradas.isEmpty()) {
+                                TelaEstado.Vazio
+                            } else {
+                                TelaEstado.Sucesso(
+                                    dados = filtradas,
+                                    desatualizado = estadoCampanhas.desatualizado,
+                                )
+                            }
+                        }
+                    }
 
-                if (campanhasFavoritas.isEmpty()) {
+                if (estadoFavoritas is TelaEstado.Vazio) {
                     PlaceholderScreen(
                         title = "Nenhuma campanha salva",
                         subtitle = "As campanhas que você marcar nos favoritos aparecerão aqui.",
@@ -445,7 +459,7 @@ private fun TabContent(
                     )
                 } else {
                     HomeScreen(
-                        estado = TelaEstado.Sucesso(campanhasFavoritas),
+                        estado = estadoFavoritas,
                         onCampaignClick = onCampaignClick,
                         onTentarDeNovo = onRecarregarCampanhas,
                         wide = wide,

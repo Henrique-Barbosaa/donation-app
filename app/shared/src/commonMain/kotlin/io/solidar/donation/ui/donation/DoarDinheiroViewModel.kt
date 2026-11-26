@@ -92,6 +92,8 @@ class DoarDinheiroViewModel(
                     descricao = "Contribuição financeira via PIX para ${campaign.organizer}",
                     motivo = "Campanha: ${campaign.title}",
                     donatarioId = campaign.instituicaoId,
+                    campanhaId = campaign.id.toIntOrNull(),
+                    valorEmCentavos = atual.valorEmCentavos,
                 )
             val result = repository.criarDoacao(input)
             result.fold(

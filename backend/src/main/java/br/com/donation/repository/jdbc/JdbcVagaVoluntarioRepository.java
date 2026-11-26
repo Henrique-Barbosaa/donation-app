@@ -8,6 +8,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,9 +36,9 @@ public class JdbcVagaVoluntarioRepository extends AbstractJdbcRepository impleme
                 try (PreparedStatement psUpdate = connection.prepareStatement(updateSql)) {
                     psUpdate.setDate(1, vaga.getDataInicio() != null ? Date.valueOf(vaga.getDataInicio()) : null);
                     psUpdate.setDate(2, vaga.getDataFim() != null ? Date.valueOf(vaga.getDataFim()) : null);
-                    psUpdate.setInt(3, vaga.getQuantidadeVagas());
+                    setNullableInt(psUpdate, 3, vaga.getQuantidadeVagas());
                     psUpdate.setString(4, vaga.getDescricaoAtividades());
-                    psUpdate.setInt(5, vaga.getCargaHorariaSemanal());
+                    setNullableInt(psUpdate, 5, vaga.getCargaHorariaSemanal());
                     psUpdate.setString(6, vaga.getFuncao());
                     psUpdate.setInt(7, vaga.getCampanhaDoacaoId());
                     psUpdate.setInt(8, vaga.getCodigoVaga());
@@ -50,9 +51,9 @@ public class JdbcVagaVoluntarioRepository extends AbstractJdbcRepository impleme
                     psInsert.setInt(2, vaga.getCodigoVaga());
                     psInsert.setDate(3, vaga.getDataInicio() != null ? Date.valueOf(vaga.getDataInicio()) : null);
                     psInsert.setDate(4, vaga.getDataFim() != null ? Date.valueOf(vaga.getDataFim()) : null);
-                    psInsert.setInt(5, vaga.getQuantidadeVagas());
+                    setNullableInt(psInsert, 5, vaga.getQuantidadeVagas());
                     psInsert.setString(6, vaga.getDescricaoAtividades());
-                    psInsert.setInt(7, vaga.getCargaHorariaSemanal());
+                    setNullableInt(psInsert, 7, vaga.getCargaHorariaSemanal());
                     psInsert.setString(8, vaga.getFuncao());
                     psInsert.executeUpdate();
                 }
@@ -118,11 +119,21 @@ public class JdbcVagaVoluntarioRepository extends AbstractJdbcRepository impleme
         if (dataFim != null) {
             vaga.setDataFim(dataFim.toLocalDate());
         }
-        vaga.setQuantidadeVagas(rs.getInt("quantidade_vagas"));
+        int qtdVagas = rs.getInt("quantidade_vagas");
+        vaga.setQuantidadeVagas(rs.wasNull() ? null : qtdVagas);
         vaga.setDescricaoAtividades(rs.getString("descricao_atividades"));
-        vaga.setCargaHorariaSemanal(rs.getInt("carga_horaria_semanal"));
+        int cargaHoraria = rs.getInt("carga_horaria_semanal");
+        vaga.setCargaHorariaSemanal(rs.wasNull() ? null : cargaHoraria);
         vaga.setFuncao(rs.getString("funcao"));
         return vaga;
+    }
+
+    private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
+        if (value != null) {
+            ps.setInt(index, value);
+        } else {
+            ps.setNull(index, Types.INTEGER);
+        }
     }
 
     @Override

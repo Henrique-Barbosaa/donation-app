@@ -55,11 +55,14 @@ class AppContainer(
 ) {
     fun createAuthViewModel(): AuthViewModel = AuthViewModel(authRepository)
 
-    fun createCampanhasViewModel(): CampanhasViewModel = CampanhasViewModel(campanhaRepository)
+    fun createCampanhasViewModel(carregarAoIniciar: Boolean = true): CampanhasViewModel =
+        CampanhasViewModel(campanhaRepository, carregarAoIniciar = carregarAoIniciar)
 
-    fun createHistoricoViewModel(): HistoricoViewModel = HistoricoViewModel(doacaoRepository, campanhaRepository)
+    fun createHistoricoViewModel(carregarAoIniciar: Boolean = true): HistoricoViewModel =
+        HistoricoViewModel(doacaoRepository, campanhaRepository, carregarAoIniciar = carregarAoIniciar)
 
-    fun createExplorarViewModel(): ExplorarViewModel = ExplorarViewModel(doacaoRepository)
+    fun createExplorarViewModel(carregarAoIniciar: Boolean = true): ExplorarViewModel =
+        ExplorarViewModel(doacaoRepository, carregarAoIniciar = carregarAoIniciar)
 
     fun createCriarDoacaoViewModel(): CriarDoacaoViewModel = CriarDoacaoViewModel(doacaoRepository)
 

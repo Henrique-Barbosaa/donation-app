@@ -28,8 +28,10 @@ fun mapearMensagemDeErro(erro: Throwable): String =
     when (erro) {
         is FalhaDominio.SemConexao ->
             "Sem conexão com o servidor. Verifique sua internet ou se o backend está ativo."
-        is FalhaDominio.RespostaInvalida ->
-            "O servidor retornou uma resposta inválida. Tente novamente mais tarde."
+        is FalhaDominio.RespostaInvalida -> {
+            val detalheStatus = erro.statusCode?.let { " (HTTP $it)" }.orEmpty()
+            "O servidor retornou uma resposta inválida$detalheStatus. Tente novamente mais tarde."
+        }
         is FalhaDominio.DadosInvalidos ->
             erro.message
         else ->

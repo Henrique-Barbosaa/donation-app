@@ -11,8 +11,11 @@ object Validators {
 
     const val SENHA_MIN = 6
     const val NOME_ITEM_MIN = 3
-    const val NOME_ITEM_MAX = 80
+    const val NOME_ITEM_MAX = 45
+    const val TITULO_CAMPANHA_MAX = 80
+    const val DESCRICAO_ITEM_MAX = 200
     const val DESCRICAO_MAX = 500
+    const val NOME_LOCAL_MAX = 45
     const val ITENS_FOCO_MAX = 200
 
     fun emailValido(email: String): Boolean = EMAIL_REGEX.matches(email.trim())
@@ -89,8 +92,8 @@ fun validarDoacao(form: DoacaoForm): DoacaoFormErros {
         quantidade = if (form.quantidade < 1) "A quantidade deve ser pelo menos 1." else null,
         categoria = if (form.categoria.isBlank()) "Escolha uma categoria." else null,
         descricao =
-            if (form.descricao.length > Validators.DESCRICAO_MAX) {
-                "A descrição pode ter no máximo ${Validators.DESCRICAO_MAX} caracteres."
+            if (form.descricao.length > Validators.DESCRICAO_ITEM_MAX) {
+                "A descrição pode ter no máximo ${Validators.DESCRICAO_ITEM_MAX} caracteres."
             } else {
                 null
             },
@@ -108,18 +111,33 @@ data class ItemCampanhaForm(
 data class CampanhaForm(
     val titulo: String = "",
     val descricao: String = "",
+    val pedirItens: Boolean = true,
+    val pedirDinheiro: Boolean = false,
+    val metaReaisTexto: String = "",
     val itens: List<ItemCampanhaForm> = listOf(ItemCampanhaForm(id = 1, nome = "", quantidade = 1)),
 ) {
     val itensPreenchidos: List<ItemCampanhaForm>
         get() = itens.filter { it.nome.isNotBlank() }
 
     val totalUnidades: Int
-        get() = itensPreenchidos.sumOf { it.quantidade.coerceAtLeast(1) }
+        get() = if (pedirItens) itensPreenchidos.sumOf { it.quantidade.coerceAtLeast(1) } else 0
+
+    val metaEmCentavos: Long
+        get() =
+            if (pedirDinheiro) {
+                (metaReaisTexto.filter { it.isDigit() }.toLongOrNull() ?: 0L) * 100L
+            } else {
+                0L
+            }
 
     val itensFocoFormatado: String
         get() =
-            itensPreenchidos.joinToString(", ") { item ->
-                "${item.nome.trim()} (${item.quantidade.coerceAtLeast(1)} un.)"
+            if (!pedirItens) {
+                ""
+            } else {
+                itensPreenchidos.joinToString(", ") { item ->
+                    "${item.nome.trim()} (${item.quantidade.coerceAtLeast(1)} un.)"
+                }
             }
 
     fun proximoItemId(): Int = (itens.maxOfOrNull { it.id } ?: 0) + 1
@@ -129,29 +147,54 @@ data class CampanhaForm(
 data class CampanhaFormErros(
     val titulo: String? = null,
     val descricao: String? = null,
+    val tipoArrecadacao: String? = null,
     val itens: String? = null,
+    val metaDinheiro: String? = null,
 ) {
     val valido: Boolean
-        get() = titulo == null && descricao == null && itens == null
+        get() =
+            titulo == null &&
+                descricao == null &&
+                tipoArrecadacao == null &&
+                itens == null &&
+                metaDinheiro == null
 }
 
 fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
     val titulo = form.titulo.trim()
+    val erroTipo =
+        if (!form.pedirItens && !form.pedirDinheiro) {
+            "Ative pelo menos um tipo de arrecadação (objetos ou dinheiro)."
+        } else {
+            null
+        }
     val itensValidos = form.itensPreenchidos
     val erroItens =
-        when {
-            itensValidos.isEmpty() -> "Adicione pelo menos um item com nome."
-            itensValidos.any { it.quantidade < 1 } -> "A quantidade de cada item deve ser pelo menos 1."
-            form.itensFocoFormatado.length > Validators.ITENS_FOCO_MAX ->
-                "A lista de itens excede o limite de ${Validators.ITENS_FOCO_MAX} caracteres."
-            else -> null
+        if (!form.pedirItens) {
+            null
+        } else {
+            when {
+                itensValidos.isEmpty() -> "Adicione pelo menos um item com nome."
+                itensValidos.any { it.quantidade < 1 } -> "A quantidade de cada item deve ser pelo menos 1."
+                form.itensFocoFormatado.length > Validators.ITENS_FOCO_MAX ->
+                    "A lista de itens excede o limite de ${Validators.ITENS_FOCO_MAX} caracteres."
+                else -> null
+            }
+        }
+    val erroMetaDinheiro =
+        if (!form.pedirDinheiro) {
+            null
+        } else if (form.metaEmCentavos < 100L) {
+            "Informe uma meta financeira de pelo menos R$ 1,00."
+        } else {
+            null
         }
     return CampanhaFormErros(
         titulo =
             when {
                 titulo.isEmpty() -> "Informe o título da campanha."
                 titulo.length < Validators.NOME_ITEM_MIN -> "Use pelo menos ${Validators.NOME_ITEM_MIN} caracteres."
-                titulo.length > Validators.NOME_ITEM_MAX -> "Use no máximo ${Validators.NOME_ITEM_MAX} caracteres."
+                titulo.length > Validators.TITULO_CAMPANHA_MAX -> "Use no máximo ${Validators.TITULO_CAMPANHA_MAX} caracteres."
                 else -> null
             },
         descricao =
@@ -160,6 +203,8 @@ fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
             } else {
                 null
             },
+        tipoArrecadacao = erroTipo,
         itens = erroItens,
+        metaDinheiro = erroMetaDinheiro,
     )
 }

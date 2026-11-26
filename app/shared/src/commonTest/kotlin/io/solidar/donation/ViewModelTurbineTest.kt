@@ -5,6 +5,7 @@ import io.solidar.donation.domain.error.FalhaDominio
 import io.solidar.donation.domain.model.NovaCampanhaInput
 import io.solidar.donation.domain.model.NovaDoacaoInput
 import io.solidar.donation.domain.model.ResultadoCacheado
+import io.solidar.donation.domain.repository.AuthRepository
 import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.domain.repository.DoacaoRepository
 import io.solidar.donation.model.Campaign
@@ -12,6 +13,9 @@ import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
 import io.solidar.donation.model.DoacaoDisponivel
 import io.solidar.donation.model.DoacaoStatus
+import io.solidar.donation.model.UserSession
+import io.solidar.donation.ui.auth.AuthState
+import io.solidar.donation.ui.auth.AuthViewModel
 import io.solidar.donation.ui.donation.CriarDoacaoState
 import io.solidar.donation.ui.donation.CriarDoacaoViewModel
 import io.solidar.donation.ui.history.HistoricoAba
@@ -115,6 +119,46 @@ private class FakeDoacaoRepository(
     override suspend fun removerInteresse(doacaoId: String): Result<Unit> = Result.success(Unit)
 
     override fun listarInteressesIds(): Set<String> = emptySet()
+}
+
+private class FakeAuthRepository(
+    var respostaLogin: Result<UserSession> =
+        Result.success(UserSession("tok", "PESSOA_FISICA", 1, "Maria", "maria@solidar.io")),
+    var atrasoMs: Long = 50L,
+) : AuthRepository {
+    private var sessaoAtual: UserSession? = null
+
+    override suspend fun login(
+        email: String,
+        senha: String,
+    ): Result<UserSession> {
+        if (atrasoMs > 0) delay(atrasoMs)
+        respostaLogin.onSuccess { sessaoAtual = it }
+        return respostaLogin
+    }
+
+    override suspend fun registerPessoaFisica(
+        nome: String,
+        email: String,
+        senha: String,
+        cpf: String,
+    ): Result<UserSession> = respostaLogin
+
+    override suspend fun registerInstituicao(
+        nome: String,
+        email: String,
+        senha: String,
+        cnpj: String,
+    ): Result<UserSession> = respostaLogin
+
+    override suspend fun verifySession(): Result<UserSession> =
+        sessaoAtual?.let { Result.success(it) } ?: Result.failure(FalhaDominio.DadosInvalidos("Sem sessão"))
+
+    override fun getActiveSession(): UserSession? = sessaoAtual
+
+    override fun logout() {
+        sessaoAtual = null
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -322,6 +366,63 @@ class ViewModelTurbineTest {
                 assertEquals("Agasalho Infantil", estadoErro.form.nome)
                 assertEquals(3, estadoErro.form.quantidade)
                 assertEquals("Agasalho novo na etiqueta", estadoErro.form.descricao)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun authViewModel_loginTransicionaDeLoadingParaSucessoEErro() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val fakeAuthRepo = FakeAuthRepository()
+            val viewModel = AuthViewModel(fakeAuthRepo)
+
+            viewModel.loginUiState.test {
+                assertIs<AuthState.Idle>(awaitItem().authState)
+
+                viewModel.login("maria@solidar.io", "123456")
+                assertIs<AuthState.Loading>(awaitItem().authState)
+                val sucesso = assertIs<AuthState.Success>(awaitItem().authState)
+                assertTrue(sucesso.message.contains("Maria"))
+
+                fakeAuthRepo.respostaLogin = Result.failure(FalhaDominio.SemConexao())
+                viewModel.login("maria@solidar.io", "123456")
+                assertIs<AuthState.Loading>(awaitItem().authState)
+                val erro = assertIs<AuthState.Error>(awaitItem().authState)
+                assertTrue(erro.message.contains("Sem conexão", ignoreCase = true))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun campanhasViewModel_carregarCampanhaPorId_buscaNoRepositorioSemUsarMock() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val campanhaRemota =
+                Campaign(
+                    id = "1",
+                    title = "Campanha Real do Backend",
+                    organizer = "ONG Real",
+                    goalInCents = 100_000L,
+                    raisedInCents = 25_000L,
+                )
+            val fakeRepo =
+                FakeCampanhaRepository(
+                    resposta = Result.success(ResultadoCacheado(listOf(campanhaRemota))),
+                )
+            val viewModel = CampanhasViewModel(fakeRepo, carregarAoIniciar = false)
+
+            // Antes de carregar, não retorna sampleCampaigns hardcoded
+            assertEquals(null, viewModel.buscarCampanhaPorId("1"))
+
+            viewModel.uiState.test {
+                awaitItem() // estado inicial
+                viewModel.carregarCampanhaPorId("1")
+                assertTrue(awaitItem().carregandoDetalhe)
+                val carregado = awaitItem()
+                assertEquals("Campanha Real do Backend", carregado.campanhaDetalheCarregada?.title)
+                assertEquals("Campanha Real do Backend", viewModel.buscarCampanhaPorId("1")?.title)
                 cancelAndIgnoreRemainingEvents()
             }
         }

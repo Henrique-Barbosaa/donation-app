@@ -39,6 +39,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -479,7 +481,7 @@ private fun MinhaCampanhaCard(
         }
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -523,19 +525,29 @@ private fun MinhaCampanhaCard(
                 )
             }
 
-            LinearProgressIndicator(
-                progress = { campaign.progress },
-                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
+            if (campaign.aceitaDinheiro) {
+                val percentual = (campaign.progress * 100).toInt()
+                LinearProgressIndicator(
+                    progress = { campaign.progress },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .semantics {
+                                contentDescription = "Progresso da campanha: $percentual por cento"
+                            },
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
 
-            Text(
-                text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
+                Text(
+                    text = "${formatBrl(campaign.raisedInCents)} arrecadados de ${formatBrl(campaign.goalInCents)}",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
 
             if (campaign.itensNecessarios.isNotEmpty()) {
                 val resumoItens =
@@ -608,7 +620,8 @@ fun HistoricoScreen(
 ) {
     val doacoesFiltradas =
         when (selectedTab) {
-            HistoricoAba.FEITAS -> doacoes.filter { it.direction == DoacaoDirecao.FEITA }
+            HistoricoAba.FEITAS ->
+                doacoes.filter { it.direction == DoacaoDirecao.FEITA && it.status != DoacaoStatus.PENDENTE }
             HistoricoAba.INTERESSADOS ->
                 doacoes.filter { it.direction == DoacaoDirecao.FEITA && it.status == DoacaoStatus.PENDENTE }
             HistoricoAba.RECEBIDAS -> doacoes.filter { it.direction == DoacaoDirecao.RECEBIDA }
@@ -665,7 +678,17 @@ private fun EmptyHistoricoMessage(
 private fun HistoricoScreenFilledPreview() {
     DonationTheme {
         HistoricoScreen(
-            doacoes = sampleDoacoes,
+            doacoes =
+                listOf(
+                    Doacao(
+                        id = "preview-1",
+                        itemTitle = "Item de Exemplo",
+                        counterpartName = "Instituição Parceira",
+                        direction = DoacaoDirecao.FEITA,
+                        status = DoacaoStatus.CONCLUIDA,
+                        dateLabel = "Registrada recentemente",
+                    ),
+                ),
             selectedTab = HistoricoAba.FEITAS,
             onTabSelected = {},
         )
@@ -689,7 +712,17 @@ private fun HistoricoScreenEmptyPreview() {
 private fun HistoricoScreenDarkPreview() {
     DonationTheme(darkTheme = true) {
         HistoricoScreen(
-            doacoes = sampleDoacoes,
+            doacoes =
+                listOf(
+                    Doacao(
+                        id = "preview-1",
+                        itemTitle = "Item de Exemplo",
+                        counterpartName = "Instituição Parceira",
+                        direction = DoacaoDirecao.FEITA,
+                        status = DoacaoStatus.CONCLUIDA,
+                        dateLabel = "Registrada recentemente",
+                    ),
+                ),
             selectedTab = HistoricoAba.FEITAS,
             onTabSelected = {},
         )

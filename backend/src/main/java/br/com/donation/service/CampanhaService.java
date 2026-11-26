@@ -55,14 +55,22 @@ public class CampanhaService {
     public CampanhaDTO criarCampanha(Integer userId, CriarCampanhaDTO dto, MultipartFile imagem) {
         verificarSeInstituicao(userId);
 
+        long metaEmCentavos = dto.getMetaEmCentavos() != null ? Math.max(0L, dto.getMetaEmCentavos()) : 0L;
+        boolean temItens = dto.getItensFoco() != null && !dto.getItensFoco().isBlank();
+        if (!temItens && metaEmCentavos <= 0L) {
+            throw new BusinessException("A campanha deve solicitar itens físicos, uma meta financeira ou ambos.");
+        }
+
         CampanhaDoacao campanha = new CampanhaDoacao();
         campanha.setInstituicaoUsuarioId(userId);
         campanha.setTitulo(dto.getTitulo());
         campanha.setDescricao(dto.getDescricao());
         campanha.setDataInicio(dto.getDataInicio());
         campanha.setDataFim(dto.getDataFim());
-        campanha.setItensFoco(dto.getItensFoco());
+        campanha.setItensFoco(temItens ? dto.getItensFoco().trim() : null);
         campanha.setMetaVoluntarios(dto.getMetaVoluntarios());
+        campanha.setMetaEmCentavos(metaEmCentavos);
+        campanha.setArrecadadoEmCentavos(0L);
         campanha.setStatus("ATIVA");
 
         if (imagem != null && !imagem.isEmpty()) {
@@ -215,6 +223,8 @@ public class CampanhaService {
         dto.setStatus(campanha.getStatus());
         dto.setItensFoco(campanha.getItensFoco());
         dto.setMetaVoluntarios(campanha.getMetaVoluntarios());
+        dto.setMetaEmCentavos(campanha.getMetaEmCentavos() != null ? campanha.getMetaEmCentavos() : 0L);
+        dto.setArrecadadoEmCentavos(campanha.getArrecadadoEmCentavos() != null ? campanha.getArrecadadoEmCentavos() : 0L);
 
         usuarioRepository.findById(campanha.getInstituicaoUsuarioId())
                 .ifPresent(u -> dto.setNomeInstituicao(u.getNome()));

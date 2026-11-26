@@ -1,5 +1,6 @@
 package io.solidar.donation
 
+import io.solidar.donation.data.remote.GeneratedBackendConfig
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDefaults
@@ -12,7 +13,12 @@ class IOSPlatform : Platform {
 
 actual fun getPlatform(): Platform = IOSPlatform()
 
-actual fun platformDefaultBackendUrl(): String = "http://localhost:8080"
+actual fun platformDefaultBackendUrl(): String =
+    if (GeneratedBackendConfig.IS_CUSTOM_HOST) {
+        GeneratedBackendConfig.DEFAULT_BASE_URL
+    } else {
+        "http://localhost:8080"
+    }
 
 actual fun platformStorageDir(): String {
     val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
