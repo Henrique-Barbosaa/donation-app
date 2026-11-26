@@ -11,21 +11,21 @@ O código comum (`commonMain`) está organizado em três camadas com dependênci
 ```mermaid
 flowchart TD
     subgraph UI["Camada de Apresentação (ui)"]
-        Screens["Telas @Composable\n(HomeScreen, ExplorarScreen, HistoricoScreen, CriarDoacaoScreen,\nCriarCampanhaScreen, EfetivarDoacaoScreen, DoarItensCampanhaScreen,\nDoarDinheiroScreen, CampanhaDetalheScreen, LoginScreen, SignUpScreen)"]
-        ViewModels["ViewModels Multiplataforma\n(CampanhasViewModel, ExplorarViewModel, HistoricoViewModel,\nCriarDoacaoViewModel, CriarCampanhaViewModel, EfetivarDoacaoViewModel,\nDoarItensCampanhaViewModel, DoarDinheiroViewModel, AuthViewModel)"]
+        Screens["Telas @Composable\n(HomeScreen, ExplorarScreen, HistoricoScreen, CriarDoacaoScreen,\nCriarCampanhaScreen, EfetivarDoacaoScreen, DoarItensCampanhaScreen,\nDoarDinheiroScreen, CampanhaDetalheScreen, PerfilScreen,\nEditarPerfilScreen, AlterarSenhaScreen, LoginScreen, SignUpScreen)"]
+        ViewModels["ViewModels Multiplataforma\n(CampanhasViewModel, ExplorarViewModel, HistoricoViewModel,\nCriarDoacaoViewModel, CriarCampanhaViewModel, EfetivarDoacaoViewModel,\nDoarItensCampanhaViewModel, DoarDinheiroViewModel, PerfilViewModel, AuthViewModel)"]
         TelaEstado["Estados Imutáveis & Classe Selada\n(TelaEstado: Carregando | Vazio | Sucesso | Erro)"]
     end
 
     subgraph DOMAIN["Camada de Domínio (domain / model)"]
-        Entities["Entidades Puras\n(Campaign, Doacao, DoacaoDisponivel, Interessado, UserSession,\nNovaDoacaoInput, NovaCampanhaInput, EfetivarDoacaoInput, ResultadoCacheado)"]
-        RepoInterfaces["Interfaces de Repositório\n(CampanhaRepository, DoacaoRepository, AuthRepository)"]
+        Entities["Entidades Puras\n(Campaign, Doacao, DoacaoDisponivel, Interessado, PerfilUsuario, UserSession,\nNovaDoacaoInput, NovaCampanhaInput, EfetivarDoacaoInput,\nAtualizarPerfilInput, AlterarSenhaInput, ResultadoCacheado)"]
+        RepoInterfaces["Interfaces de Repositório\n(CampanhaRepository, DoacaoRepository, PerfilRepository, AuthRepository)"]
         DomainErrors["Falhas de Domínio Nomeadas\n(FalhaDominio: SemConexao | RespostaInvalida | DadosInvalidos)"]
     end
 
     subgraph DATA["Camada de Dados (data)"]
-        RepoImpl["Implementações de Repositório\n(CampanhaRepositoryImpl, DoacaoRepositoryImpl, AuthRepositoryImpl)"]
-        RemoteDS["Fontes Remotas (Ktor Client)\n(CampanhaRemoteDataSource, DoacaoRemoteDataSource, AuthRemoteDataSource)"]
-        DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain, InteressadoResponseDto.toDomain)"]
+        RepoImpl["Implementações de Repositório\n(CampanhaRepositoryImpl, DoacaoRepositoryImpl, PerfilRepositoryImpl, AuthRepositoryImpl)"]
+        RemoteDS["Fontes Remotas (Ktor Client)\n(CampanhaRemoteDataSource, DoacaoRemoteDataSource, PerfilRemoteDataSource, AuthRemoteDataSource)"]
+        DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain, InteressadoResponseDto.toDomain, PessoaFisicaResponseDto.toDomain)"]
         LocalCache["Persistência Local em Disco\n(FileLocalCacheStorage + PersistentTokenStorage via expect/actual filesDir)"]
     end
 
@@ -126,3 +126,4 @@ sequenceDiagram
 | **Publicação de Doações** | `CriarDoacaoScreen`, `CriarDoacaoViewModel` | `POST /api/doacoes` (multipart) |
 | **Feed de Doações Disponíveis e Interesse** | `ExplorarScreen`, `HomeScreen` (aba `Oferecem doações`), `ExplorarViewModel` | `GET /api/doacoes/disponiveis`, `POST /api/doacoes/{id}/interesse`, `DELETE /api/doacoes/{id}/interesse` |
 | **Efetivação e Histórico de Doações** | `HistoricoScreen` (`Feitas`, `Interessados`, `Recebidas`, `Campanhas`), `EfetivarDoacaoScreen`, `HistoricoViewModel`, `EfetivarDoacaoViewModel` | `GET /api/doacoes/minhas`, `GET /api/doacoes/recebidas`, `GET /api/doacoes/{id}/interessados`, `PUT /api/doacoes/{id}/efetivar`, `DELETE /api/doacoes/{id}` |
+| **Perfil, Edição de Dados e Alteração de Senha** | `PerfilScreen`, `EditarPerfilScreen`, `AlterarSenhaScreen`, `PerfilViewModel` | `GET /api/usuarios/pessoa-fisica/{id}`, `GET /api/usuarios/instituicao/{id}`, `PUT /api/usuarios/perfil`, `PUT /api/usuarios/senha` |

@@ -6,14 +6,17 @@ import io.solidar.donation.data.remote.AuthRemoteDataSource
 import io.solidar.donation.data.remote.CampanhaRemoteDataSource
 import io.solidar.donation.data.remote.DoacaoRemoteDataSource
 import io.solidar.donation.data.remote.HttpClientFactory
+import io.solidar.donation.data.remote.PerfilRemoteDataSource
 import io.solidar.donation.data.repository.AuthRepositoryImpl
 import io.solidar.donation.data.repository.CampanhaRepositoryImpl
 import io.solidar.donation.data.repository.DoacaoRepositoryImpl
+import io.solidar.donation.data.repository.PerfilRepositoryImpl
 import io.solidar.donation.data.storage.SessionStorage
 import io.solidar.donation.data.storage.TokenStorage
 import io.solidar.donation.domain.repository.AuthRepository
 import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.domain.repository.DoacaoRepository
+import io.solidar.donation.domain.repository.PerfilRepository
 import io.solidar.donation.ui.auth.AuthViewModel
 import io.solidar.donation.ui.campaign.CriarCampanhaViewModel
 import io.solidar.donation.ui.donation.CriarDoacaoViewModel
@@ -23,6 +26,7 @@ import io.solidar.donation.ui.donation.EfetivarDoacaoViewModel
 import io.solidar.donation.ui.explore.ExplorarViewModel
 import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.home.CampanhasViewModel
+import io.solidar.donation.ui.profile.PerfilViewModel
 
 /**
  * Container central de injeção de dependências da aplicação.
@@ -52,6 +56,12 @@ class AppContainer(
             remoteDataSource = DoacaoRemoteDataSource(httpClient = httpClient),
             localCacheStorage = localCacheStorage,
         ),
+    val perfilRepository: PerfilRepository =
+        PerfilRepositoryImpl(
+            tokenStorage = tokenStorage,
+            remoteDataSource = PerfilRemoteDataSource(httpClient = httpClient),
+            localCacheStorage = localCacheStorage,
+        ),
 ) {
     fun createAuthViewModel(): AuthViewModel = AuthViewModel(authRepository)
 
@@ -73,6 +83,9 @@ class AppContainer(
     fun createDoarItensCampanhaViewModel(): DoarItensCampanhaViewModel = DoarItensCampanhaViewModel(doacaoRepository)
 
     fun createDoarDinheiroViewModel(): DoarDinheiroViewModel = DoarDinheiroViewModel(doacaoRepository)
+
+    fun createPerfilViewModel(carregarAoIniciar: Boolean = true): PerfilViewModel =
+        PerfilViewModel(perfilRepository, carregarAoIniciar = carregarAoIniciar)
 
     companion object {
         val default: AppContainer by lazy { AppContainer() }

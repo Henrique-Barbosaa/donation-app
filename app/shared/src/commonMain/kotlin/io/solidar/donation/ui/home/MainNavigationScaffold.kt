@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import io.solidar.donation.di.AppContainer
+import io.solidar.donation.domain.model.PerfilUsuario
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.UserSession
@@ -65,6 +66,8 @@ import io.solidar.donation.ui.explore.ExplorarViewModel
 import io.solidar.donation.ui.history.HistoricoAba
 import io.solidar.donation.ui.history.HistoricoScreen
 import io.solidar.donation.ui.history.HistoricoViewModel
+import io.solidar.donation.ui.profile.PerfilScreen
+import io.solidar.donation.ui.profile.PerfilViewModel
 import io.solidar.donation.ui.state.TelaEstado
 
 enum class MainTab(
@@ -79,7 +82,7 @@ enum class MainTab(
 }
 
 /**
- * Shell principal pós-login. Lê o estado de [CampanhasViewModel] e [HistoricoViewModel]
+ * Shell principal pós-login. Lê o estado de [CampanhasViewModel], [HistoricoViewModel] e [PerfilViewModel]
  * com [collectAsStateWithLifecycle], sem manter estado de negócio em `remember`.
  */
 @Composable
@@ -90,10 +93,13 @@ fun MainNavigationScaffold(
     modifier: Modifier = Modifier,
     onNavigateToCreateCampaign: (() -> Unit)? = null,
     onEfetivarDoacao: ((Doacao) -> Unit)? = null,
+    onNavigateToEditarPerfil: () -> Unit = {},
+    onNavigateToAlterarSenha: () -> Unit = {},
     activeSession: UserSession? = null,
     campanhasViewModel: CampanhasViewModel = viewModel { AppContainer.default.createCampanhasViewModel() },
     historicoViewModel: HistoricoViewModel = viewModel { AppContainer.default.createHistoricoViewModel() },
     explorarViewModel: ExplorarViewModel = viewModel { AppContainer.default.createExplorarViewModel() },
+    perfilViewModel: PerfilViewModel = viewModel { AppContainer.default.createPerfilViewModel() },
 ) {
     val wide =
         currentWindowAdaptiveInfo()
@@ -103,6 +109,7 @@ fun MainNavigationScaffold(
     val campanhasUiState by campanhasViewModel.uiState.collectAsStateWithLifecycle()
     val historicoUiState by historicoViewModel.uiState.collectAsStateWithLifecycle()
     val explorarUiState by explorarViewModel.uiState.collectAsStateWithLifecycle()
+    val perfilUiState by perfilViewModel.uiState.collectAsStateWithLifecycle()
 
     val ehInstituicao = activeSession?.tipo == "INSTITUICAO"
 
@@ -157,6 +164,19 @@ fun MainNavigationScaffold(
         activeSession = activeSession,
         onNavigateToCreateCampaign = onNavigateToCreateCampaign,
         onEfetivarDoacao = onEfetivarDoacao,
+        totalDoacoesFeitas = historicoUiState.totalFeitas,
+        totalDoacoesRecebidas = historicoUiState.totalRecebidas,
+        estadoPerfil = perfilUiState.estadoPerfil,
+        mensagemFeedbackPerfil = perfilUiState.mensagemFeedback,
+        onRecarregarPerfil = perfilViewModel::carregarPerfil,
+        onEditarPerfilClick = {
+            perfilViewModel.prepararEdicaoPerfil()
+            onNavigateToEditarPerfil()
+        },
+        onAlterarSenhaClick = {
+            perfilViewModel.prepararAlteracaoSenha()
+            onNavigateToAlterarSenha()
+        },
         onCampaignClick = onCampaignClick,
         onNavigateToCreateDonation = onNavigateToCreateDonation,
         onLogout = onLogout,
@@ -206,6 +226,13 @@ fun MainNavigationContent(
     activeSession: UserSession? = null,
     onNavigateToCreateCampaign: (() -> Unit)? = null,
     onEfetivarDoacao: ((Doacao) -> Unit)? = null,
+    totalDoacoesFeitas: Int = 0,
+    totalDoacoesRecebidas: Int = 0,
+    estadoPerfil: TelaEstado<PerfilUsuario> = TelaEstado.Carregando,
+    mensagemFeedbackPerfil: String? = null,
+    onRecarregarPerfil: () -> Unit = {},
+    onEditarPerfilClick: () -> Unit = {},
+    onAlterarSenhaClick: () -> Unit = {},
 ) {
     var exibirSeletorCadastro by rememberSaveable { mutableStateOf(false) }
     val podeCriarCampanha = onNavigateToCreateCampaign != null
@@ -292,6 +319,13 @@ fun MainNavigationContent(
                     onNavigateToCreateCampaign = onNavigateToCreateCampaign,
                     onNavigateToCreateDonation = onNavigateToCreateDonation,
                     onEfetivarDoacao = onEfetivarDoacao,
+                    totalDoacoesFeitas = totalDoacoesFeitas,
+                    totalDoacoesRecebidas = totalDoacoesRecebidas,
+                    estadoPerfil = estadoPerfil,
+                    mensagemFeedbackPerfil = mensagemFeedbackPerfil,
+                    onRecarregarPerfil = onRecarregarPerfil,
+                    onEditarPerfilClick = onEditarPerfilClick,
+                    onAlterarSenhaClick = onAlterarSenhaClick,
                     onCampaignClick = onCampaignClick,
                     onLogout = onLogout,
                     modifier = Modifier.padding(padding),
@@ -363,6 +397,13 @@ fun MainNavigationContent(
                 onNavigateToCreateCampaign = onNavigateToCreateCampaign,
                 onNavigateToCreateDonation = onNavigateToCreateDonation,
                 onEfetivarDoacao = onEfetivarDoacao,
+                totalDoacoesFeitas = totalDoacoesFeitas,
+                totalDoacoesRecebidas = totalDoacoesRecebidas,
+                estadoPerfil = estadoPerfil,
+                mensagemFeedbackPerfil = mensagemFeedbackPerfil,
+                onRecarregarPerfil = onRecarregarPerfil,
+                onEditarPerfilClick = onEditarPerfilClick,
+                onAlterarSenhaClick = onAlterarSenhaClick,
                 onCampaignClick = onCampaignClick,
                 onLogout = onLogout,
                 modifier = Modifier.padding(padding),
@@ -405,6 +446,13 @@ private fun TabContent(
     onNavigateToCreateCampaign: (() -> Unit)?,
     onNavigateToCreateDonation: () -> Unit,
     onEfetivarDoacao: ((Doacao) -> Unit)?,
+    totalDoacoesFeitas: Int,
+    totalDoacoesRecebidas: Int,
+    estadoPerfil: TelaEstado<PerfilUsuario>,
+    mensagemFeedbackPerfil: String?,
+    onRecarregarPerfil: () -> Unit,
+    onEditarPerfilClick: () -> Unit,
+    onAlterarSenhaClick: () -> Unit,
     onCampaignClick: (Campaign) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -500,26 +548,19 @@ private fun TabContent(
                     processandoCampanhaId = processandoCampanhaId,
                     onRecarregarCampanhas = onRecarregarMinhasCampanhas,
                 )
-            MainTab.PROFILE -> {
-                val nomePerfil = activeSession?.nome?.takeIf { it.isNotBlank() } ?: "Seu Perfil"
-                val tipoLabel =
-                    when (activeSession?.tipo) {
-                        "INSTITUICAO" -> "Instituição / ONG"
-                        "PESSOA_FISICA" -> "Pessoa Física"
-                        else -> null
-                    }
-                val subtituloPerfil =
-                    listOfNotNull(activeSession?.email?.takeIf { it.isNotBlank() }, tipoLabel)
-                        .joinToString(" • ")
-                        .ifBlank { "Gerencie seus dados, preferências e informações de doador/ONG." }
-                PlaceholderScreen(
-                    title = nomePerfil,
-                    subtitle = subtituloPerfil,
-                    icon = AppIcons.Person,
-                    actionButtonText = "Sair da conta",
-                    onActionClick = onLogout,
+            MainTab.PROFILE ->
+                PerfilScreen(
+                    estado = estadoPerfil,
+                    wide = wide,
+                    mensagemFeedback = mensagemFeedbackPerfil,
+                    totalDoacoesFeitas = totalDoacoesFeitas,
+                    totalDoacoesRecebidas = totalDoacoesRecebidas,
+                    totalFavoritas = favoritosIds.size,
+                    onEditarPerfilClick = onEditarPerfilClick,
+                    onAlterarSenhaClick = onAlterarSenhaClick,
+                    onTentarDeNovo = onRecarregarPerfil,
+                    onLogout = onLogout,
                 )
-            }
         }
     }
 }

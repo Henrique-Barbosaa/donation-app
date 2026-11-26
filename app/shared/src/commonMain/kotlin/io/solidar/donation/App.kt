@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import io.solidar.donation.di.AppContainer
+import io.solidar.donation.navigation.AlterarSenhaRoute
 import io.solidar.donation.navigation.AuthGraph
 import io.solidar.donation.navigation.CampanhaDetalheRoute
 import io.solidar.donation.navigation.CriarCampanhaRoute
@@ -26,6 +27,7 @@ import io.solidar.donation.navigation.CriarDoacaoRoute
 import io.solidar.donation.navigation.DEEP_LINK_CAMPANHA
 import io.solidar.donation.navigation.DoarDinheiroRoute
 import io.solidar.donation.navigation.DoarItensCampanhaRoute
+import io.solidar.donation.navigation.EditarPerfilRoute
 import io.solidar.donation.navigation.EfetivarDoacaoRoute
 import io.solidar.donation.navigation.LoginRoute
 import io.solidar.donation.navigation.MainRoute
@@ -43,6 +45,9 @@ import io.solidar.donation.ui.donation.EfetivarDoacaoScreen
 import io.solidar.donation.ui.donation.OpcoesDoacaoScreen
 import io.solidar.donation.ui.home.CampanhasViewModel
 import io.solidar.donation.ui.home.MainNavigationScaffold
+import io.solidar.donation.ui.profile.AlterarSenhaScreen
+import io.solidar.donation.ui.profile.EditarPerfilScreen
+import io.solidar.donation.ui.profile.PerfilViewModel
 
 @Composable
 @Preview
@@ -72,6 +77,7 @@ fun DonationNavHost(
     val campanhasViewModel: CampanhasViewModel = viewModel { appContainer.createCampanhasViewModel(carregarAoIniciar = false) }
     val historicoViewModel = viewModel { appContainer.createHistoricoViewModel(carregarAoIniciar = false) }
     val explorarViewModel = viewModel { appContainer.createExplorarViewModel(carregarAoIniciar = false) }
+    val perfilViewModel: PerfilViewModel = viewModel { appContainer.createPerfilViewModel(carregarAoIniciar = false) }
     val sessaoInicial = remember(appContainer) { appContainer.authRepository.getActiveSession() }
     val destinoInicial: Any = if (sessaoInicial != null) MainRoute else AuthGraph
 
@@ -101,12 +107,14 @@ fun DonationNavHost(
                 campanhasViewModel.carregarCampanhas()
                 historicoViewModel.carregarHistorico(carregarCampanhas = ehInstituicao)
                 explorarViewModel.carregarDoacoes()
+                perfilViewModel.carregarPerfil()
             }
 
             MainNavigationScaffold(
                 campanhasViewModel = campanhasViewModel,
                 historicoViewModel = historicoViewModel,
                 explorarViewModel = explorarViewModel,
+                perfilViewModel = perfilViewModel,
                 activeSession = activeSession,
                 onNavigateToCreateDonation = { navController.navigate(CriarDoacaoRoute) },
                 onNavigateToCreateCampaign =
@@ -118,16 +126,35 @@ fun DonationNavHost(
                 onEfetivarDoacao = { doacao ->
                     navController.navigate(EfetivarDoacaoRoute(id = doacao.id, itemTitle = doacao.itemTitle))
                 },
+                onNavigateToEditarPerfil = { navController.navigate(EditarPerfilRoute) },
+                onNavigateToAlterarSenha = { navController.navigate(AlterarSenhaRoute) },
                 onCampaignClick = { navController.navigate(CampanhaDetalheRoute(it.id)) },
                 onLogout = {
                     authViewModel.logout()
                     campanhasViewModel.limparEstadoSessao()
                     historicoViewModel.limparEstadoSessao()
                     explorarViewModel.limparEstadoSessao()
+                    perfilViewModel.limparEstadoSessao()
                     navController.navigate(AuthGraph) {
                         popUpTo<MainRoute> { inclusive = true }
                     }
                 },
+            )
+        }
+
+        composable<EditarPerfilRoute> {
+            EditarPerfilScreen(
+                viewModel = perfilViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onProfileUpdated = { navController.popBackStack() },
+            )
+        }
+
+        composable<AlterarSenhaRoute> {
+            AlterarSenhaScreen(
+                viewModel = perfilViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onPasswordChanged = { navController.popBackStack() },
             )
         }
 

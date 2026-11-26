@@ -17,6 +17,7 @@ object Validators {
     const val DESCRICAO_MAX = 500
     const val NOME_LOCAL_MAX = 45
     const val ITENS_FOCO_MAX = 200
+    const val CEP_DIGITOS = 8
 
     fun emailValido(email: String): Boolean = EMAIL_REGEX.matches(email.trim())
 
@@ -245,5 +246,118 @@ fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
         itens = erroItens,
         metaDinheiro = erroMetaDinheiro,
         locais = erroLocais,
+    )
+}
+
+/** Estado do formulário de edição de perfil do usuário. */
+data class PerfilForm(
+    val nome: String = "",
+    val cep: String = "",
+    val logradouro: String = "",
+    val numero: String = "",
+    val bairro: String = "",
+)
+
+/** Erros derivados do [PerfilForm]; `null` significa campo válido. */
+data class PerfilFormErros(
+    val nome: String? = null,
+    val cep: String? = null,
+    val logradouro: String? = null,
+    val numero: String? = null,
+    val bairro: String? = null,
+) {
+    val valido: Boolean
+        get() =
+            nome == null &&
+                cep == null &&
+                logradouro == null &&
+                numero == null &&
+                bairro == null
+}
+
+/** Validação pura do formulário de edição de perfil. */
+fun validarPerfil(form: PerfilForm): PerfilFormErros {
+    val nomeLimpo = form.nome.trim()
+    val cepDigitos = form.cep.filter { it.isDigit() }
+    return PerfilFormErros(
+        nome =
+            when {
+                nomeLimpo.isEmpty() -> "O nome é obrigatório."
+                nomeLimpo.length < Validators.NOME_ITEM_MIN ->
+                    "O nome deve ter no mínimo ${Validators.NOME_ITEM_MIN} caracteres."
+                nomeLimpo.length > 100 -> "O nome pode ter no máximo 100 caracteres."
+                else -> null
+            },
+        cep =
+            if (cepDigitos.isNotEmpty() && cepDigitos.length != Validators.CEP_DIGITOS) {
+                "O CEP deve conter ${Validators.CEP_DIGITOS} dígitos."
+            } else {
+                null
+            },
+        logradouro =
+            if (form.logradouro.trim().length > 100) {
+                "O logradouro pode ter no máximo 100 caracteres."
+            } else {
+                null
+            },
+        numero =
+            if (form.numero.trim().length > 10) {
+                "O número pode ter no máximo 10 caracteres."
+            } else {
+                null
+            },
+        bairro =
+            if (form.bairro.trim().length > 100) {
+                "O bairro pode ter no máximo 100 caracteres."
+            } else {
+                null
+            },
+    )
+}
+
+/** Estado do formulário de alteração de senha. */
+data class AlterarSenhaForm(
+    val senhaAtual: String = "",
+    val novaSenha: String = "",
+    val confirmarNovaSenha: String = "",
+)
+
+/** Erros derivados do [AlterarSenhaForm]; `null` significa campo válido. */
+data class AlterarSenhaFormErros(
+    val senhaAtual: String? = null,
+    val novaSenha: String? = null,
+    val confirmarNovaSenha: String? = null,
+) {
+    val valido: Boolean
+        get() =
+            senhaAtual == null &&
+                novaSenha == null &&
+                confirmarNovaSenha == null
+}
+
+/** Validação pura do formulário de alteração de senha. */
+fun validarAlterarSenha(form: AlterarSenhaForm): AlterarSenhaFormErros {
+    return AlterarSenhaFormErros(
+        senhaAtual =
+            if (form.senhaAtual.isBlank()) {
+                "Informe a sua senha atual."
+            } else {
+                null
+            },
+        novaSenha =
+            when {
+                form.novaSenha.isEmpty() -> "Informe a nova senha."
+                form.novaSenha.length < Validators.SENHA_MIN ->
+                    "A nova senha deve ter pelo menos ${Validators.SENHA_MIN} caracteres."
+                form.senhaAtual.isNotEmpty() && form.novaSenha == form.senhaAtual ->
+                    "A nova senha deve ser diferente da senha atual."
+                else -> null
+            },
+        confirmarNovaSenha =
+            when {
+                form.confirmarNovaSenha.isEmpty() -> "Confirme a nova senha."
+                form.confirmarNovaSenha != form.novaSenha -> "A confirmação não coincide com a nova senha."
+                else -> null
+            },
     )
 }

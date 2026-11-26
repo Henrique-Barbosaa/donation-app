@@ -24,6 +24,8 @@ data class HistoricoUiState(
     val cancelandoDoacaoId: String? = null,
     val processandoCampanhaId: String? = null,
     val avisoAcao: String? = null,
+    val totalFeitas: Int = 0,
+    val totalRecebidas: Int = 0,
 )
 
 /**
@@ -94,12 +96,17 @@ class HistoricoViewModel(
             result.fold(
                 onSuccess = {
                     todasDoacoesCache = todasDoacoesCache?.filterNot { it.id == doacaoId }
+                    val todas = todasDoacoesCache.orEmpty()
+                    val qtdFeitas = todas.count { it.direction == DoacaoDirecao.FEITA }
+                    val qtdRecebidas = todas.count { it.direction == DoacaoDirecao.RECEBIDA }
                     val novoEstado = calcularEstadoFiltrado(_uiState.value.abaSelecionada)
                     _uiState.update { atual ->
                         atual.copy(
                             estadoLista = novoEstado ?: atual.estadoLista,
                             cancelandoDoacaoId = null,
                             avisoAcao = "Doação cancelada com sucesso.",
+                            totalFeitas = qtdFeitas,
+                            totalRecebidas = qtdRecebidas,
                         )
                     }
                     onSucesso()
@@ -248,8 +255,17 @@ class HistoricoViewModel(
     }
 
     private fun atualizarListaFiltrada(aba: HistoricoAba) {
-        val novoEstado = calcularEstadoFiltrado(aba) ?: return
-        _uiState.update { it.copy(estadoLista = novoEstado) }
+        val todas = todasDoacoesCache ?: return
+        val qtdFeitas = todas.count { it.direction == DoacaoDirecao.FEITA }
+        val qtdRecebidas = todas.count { it.direction == DoacaoDirecao.RECEBIDA }
+        val novoEstado = calcularEstadoFiltrado(aba)
+        _uiState.update { atual ->
+            atual.copy(
+                estadoLista = novoEstado ?: atual.estadoLista,
+                totalFeitas = qtdFeitas,
+                totalRecebidas = qtdRecebidas,
+            )
+        }
     }
 
     private fun calcularEstadoFiltrado(aba: HistoricoAba): TelaEstado<List<Doacao>>? {
