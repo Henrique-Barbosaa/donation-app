@@ -8,6 +8,11 @@ data class CampaignItem(
     val quantidadeAlvo: Int? = null,
 )
 
+data class CampaignLocalColeta(
+    val nome: String,
+    val enderecoResumo: String = "",
+)
+
 data class Campaign(
     val id: String,
     val title: String,
@@ -17,6 +22,7 @@ data class Campaign(
     val descricao: String = "",
     val imageUrl: String? = null,
     val itensNecessarios: List<CampaignItem> = emptyList(),
+    val locaisColeta: List<CampaignLocalColeta> = emptyList(),
     val instituicaoId: Int? = null,
     val status: String = "ATIVA",
 ) {

@@ -3,6 +3,7 @@ package io.solidar.donation.ui.campaign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.solidar.donation.domain.model.ItemCampanhaInput
+import io.solidar.donation.domain.model.LocalColetaInput
 import io.solidar.donation.domain.model.NovaCampanhaInput
 import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.model.Campaign
@@ -63,6 +64,7 @@ class CriarCampanhaViewModel(
                     ?: erros.tipoArrecadacao
                     ?: erros.itens
                     ?: erros.metaDinheiro
+                    ?: erros.locais
                     ?: "Dados da campanha inválidos."
             _uiState.update { it.copy(envioState = CriarCampanhaState.Error(mensagem)) }
             return
@@ -81,6 +83,16 @@ class CriarCampanhaViewModel(
                 } else {
                     emptyList()
                 }
+            val locaisInput =
+                formAtual.locaisPreenchidos.map { local ->
+                    LocalColetaInput(
+                        nome = local.nome.trim(),
+                        logradouro = local.logradouro.trim(),
+                        bairro = local.bairro.trim(),
+                        numero = local.numero.trim(),
+                        cep = local.cep.filter { it.isDigit() },
+                    )
+                }
             val input =
                 NovaCampanhaInput(
                     titulo = formAtual.titulo.trim(),
@@ -88,6 +100,7 @@ class CriarCampanhaViewModel(
                     itens = itensInput,
                     metaEmCentavos = formAtual.metaEmCentavos,
                     metaVoluntarios = itensInput.sumOf { it.quantidade },
+                    locais = locaisInput,
                 )
             val result = repository.criarCampanha(input)
             result.fold(

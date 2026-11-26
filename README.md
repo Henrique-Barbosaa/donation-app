@@ -39,6 +39,7 @@ Este projeto combina:
 - **Criação configurável (`CriarCampanhaScreen`):**
   - Campo de **foto de capa da campanha** (opcional) no mesmo padrão visual das doações;
   - Seletores independentes para ativar **"Pedir objetos / itens físicos"** (com quantidade unitária individual por item) e/ou **"Pedir arrecadação em dinheiro (PIX)"** (meta financeira real informada pela ONG, iniciando sempre em `R$ 0,00`);
+  - Cadastro opcional de **locais físicos de coleta** (nome do ponto, logradouro, bairro, número e CEP), enviados ao backend e exibidos na tela de detalhes da campanha;
   - Bloqueio automático caso nenhuma modalidade de arrecadação esteja ativa.
 - **Feed, Detalhes e Favoritos (`HomeScreen`, `CampanhaDetalheScreen`):**
   - Navegação adaptativa (`NavigationBar` em telas compactas e `NavigationRail` + grade em telas largas);

@@ -3,6 +3,7 @@ package io.solidar.donation.data.local
 import io.solidar.donation.data.remote.HttpClientFactory
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
+import io.solidar.donation.model.CampaignLocalColeta
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
 import io.solidar.donation.model.DoacaoDisponivel
@@ -97,6 +98,12 @@ internal data class CampaignItemCacheDto(
 )
 
 @Serializable
+internal data class CampaignLocalColetaCacheDto(
+    val nome: String,
+    val enderecoResumo: String = "",
+)
+
+@Serializable
 internal data class CampaignCacheDto(
     val id: String,
     val title: String,
@@ -106,6 +113,7 @@ internal data class CampaignCacheDto(
     val descricao: String = "",
     val imageUrl: String? = null,
     val itensNecessarios: List<CampaignItemCacheDto> = emptyList(),
+    val locaisColeta: List<CampaignLocalColetaCacheDto> = emptyList(),
     val instituicaoId: Int? = null,
     val status: String = "ATIVA",
 )
@@ -144,30 +152,7 @@ class FileLocalCacheStorage(
     private val writer: (String, String) -> Unit = ::writePlatformFileText,
 ) : LocalCacheStorage {
     override fun salvarCampanhas(campanhas: List<Campaign>) {
-        val dtos =
-            campanhas.map { camp ->
-                CampaignCacheDto(
-                    id = camp.id,
-                    title = camp.title,
-                    organizer = camp.organizer,
-                    goalInCents = camp.goalInCents,
-                    raisedInCents = camp.raisedInCents,
-                    descricao = camp.descricao,
-                    imageUrl = camp.imageUrl,
-                    instituicaoId = camp.instituicaoId,
-                    status = camp.status,
-                    itensNecessarios =
-                        camp.itensNecessarios.map { item ->
-                            CampaignItemCacheDto(
-                                id = item.id,
-                                nome = item.nome,
-                                quantidadeDescricao = item.quantidadeDescricao,
-                                iconeRef = item.iconeRef,
-                                quantidadeAlvo = item.quantidadeAlvo,
-                            )
-                        },
-                )
-            }
+        val dtos = campanhas.map { it.toCacheDto() }
         runCatching {
             writer(ARQUIVO_CAMPANHAS, json.encodeToString(dtos))
         }
@@ -176,29 +161,7 @@ class FileLocalCacheStorage(
     override fun lerCampanhas(): List<Campaign>? {
         val raw = reader(ARQUIVO_CAMPANHAS) ?: return null
         return runCatching {
-            json.decodeFromString<List<CampaignCacheDto>>(raw).map { dto ->
-                Campaign(
-                    id = dto.id,
-                    title = dto.title,
-                    organizer = dto.organizer,
-                    goalInCents = dto.goalInCents,
-                    raisedInCents = dto.raisedInCents,
-                    descricao = dto.descricao,
-                    imageUrl = dto.imageUrl,
-                    instituicaoId = dto.instituicaoId,
-                    status = dto.status,
-                    itensNecessarios =
-                        dto.itensNecessarios.map { item ->
-                            CampaignItem(
-                                id = item.id,
-                                nome = item.nome,
-                                quantidadeDescricao = item.quantidadeDescricao,
-                                iconeRef = item.iconeRef,
-                                quantidadeAlvo = item.quantidadeAlvo,
-                            )
-                        },
-                )
-            }
+            json.decodeFromString<List<CampaignCacheDto>>(raw).map { it.toDomain() }
         }.getOrNull()
     }
 
@@ -448,6 +411,13 @@ class FileLocalCacheStorage(
                         quantidadeAlvo = item.quantidadeAlvo,
                     )
                 },
+            locaisColeta =
+                locaisColeta.map { local ->
+                    CampaignLocalColetaCacheDto(
+                        nome = local.nome,
+                        enderecoResumo = local.enderecoResumo,
+                    )
+                },
         )
 
     private fun CampaignCacheDto.toDomain(): Campaign =
@@ -469,6 +439,13 @@ class FileLocalCacheStorage(
                         quantidadeDescricao = item.quantidadeDescricao,
                         iconeRef = item.iconeRef,
                         quantidadeAlvo = item.quantidadeAlvo,
+                    )
+                },
+            locaisColeta =
+                locaisColeta.map { local ->
+                    CampaignLocalColeta(
+                        nome = local.nome,
+                        enderecoResumo = local.enderecoResumo,
                     )
                 },
         )

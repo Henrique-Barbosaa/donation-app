@@ -66,6 +66,8 @@ import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.util.CampanhaForm
 import io.solidar.donation.util.ItemCampanhaForm
+import io.solidar.donation.util.LocalColetaForm
+import io.solidar.donation.util.Validators
 import io.solidar.donation.util.validarCampanha
 
 /**
@@ -273,6 +275,12 @@ fun CriarCampanhaContent(
                     onFormChange = onFormChange,
                 )
             }
+
+            SecaoLocaisColeta(
+                form = form,
+                erroLocais = erros.locais,
+                onFormChange = onFormChange,
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -811,6 +819,224 @@ private fun ItemCampanhaFormCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SecaoLocaisColeta(
+    form: CampanhaForm,
+    erroLocais: String?,
+    onFormChange: (CampanhaForm) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Locais físicos de coleta (opcional)",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() },
+        )
+
+        Text(
+            text = "Informe pontos físicos onde os doadores podem entregar os itens presencialmente.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        form.locais.forEachIndexed { index, local ->
+            LocalColetaFormCard(
+                index = index,
+                local = local,
+                onLocalChange = { atualizado ->
+                    val listaAtualizada =
+                        form.locais.map { atual ->
+                            if (atual.id == local.id) atualizado else atual
+                        }
+                    onFormChange(form.copy(locais = listaAtualizada))
+                },
+                onRemover = {
+                    onFormChange(form.copy(locais = form.locais.filterNot { it.id == local.id }))
+                },
+            )
+        }
+
+        if (erroLocais != null) {
+            Text(
+                text = erroLocais,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
+        OutlinedButton(
+            onClick = {
+                val novoLocal = LocalColetaForm(id = form.proximoLocalId())
+                onFormChange(form.copy(locais = form.locais + novoLocal))
+            },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+        ) {
+            Icon(
+                imageVector = AppIcons.Add,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Adicionar local de coleta",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LocalColetaFormCard(
+    index: Int,
+    local: LocalColetaForm,
+    onLocalChange: (LocalColetaForm) -> Unit,
+    onRemover: () -> Unit,
+) {
+    val numeroLocal = index + 1
+    val fieldColors =
+        OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedContainerColor = MaterialTheme.colorScheme.background,
+            focusedContainerColor = MaterialTheme.colorScheme.background,
+        )
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(16.dp),
+                ),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(
+                    value = local.nome,
+                    onValueChange = { onLocalChange(local.copy(nome = it.take(Validators.NOME_LOCAL_MAX))) },
+                    label = { Text("Nome do local $numeroLocal *") },
+                    placeholder = { Text("Ex: Sede da ONG, Portaria do IMD") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Next,
+                        ),
+                    colors = fieldColors,
+                )
+
+                IconButton(
+                    onClick = onRemover,
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .semantics { contentDescription = "Remover local de coleta $numeroLocal" },
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.errorContainer),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "×",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value = local.logradouro,
+                onValueChange = { onLocalChange(local.copy(logradouro = it.take(100))) },
+                label = { Text("Logradouro") },
+                placeholder = { Text("Ex: Av. Senador Salgado Filho") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                keyboardOptions =
+                    KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Next,
+                    ),
+                colors = fieldColors,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(
+                    value = local.bairro,
+                    onValueChange = { onLocalChange(local.copy(bairro = it.take(100))) },
+                    label = { Text("Bairro") },
+                    placeholder = { Text("Ex: Lagoa Nova") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next,
+                        ),
+                    colors = fieldColors,
+                )
+
+                OutlinedTextField(
+                    value = local.numero,
+                    onValueChange = { onLocalChange(local.copy(numero = it.take(10))) },
+                    label = { Text("Nº") },
+                    placeholder = { Text("120") },
+                    modifier = Modifier.width(88.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    colors = fieldColors,
+                )
+            }
+
+            OutlinedTextField(
+                value = local.cep,
+                onValueChange = { novo ->
+                    onLocalChange(local.copy(cep = novo.filter { it.isDigit() }.take(8)))
+                },
+                label = { Text("CEP (opcional)") },
+                placeholder = { Text("Somente números (8 dígitos)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done,
+                    ),
+                colors = fieldColors,
+            )
         }
     }
 }

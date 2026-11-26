@@ -107,6 +107,24 @@ data class ItemCampanhaForm(
     val quantidade: Int = 1,
 )
 
+/** Local físico de coleta no formulário de criação de campanha. */
+data class LocalColetaForm(
+    val id: Int,
+    val nome: String = "",
+    val logradouro: String = "",
+    val bairro: String = "",
+    val numero: String = "",
+    val cep: String = "",
+) {
+    val possuiAlgumCampo: Boolean
+        get() =
+            nome.isNotBlank() ||
+                logradouro.isNotBlank() ||
+                bairro.isNotBlank() ||
+                numero.isNotBlank() ||
+                cep.isNotBlank()
+}
+
 /** Estado do formulário de criação de campanha de doação. */
 data class CampanhaForm(
     val titulo: String = "",
@@ -115,9 +133,13 @@ data class CampanhaForm(
     val pedirDinheiro: Boolean = false,
     val metaReaisTexto: String = "",
     val itens: List<ItemCampanhaForm> = listOf(ItemCampanhaForm(id = 1, nome = "", quantidade = 1)),
+    val locais: List<LocalColetaForm> = emptyList(),
 ) {
     val itensPreenchidos: List<ItemCampanhaForm>
         get() = itens.filter { it.nome.isNotBlank() }
+
+    val locaisPreenchidos: List<LocalColetaForm>
+        get() = locais.filter { it.nome.isNotBlank() }
 
     val totalUnidades: Int
         get() = if (pedirItens) itensPreenchidos.sumOf { it.quantidade.coerceAtLeast(1) } else 0
@@ -141,6 +163,8 @@ data class CampanhaForm(
             }
 
     fun proximoItemId(): Int = (itens.maxOfOrNull { it.id } ?: 0) + 1
+
+    fun proximoLocalId(): Int = (locais.maxOfOrNull { it.id } ?: 0) + 1
 }
 
 /** Erros derivados do [CampanhaForm]; `null` significa campo válido. */
@@ -150,6 +174,7 @@ data class CampanhaFormErros(
     val tipoArrecadacao: String? = null,
     val itens: String? = null,
     val metaDinheiro: String? = null,
+    val locais: String? = null,
 ) {
     val valido: Boolean
         get() =
@@ -157,7 +182,8 @@ data class CampanhaFormErros(
                 descricao == null &&
                 tipoArrecadacao == null &&
                 itens == null &&
-                metaDinheiro == null
+                metaDinheiro == null &&
+                locais == null
 }
 
 fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
@@ -189,6 +215,18 @@ fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
         } else {
             null
         }
+    val erroLocais =
+        when {
+            form.locais.any { it.possuiAlgumCampo && it.nome.isBlank() } ->
+                "Informe o nome do local de coleta."
+            form.locais.any { it.nome.trim().length > Validators.NOME_LOCAL_MAX } ->
+                "O nome do local pode ter no máximo ${Validators.NOME_LOCAL_MAX} caracteres."
+            form.locais.any { local ->
+                val cepDigitos = local.cep.filter { it.isDigit() }
+                cepDigitos.isNotEmpty() && cepDigitos.length != 8
+            } -> "O CEP do local deve conter 8 dígitos."
+            else -> null
+        }
     return CampanhaFormErros(
         titulo =
             when {
@@ -206,5 +244,6 @@ fun validarCampanha(form: CampanhaForm): CampanhaFormErros {
         tipoArrecadacao = erroTipo,
         itens = erroItens,
         metaDinheiro = erroMetaDinheiro,
+        locais = erroLocais,
     )
 }

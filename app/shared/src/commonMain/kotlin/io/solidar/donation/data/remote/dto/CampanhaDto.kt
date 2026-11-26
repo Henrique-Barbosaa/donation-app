@@ -3,7 +3,17 @@ package io.solidar.donation.data.remote.dto
 import io.solidar.donation.domain.model.NovaCampanhaInput
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
+import io.solidar.donation.model.CampaignLocalColeta
 import kotlinx.serialization.Serializable
+
+@Serializable
+data class LocalDoacaoRequestDto(
+    val nome: String,
+    val logradouro: String? = null,
+    val bairro: String? = null,
+    val numero: String? = null,
+    val cep: String? = null,
+)
 
 @Serializable
 data class CriarCampanhaRequest(
@@ -12,16 +22,31 @@ data class CriarCampanhaRequest(
     val itensFoco: String? = null,
     val metaVoluntarios: Int? = null,
     val metaEmCentavos: Long? = null,
+    val locais: List<LocalDoacaoRequestDto>? = null,
 )
 
-fun NovaCampanhaInput.toCriarCampanhaRequest(): CriarCampanhaRequest =
-    CriarCampanhaRequest(
+fun NovaCampanhaInput.toCriarCampanhaRequest(): CriarCampanhaRequest {
+    val locaisValidos =
+        locais
+            .filter { it.nome.isNotBlank() }
+            .map { local ->
+                LocalDoacaoRequestDto(
+                    nome = local.nome.trim(),
+                    logradouro = local.logradouro.trim().ifBlank { null },
+                    bairro = local.bairro.trim().ifBlank { null },
+                    numero = local.numero.trim().ifBlank { null },
+                    cep = local.cep.filter { it.isDigit() }.ifBlank { null },
+                )
+            }
+    return CriarCampanhaRequest(
         titulo = titulo.trim(),
         descricao = descricao.trim().ifBlank { null },
         itensFoco = itensFocoFormatado.ifBlank { null },
         metaVoluntarios = metaVoluntarios.takeIf { it > 0 },
         metaEmCentavos = metaEmCentavos.takeIf { it > 0L },
+        locais = locaisValidos.takeIf { it.isNotEmpty() },
     )
+}
 
 @Serializable
 data class LocalDoacaoResponseDto(
@@ -96,6 +121,20 @@ fun CampanhaResponseDto.toDomain(): Campaign {
                 )
             }.orEmpty()
 
+    val locaisMapeados =
+        locais
+            ?.mapNotNull { local ->
+                val nomeLocal = local.nome?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val endereco =
+                    listOfNotNull(
+                        local.logradouro?.trim()?.takeIf { it.isNotEmpty() },
+                        local.numero?.trim()?.takeIf { it.isNotEmpty() }?.let { "nº $it" },
+                        local.bairro?.trim()?.takeIf { it.isNotEmpty() },
+                        local.cep?.trim()?.takeIf { it.isNotEmpty() }?.let { "CEP $it" },
+                    ).joinToString(" • ")
+                CampaignLocalColeta(nome = nomeLocal, enderecoResumo = endereco)
+            }.orEmpty()
+
     return Campaign(
         id = idStr,
         title = tituloFinal,
@@ -105,6 +144,7 @@ fun CampanhaResponseDto.toDomain(): Campaign {
         descricao = descricao.orEmpty(),
         imageUrl = urlImagemCapa,
         itensNecessarios = itens,
+        locaisColeta = locaisMapeados,
         instituicaoId = instituicaoId,
         status = status?.takeIf { it.isNotBlank() }?.uppercase() ?: "ATIVA",
     )

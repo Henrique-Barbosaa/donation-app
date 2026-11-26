@@ -29,6 +29,7 @@ import io.solidar.donation.data.storage.InMemoryTokenStorage
 import io.solidar.donation.domain.error.FalhaDominio
 import io.solidar.donation.domain.model.EfetivarDoacaoInput
 import io.solidar.donation.domain.model.ItemCampanhaInput
+import io.solidar.donation.domain.model.LocalColetaInput
 import io.solidar.donation.domain.model.NovaCampanhaInput
 import io.solidar.donation.domain.model.NovaDoacaoInput
 import io.solidar.donation.domain.model.ResultadoCacheado
@@ -36,6 +37,7 @@ import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.domain.repository.DoacaoRepository
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.CampaignItem
+import io.solidar.donation.model.CampaignLocalColeta
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.model.DoacaoDirecao
 import io.solidar.donation.model.DoacaoDisponivel
@@ -300,7 +302,15 @@ class ExplorarECriarCampanhaTest {
                               "titulo": "Agasalho Solidário",
                               "descricao": "Campanha de inverno",
                               "itensFoco": "Casacos (15 un.), Cobertores (10 un.)",
-                              "metaVoluntarios": 25
+                              "metaVoluntarios": 25,
+                              "locais": [
+                                {
+                                  "id": 3,
+                                  "nome": "Portaria do IMD",
+                                  "logradouro": "Av. Capitão-Mor Gouveia",
+                                  "bairro": "Lagoa Nova"
+                                }
+                              ]
                             }
                             """.trimIndent(),
                         status = HttpStatusCode.Created,
@@ -324,6 +334,14 @@ class ExplorarECriarCampanhaTest {
                                 ItemCampanhaInput("Casacos", 15),
                                 ItemCampanhaInput("Cobertores", 10),
                             ),
+                        locais =
+                            listOf(
+                                LocalColetaInput(
+                                    nome = "Portaria do IMD",
+                                    logradouro = "Av. Capitão-Mor Gouveia",
+                                    bairro = "Lagoa Nova",
+                                ),
+                            ),
                     ),
                 ).getOrThrow()
 
@@ -334,6 +352,9 @@ class ExplorarECriarCampanhaTest {
             assertEquals("15 unidades", criada.itensNecessarios[0].quantidadeDescricao)
             assertEquals("Cobertores", criada.itensNecessarios[1].nome)
             assertEquals("10 unidades", criada.itensNecessarios[1].quantidadeDescricao)
+            assertEquals(1, criada.locaisColeta.size)
+            assertEquals("Portaria do IMD", criada.locaisColeta.first().nome)
+            assertTrue(criada.locaisColeta.first().enderecoResumo.contains("Lagoa Nova"))
             assertEquals(0L, criada.goalInCents)
             assertEquals(0L, criada.raisedInCents)
             assertFalse(criada.aceitaDinheiro)
@@ -378,8 +399,43 @@ class ExplorarECriarCampanhaTest {
             waitForIdle()
 
             assertEquals(50_000L, form.metaEmCentavos)
+            onNodeWithText("Adicionar local de coleta").performScrollTo().performClick()
+            waitForIdle()
+            assertEquals(1, form.locais.size)
+            onNodeWithText("Nome do local 1 *").performScrollTo().performTextInput("Sede da ONG")
+            waitForIdle()
+            assertEquals("Sede da ONG", form.locais.first().nome)
+
             onNodeWithText("Publicar Campanha").performScrollTo().assertIsEnabled().performClick()
             assertTrue(submetido)
+        }
+
+    @Test
+    fun campanhaDetalheScreen_exibeLocaisFisicosDeColeta() =
+        runComposeUiTest {
+            val campanha =
+                Campaign(
+                    id = "88",
+                    title = "Campanha com Ponto de Coleta",
+                    organizer = "ONG Local",
+                    goalInCents = 0L,
+                    raisedInCents = 0L,
+                    itensNecessarios = listOf(CampaignItem("i1", "Arroz", "5 unidades", "check", 5)),
+                    locaisColeta = listOf(CampaignLocalColeta("Portaria do IMD", "Av. Salgado Filho • Lagoa Nova")),
+                )
+
+            setContent {
+                DonationTheme {
+                    CampanhaDetalheScreen(
+                        campaign = campanha,
+                        onBack = {},
+                        onQueroDoar = {},
+                    )
+                }
+            }
+
+            onNodeWithText("Locais físicos de coleta:").performScrollTo().assertIsDisplayed()
+            onNodeWithText("Portaria do IMD").performScrollTo().assertIsDisplayed()
         }
 
     @Test

@@ -9,6 +9,17 @@ data class ItemCampanhaInput(
 )
 
 /**
+ * Local físico de coleta associado a uma campanha de arrecadação.
+ */
+data class LocalColetaInput(
+    val nome: String,
+    val logradouro: String = "",
+    val bairro: String = "",
+    val numero: String = "",
+    val cep: String = "",
+)
+
+/**
  * Entrada pura da camada de domínio para criação de uma nova campanha de doação.
  */
 data class NovaCampanhaInput(
@@ -17,6 +28,7 @@ data class NovaCampanhaInput(
     val itens: List<ItemCampanhaInput> = emptyList(),
     val metaEmCentavos: Long = 0L,
     val metaVoluntarios: Int = itens.sumOf { it.quantidade.coerceAtLeast(1) },
+    val locais: List<LocalColetaInput> = emptyList(),
 ) {
     val itensFocoFormatado: String
         get() =

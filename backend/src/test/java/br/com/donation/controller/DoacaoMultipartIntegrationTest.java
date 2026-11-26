@@ -116,7 +116,16 @@ class DoacaoMultipartIntegrationTest {
                 {
                   "titulo": "Reforma da biblioteca",
                   "descricao": "Meta exclusivamente financeira",
-                  "metaEmCentavos": 50000
+                  "metaEmCentavos": 50000,
+                  "locais": [
+                    {
+                      "nome": "Sede da ONG",
+                      "logradouro": "Av. Salgado Filho",
+                      "bairro": "Lagoa Nova",
+                      "numero": "1200",
+                      "cep": "59075000"
+                    }
+                  ]
                 }
                 """;
         MockMultipartFile campanhaPart = new MockMultipartFile(
@@ -132,6 +141,8 @@ class DoacaoMultipartIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.metaEmCentavos").value(50000))
                 .andExpect(jsonPath("$.arrecadadoEmCentavos").value(0))
+                .andExpect(jsonPath("$.locais[0].nome").value("Sede da ONG"))
+                .andExpect(jsonPath("$.locais[0].bairro").value("Lagoa Nova"))
                 .andReturn();
 
         JsonNode body = new ObjectMapper().readTree(created.getResponse().getContentAsString());
