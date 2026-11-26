@@ -41,7 +41,6 @@ import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.history.sampleDoacoes
 import io.solidar.donation.ui.profile.PerfilScreen
 import io.solidar.donation.ui.profile.PerfilViewModel
-import io.solidar.donation.ui.profile.samplePerfilPf
 import io.solidar.donation.ui.state.TelaEstado
 
 enum class MainTab(
@@ -131,9 +130,9 @@ fun MainNavigationContent(
     onRecarregarCampanhas: () -> Unit = {},
     estadoHistorico: TelaEstado<List<Doacao>> = TelaEstado.Sucesso(sampleDoacoes),
     onRecarregarHistorico: () -> Unit = {},
-    totalDoacoesFeitas: Int = 2,
-    totalDoacoesRecebidas: Int = 1,
-    estadoPerfil: TelaEstado<PerfilUsuario> = TelaEstado.Sucesso(samplePerfilPf),
+    totalDoacoesFeitas: Int = 0,
+    totalDoacoesRecebidas: Int = 0,
+    estadoPerfil: TelaEstado<PerfilUsuario> = TelaEstado.Carregando,
     mensagemFeedbackPerfil: String? = null,
     onRecarregarPerfil: () -> Unit = {},
     onEditarPerfilClick: () -> Unit = {},

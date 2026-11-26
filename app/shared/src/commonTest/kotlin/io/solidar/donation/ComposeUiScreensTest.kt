@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
+import io.solidar.donation.domain.model.PerfilUsuario
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.auth.AuthState
@@ -29,7 +30,6 @@ import io.solidar.donation.ui.profile.AlterarSenhaContent
 import io.solidar.donation.ui.profile.EditarPerfilContent
 import io.solidar.donation.ui.profile.PerfilScreen
 import io.solidar.donation.ui.profile.SubmissaoPerfilState
-import io.solidar.donation.ui.profile.samplePerfilPf
 import io.solidar.donation.ui.state.TelaEstado
 import io.solidar.donation.util.AlterarSenhaForm
 import io.solidar.donation.util.DoacaoForm
@@ -228,6 +228,18 @@ class ComposeUiScreensTest {
     @Test
     fun perfilEEdicao_exibeDadosValidaFormulariosENavegaParaEdicaoESenha() =
         runComposeUiTest {
+            val perfilTeste =
+                PerfilUsuario(
+                    id = 1,
+                    nome = "Antonio Henrique Lima",
+                    email = "henrique@solidar.io",
+                    tipo = "PESSOA_FISICA",
+                    documento = "12345678901",
+                    logradouro = "Av. Senador Salgado Filho",
+                    numero = "3000",
+                    bairro = "Lagoa Nova",
+                    cep = "59078970",
+                )
             var telaAtual by mutableStateOf("PERFIL")
             var formPerfil by mutableStateOf(
                 PerfilForm(
@@ -250,7 +262,7 @@ class ComposeUiScreensTest {
                     when (telaAtual) {
                         "PERFIL" ->
                             PerfilScreen(
-                                estado = TelaEstado.Sucesso(samplePerfilPf),
+                                estado = TelaEstado.Sucesso(perfilTeste),
                                 onEditarPerfilClick = { telaAtual = "EDITAR" },
                                 onAlterarSenhaClick = { telaAtual = "SENHA" },
                                 onTentarDeNovo = {},
@@ -278,8 +290,8 @@ class ComposeUiScreensTest {
 
             // 1. Verifica tela de Perfil e navega para Editar Perfil
             onNodeWithText("Meu Perfil").assertIsDisplayed()
-            onNodeWithText(samplePerfilPf.nome, substring = true).assertIsDisplayed()
-            onNodeWithText("Editar dados do perfil").performScrollTo().performClick()
+            onNodeWithText(perfilTeste.nome, substring = true).assertIsDisplayed()
+            onNodeWithText("Editar Dados").performScrollTo().performClick()
             waitForIdle()
 
             // 2. Formulário de Editar Perfil inválido -> botão desabilitado

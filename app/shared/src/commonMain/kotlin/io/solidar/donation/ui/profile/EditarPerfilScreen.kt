@@ -50,10 +50,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.util.PerfilForm
 import io.solidar.donation.util.validarPerfil
@@ -255,7 +253,7 @@ fun EditarPerfilContent(
                     value = form.cep,
                     onValueChange = { onFormChange(form.copy(cep = it)) },
                     label = { Text("CEP (apenas dígitos)") },
-                    placeholder = { Text("Ex: 59078970") },
+                    placeholder = { Text("00000-000") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
@@ -288,7 +286,6 @@ fun EditarPerfilContent(
                     value = form.logradouro,
                     onValueChange = { onFormChange(form.copy(logradouro = it)) },
                     label = { Text("Logradouro (Rua, Avenida)") },
-                    placeholder = { Text("Ex: Av. Senador Salgado Filho") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
@@ -324,7 +321,6 @@ fun EditarPerfilContent(
                         value = form.numero,
                         onValueChange = { onFormChange(form.copy(numero = it)) },
                         label = { Text("Número") },
-                        placeholder = { Text("Ex: 120") },
                         modifier = Modifier.weight(0.4f),
                         shape = RoundedCornerShape(14.dp),
                         singleLine = true,
@@ -355,7 +351,6 @@ fun EditarPerfilContent(
                         value = form.bairro,
                         onValueChange = { onFormChange(form.copy(bairro = it)) },
                         label = { Text("Bairro") },
-                        placeholder = { Text("Ex: Lagoa Nova") },
                         modifier = Modifier.weight(0.6f),
                         shape = RoundedCornerShape(14.dp),
                         singleLine = true,
@@ -433,62 +428,5 @@ fun EditarPerfilContent(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-    }
-}
-
-@Preview
-@Composable
-private fun EditarPerfilEmptyPreview() {
-    DonationTheme {
-        EditarPerfilContent(
-            form = PerfilForm(),
-            onFormChange = {},
-            submissaoState = SubmissaoPerfilState.Idle,
-            onNavigateBack = {},
-            onSubmit = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun EditarPerfilFilledPreview() {
-    DonationTheme {
-        EditarPerfilContent(
-            form =
-                PerfilForm(
-                    nome = "Antonio Henrique Lima",
-                    cep = "59078970",
-                    logradouro = "Av. Senador Salgado Filho",
-                    numero = "3000",
-                    bairro = "Lagoa Nova",
-                ),
-            onFormChange = {},
-            submissaoState = SubmissaoPerfilState.Idle,
-            onNavigateBack = {},
-            onSubmit = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun EditarPerfilLoadingDarkPreview() {
-    DonationTheme(darkTheme = true) {
-        EditarPerfilContent(
-            form =
-                PerfilForm(
-                    nome = "Instituto Mãos Solidárias",
-                    cep = "59010000",
-                    logradouro = "Rua da Solidariedade",
-                    numero = "100",
-                    bairro = "Rocas",
-                ),
-            onFormChange = {},
-            submissaoState = SubmissaoPerfilState.Loading,
-            isInstituicao = true,
-            onNavigateBack = {},
-            onSubmit = {},
-        )
     }
 }

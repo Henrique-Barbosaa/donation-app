@@ -40,35 +40,20 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.solidar.donation.domain.model.PerfilUsuario
-import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.ui.components.AvisoDadosDesatualizadosBanner
 import io.solidar.donation.ui.components.EstadoCarregandoView
 import io.solidar.donation.ui.components.EstadoErroView
 import io.solidar.donation.ui.state.TelaEstado
 
-internal val samplePerfilPf =
-    PerfilUsuario(
-        id = 1,
-        nome = "Antonio Henrique Lima",
-        email = "henrique@solidar.io",
-        tipo = "PESSOA_FISICA",
-        documento = "12345678901",
-        logradouro = "Av. Senador Salgado Filho",
-        numero = "3000",
-        bairro = "Lagoa Nova",
-        cep = "59078970",
-    )
-
 /**
  * Aba principal "Perfil" com layout moderno inspirado em perfis sociais, exibindo
  * exclusivamente os dados reais existentes no backend (`USUARIO`, `PESSOA_FISICA`, `INSTITUICAO` e `DOACAO`):
  * - Cabeçalho com avatar de iniciais, nome, e-mail, tipo de conta e contadores reais de doações;
- * - Barra dupla de ações rápidas ("Editar dados do perfil" e "Alterar senha");
+ * - Barra dupla de ações rápidas ("Editar Dados" e "Alterar senha");
  * - Cartão de credenciais cadastradas no banco (CPF/CNPJ, Data de Nascimento ou Site, E-mail);
  * - Cartão estruturado com os campos reais de endereço (Logradouro, Número, Bairro e CEP).
  *
@@ -414,7 +399,7 @@ private fun PerfilHeaderSocialCard(
                         ),
                 ) {
                     Text(
-                        text = "Editar dados do perfil",
+                        text = "Editar Dados",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         maxLines = 1,
@@ -803,80 +788,5 @@ private fun EmptyPerfilView(
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-private fun PerfilScreenFilledPreview() {
-    DonationTheme {
-        PerfilScreen(
-            estado = TelaEstado.Sucesso(samplePerfilPf),
-            onEditarPerfilClick = {},
-            onAlterarSenhaClick = {},
-            onTentarDeNovo = {},
-            onLogout = {},
-            mensagemFeedback = "Dados do perfil atualizados com sucesso!",
-            totalDoacoesFeitas = 2,
-            totalDoacoesRecebidas = 1,
-            totalFavoritas = 3,
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PerfilScreenEmptyPreview() {
-    DonationTheme {
-        PerfilScreen(
-            estado = TelaEstado.Vazio,
-            onEditarPerfilClick = {},
-            onAlterarSenhaClick = {},
-            onTentarDeNovo = {},
-            onLogout = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PerfilScreenLoadingPreview() {
-    DonationTheme {
-        PerfilScreen(
-            estado = TelaEstado.Carregando,
-            onEditarPerfilClick = {},
-            onAlterarSenhaClick = {},
-            onTentarDeNovo = {},
-            onLogout = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PerfilScreenDarkPreview() {
-    DonationTheme(darkTheme = true) {
-        PerfilScreen(
-            estado = TelaEstado.Sucesso(samplePerfilPf, desatualizado = true),
-            onEditarPerfilClick = {},
-            onAlterarSenhaClick = {},
-            onTentarDeNovo = {},
-            onLogout = {},
-        )
-    }
-}
-
-@Preview(widthDp = 900, heightDp = 600)
-@Composable
-private fun PerfilScreenWidePreview() {
-    DonationTheme {
-        PerfilScreen(
-            estado = TelaEstado.Sucesso(samplePerfilPf),
-            onEditarPerfilClick = {},
-            onAlterarSenhaClick = {},
-            onTentarDeNovo = {},
-            onLogout = {},
-            wide = true,
-        )
     }
 }

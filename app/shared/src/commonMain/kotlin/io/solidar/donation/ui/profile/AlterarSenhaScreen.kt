@@ -48,10 +48,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
 import io.solidar.donation.util.AlterarSenhaForm
 import io.solidar.donation.util.validarAlterarSenha
@@ -420,57 +418,5 @@ fun AlterarSenhaContent(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-    }
-}
-
-@Preview
-@Composable
-private fun AlterarSenhaEmptyPreview() {
-    DonationTheme {
-        AlterarSenhaContent(
-            form = AlterarSenhaForm(),
-            onFormChange = {},
-            submissaoState = SubmissaoPerfilState.Idle,
-            onNavigateBack = {},
-            onSubmit = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun AlterarSenhaFilledPreview() {
-    DonationTheme {
-        AlterarSenhaContent(
-            form =
-                AlterarSenhaForm(
-                    senhaAtual = "senhaAntiga123",
-                    novaSenha = "novaSenhaSegura456",
-                    confirmarNovaSenha = "novaSenhaSegura456",
-                ),
-            onFormChange = {},
-            submissaoState = SubmissaoPerfilState.Idle,
-            onNavigateBack = {},
-            onSubmit = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun AlterarSenhaErrorDarkPreview() {
-    DonationTheme(darkTheme = true) {
-        AlterarSenhaContent(
-            form =
-                AlterarSenhaForm(
-                    senhaAtual = "errada",
-                    novaSenha = "novaSenha123",
-                    confirmarNovaSenha = "novaSenha123",
-                ),
-            onFormChange = {},
-            submissaoState = SubmissaoPerfilState.Error("A senha atual informada está incorreta."),
-            onNavigateBack = {},
-            onSubmit = {},
-        )
     }
 }
