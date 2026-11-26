@@ -95,6 +95,25 @@ donation-app/
 
 ---
 
+## Tecnologias utilizadas
+
+### Mobile
+- Kotlin Multiplatform (Android, Desktop JVM e iOS)
+- Compose Multiplatform / Jetpack Compose (Material 3)
+- Navigation Compose (rotas tipadas e deep link)
+- Ktor Client + `kotlinx.serialization`
+- `kotlinx-coroutines-test`, `Turbine` e `compose.ui:ui-test`
+- Android Studio e Xcode (para iOS)
+
+### Backend
+- Java 21
+- Spring Boot 4
+- Spring Security + JWT
+- Spring JDBC (`PostgreSQL` por padrão ou `MySQL` opcional)
+- Maven (com wrapper `mvnw`)
+
+---
+
 ## Pré-requisitos
 
 Para rodar o projeto completo em menos de 15 minutos, certifique-se de ter instalados:
@@ -196,16 +215,31 @@ cd backend
 
 O aplicativo segue as diretrizes de acessibilidade do Material Design 3 e do leitor de tela **TalkBack** do Android:
 
-1. **Cores Semânticas e Contraste (`MaterialTheme.colorScheme`):** todas as telas e componentes utilizam os papéis semânticos do tema nos modos Claro e Escuro, sem cores fixas que prejudiquem o contraste.
-2. **Hierarquia Semântica de Cabeçalhos (`heading()`):** títulos e cabeçalhos de seção em todas as telas possuem `Modifier.semantics { heading() }`.
-3. **Descrições de Conteúdo (`contentDescription`) e Agrupamento Semântico:** controles interativos sem rótulo textual, indicadores de carregamento e barras de progresso possuem `contentDescription`; ícones decorativos usam `contentDescription = null` ou `clearAndSetSemantics {}`.
-4. **Alvos de Toque (`48dp x 48dp`) e Papéis de Controle (`Role`):** botões, chips (`Role.RadioButton`), itens selecionáveis (`Role.Checkbox`) e cartões clicáveis (`Role.Button`) respeitam o mínimo de `48dp x 48dp`.
+1. **Cores Semânticas e Contraste (`MaterialTheme.colorScheme`):**
+   - Todas as telas e componentes utilizam exclusivamente os papéis semânticos do tema (`primary`, `onPrimary`, `primaryContainer`, `onPrimaryContainer`, `secondaryContainer`, `onSecondaryContainer`, `background`, `onBackground`, `surface`, `onSurface`, `surfaceVariant`, `onSurfaceVariant`, `error`, `errorContainer`, `onErrorContainer`), garantindo contraste adequado tanto no **Modo Claro** quanto no **Modo Escuro**, sem cores fixas fora do tema.
+2. **Hierarquia Semântica de Cabeçalhos (`heading()`):**
+   - Títulos principais e cabeçalhos de seção em todas as telas (`LoginScreen`, `SignUpScreen`, `HomeScreen`, `ExplorarScreen`, `CampanhaDetalheScreen`, `OpcoesDoacaoScreen`, `CriarDoacaoScreen`, `CriarCampanhaScreen`, `DoarItensCampanhaScreen`, `DoarDinheiroScreen`, `EfetivarDoacaoScreen`, `HistoricoScreen` e `PlaceholderScreen`) possuem `Modifier.semantics { heading() }`, permitindo navegação rápida por cabeçalhos no TalkBack.
+3. **Descrições de Conteúdo (`contentDescription`) e Agrupamento Semântico:**
+   - Controles interativos sem rótulo textual explícito possuem `contentDescription` descritivo da ação (ex.: `"Voltar"`, `"Adicionar campanha aos favoritos"`, `"Remover campanha dos favoritos"`, `"Diminuir quantidade"`, `"Aumentar quantidade"`, `"Mostrar senha"`, `"Ocultar senha"`, `"Criar nova doação"`, `"Criar campanha ou doação"`, `"Ativar pedido de objetos"`, `"Ativar pedido de dinheiro"`, `"Remover local de coleta 1"` e leitura percentual nas barras de progresso).
+   - Ícones e elementos meramente decorativos utilizam `contentDescription = null` ou `Modifier.clearAndSetSemantics {}` para evitar leituras redundantes no TalkBack.
+   - Cartões informativos (`DoacaoCard`, `DoacaoDisponivelCard`, `CampaignItemCard` e cartões de locais de coleta) utilizam `mergeDescendants = true` para leitura fluida em um único gesto.
+4. **Alvos de Toque (`48dp x 48dp`) e Papéis de Controle (`Role`):**
+   - Botões, ícones de ação, chips de categoria (`Role.RadioButton` com estado `selected`), caixas de seleção (`Role.Checkbox`) e cartões clicáveis (`Role.Button`) respeitam a área mínima de toque de `48dp x 48dp`.
 
-Para validar com TalkBack via ADB:
+#### Roteiro de Verificação com TalkBack
 
-```bash
-adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService
-```
+Para validar a navegação por voz no dispositivo Android ou emulador:
+
+1. Ative o TalkBack nas configurações de acessibilidade do Android (ou via ADB):
+   ```bash
+   adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService
+   ```
+2. **Fluxo verificado no TalkBack:**
+   - **Login e Cadastro (`LoginScreen` / `SignUpScreen`):** Leitura do cabeçalho *"Bem-vindo de volta!"*, anúncio dos campos de texto *"E-mail"* e *"Senha"* sem duplicidade de ícone, botão *"Mostrar senha"* / *"Ocultar senha"*, botão *"Esqueci minha senha"* e seleção de perfil (*"Pessoa Física, botão"* e *"Instituição / ONG, botão"*).
+   - **Feed Principal, Explorar e Navegação (`MainNavigationScaffold` / `HomeScreen` / `ExplorarScreen`):** Leitura dos cabeçalhos *"Campanhas abertas"* e *"Explorar doações"*, abas *"Pedem doações"* e *"Oferecem doações"*, cartões de campanha com anúncio do percentual da barra de progresso (quando aceita dinheiro), chips de categoria, ação *"Tenho interesse"*, abas inferiores/laterais e botão flutuante *"Criar campanha ou doação"* / *"Criar nova doação, botão"*.
+   - **Detalhes da Campanha e Doação em Campanha (`CampanhaDetalheScreen` / `OpcoesDoacaoScreen` / `DoarItensCampanhaScreen` / `DoarDinheiroScreen`):** Navegação pelos cabeçalhos *"Campanha"*, *"Sobre a campanha:"*, *"Itens necessários para doar:"* e *"Locais físicos de coleta:"*, leitura agrupada dos itens e locais de coleta, anúncio de estado do botão *"Adicionar campanha aos favoritos"* / *"Remover campanha dos favoritos"*, cartões de modalidade (*"Contribuir com Dinheiro, botão"* e *"Doar Itens Físicos, botão"*) e confirmação de contribuição PIX/itens.
+   - **Nova Doação e Nova Campanha (`CriarDoacaoScreen` / `CriarCampanhaScreen`):** Leitura dos cards de foto de capa/doação (`Role.Button`), switches de modalidade (*"Ativar pedido de objetos"* e *"Ativar pedido de dinheiro"*), botões *"Diminuir quantidade"* e *"Aumentar quantidade"*, chips de categoria e condição (*"Selecionado, Usado"* / *"Novo"*) e seção de locais físicos de coleta.
+   - **Histórico e Efetivação (`HistoricoScreen` / `EfetivarDoacaoScreen`):** Navegação entre as abas *"Feitas"*, *"Interessados"*, *"Recebidas"* e *"Campanhas"*, leitura agrupada dos cartões do histórico, seleção do interessado e confirmação da entrega no local informado.
 
 ---
 
@@ -214,3 +248,15 @@ adb shell settings put secure enabled_accessibility_services com.google.android.
 - [Proposta e Escopo do MVP](docs/proposta.md)
 - [Arquitetura em Camadas, Fluxo de Dados e Persistência Offline](docs/arquitetura.md)
 - [Registro de Uso de Inteligência Artificial](docs/uso-de-ia.md)
+
+---
+
+## Observações
+
+- O backend possui autenticação stateless com Spring Security e uso de JWT (incluindo rotas de recuperação de senha `/api/auth/esqueci-senha` e `/api/auth/reset-senha`).
+- O banco de dados é configurado via `backend/src/main/resources/application.properties` (PostgreSQL por padrão) e `application-mysql.properties` (perfil opcional `mysql`).
+- O código compartilhado da aplicação mobile fica em `app/shared`, estruturado nas camadas `domain`, `data` e `ui` com persistência local (`FileLocalCacheStorage` e `PersistentTokenStorage`) para abertura offline.
+
+## Contribuição
+
+Este projeto foi desenvolvido como atividade acadêmica. Qualquer melhoria ou correção é bem-vinda.
