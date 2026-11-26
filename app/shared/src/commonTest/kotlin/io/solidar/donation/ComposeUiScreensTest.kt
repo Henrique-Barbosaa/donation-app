@@ -19,19 +19,20 @@ import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.auth.AuthState
 import io.solidar.donation.ui.auth.LoginContent
 import io.solidar.donation.ui.campaign.CampanhaDetalheScreen
+import io.solidar.donation.ui.campaign.CriarCampanhaContent
+import io.solidar.donation.ui.campaign.CriarCampanhaState
 import io.solidar.donation.ui.donation.CriarDoacaoContent
 import io.solidar.donation.ui.donation.CriarDoacaoState
 import io.solidar.donation.ui.history.HistoricoAba
 import io.solidar.donation.ui.history.HistoricoScreen
-import io.solidar.donation.ui.history.sampleDoacoes
 import io.solidar.donation.ui.home.HomeScreen
-import io.solidar.donation.ui.home.sampleCampaigns
 import io.solidar.donation.ui.profile.AlterarSenhaContent
 import io.solidar.donation.ui.profile.EditarPerfilContent
 import io.solidar.donation.ui.profile.PerfilScreen
 import io.solidar.donation.ui.profile.SubmissaoPerfilState
 import io.solidar.donation.ui.state.TelaEstado
 import io.solidar.donation.util.AlterarSenhaForm
+import io.solidar.donation.util.CampanhaForm
 import io.solidar.donation.util.DoacaoForm
 import io.solidar.donation.util.PerfilForm
 import kotlin.test.Test
@@ -48,7 +49,7 @@ class ComposeUiScreensTest {
                     HomeScreen(
                         estado =
                             TelaEstado.Sucesso(
-                                dados = sampleCampaigns,
+                                dados = testCampaigns,
                                 desatualizado = true,
                             ),
                         onCampaignClick = {},
@@ -58,7 +59,7 @@ class ComposeUiScreensTest {
             }
 
             onNodeWithText("Campanhas abertas").assertIsDisplayed()
-            onNodeWithText(sampleCampaigns.first().title).assertIsDisplayed()
+            onNodeWithText(testCampaigns.first().title).assertIsDisplayed()
             onNodeWithText(
                 "Modo offline: exibindo últimos dados salvos (podem estar desatualizados).",
             ).assertIsDisplayed()
@@ -165,7 +166,7 @@ class ComposeUiScreensTest {
             setContent {
                 DonationTheme {
                     HistoricoScreen(
-                        doacoes = sampleDoacoes,
+                        doacoes = testDoacoes,
                         selectedTab = abaAtual,
                         onTabSelected = { abaAtual = it },
                     )
@@ -193,7 +194,7 @@ class ComposeUiScreensTest {
                     val atual = campanhaSelecionada
                     if (atual == null) {
                         HomeScreen(
-                            estado = TelaEstado.Sucesso(sampleCampaigns),
+                            estado = TelaEstado.Sucesso(testCampaigns),
                             onCampaignClick = { campanhaSelecionada = it },
                             onTentarDeNovo = {},
                         )
@@ -210,7 +211,7 @@ class ComposeUiScreensTest {
             }
 
             // Clica no primeiro cartão de campanha da Home
-            onNodeWithText(sampleCampaigns.first().title).performClick()
+            onNodeWithText(testCampaigns.first().title).performClick()
             waitForIdle()
 
             // Verifica que abriu a tela de detalhes da campanha
@@ -223,6 +224,26 @@ class ComposeUiScreensTest {
             onNodeWithContentDescription("Voltar").performClick()
             waitForIdle()
             onNodeWithText("Campanhas abertas").assertIsDisplayed()
+        }
+
+    @Test
+    fun criarCampanhaScreen_exibeCampoUploadFotoDeCapa() =
+        runComposeUiTest {
+            setContent {
+                DonationTheme {
+                    CriarCampanhaContent(
+                        state = CriarCampanhaState.Idle,
+                        form = CampanhaForm(),
+                        onFormChange = {},
+                        onNavigateBack = {},
+                        onSubmit = {},
+                    )
+                }
+            }
+
+            onNodeWithText("Foto de capa da campanha").assertIsDisplayed().performClick()
+            waitForIdle()
+            onNodeWithText("O envio de fotos pela galeria/câmera será liberado na próxima versão.").assertIsDisplayed()
         }
 
     @Test

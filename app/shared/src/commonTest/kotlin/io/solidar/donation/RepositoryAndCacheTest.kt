@@ -15,9 +15,11 @@ import io.solidar.donation.data.repository.CampanhaRepositoryImpl
 import io.solidar.donation.data.repository.DoacaoRepositoryImpl
 import io.solidar.donation.data.repository.PerfilRepositoryImpl
 import io.solidar.donation.data.storage.InMemoryTokenStorage
+import io.solidar.donation.data.storage.PersistentTokenStorage
 import io.solidar.donation.di.AppContainer
 import io.solidar.donation.domain.error.FalhaDominio
 import io.solidar.donation.domain.model.AtualizarPerfilInput
+import io.solidar.donation.domain.model.NovaDoacaoInput
 import io.solidar.donation.model.UserSession
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -25,6 +27,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RepositoryAndCacheTest {
@@ -41,10 +44,54 @@ class RepositoryAndCacheTest {
         assertNotNull(container.doacaoRepository)
         assertNotNull(container.perfilRepository)
         assertNotNull(container.createAuthViewModel())
-        assertNotNull(container.createCampanhasViewModel())
-        assertNotNull(container.createHistoricoViewModel())
+        assertNotNull(container.createCampanhasViewModel(carregarAoIniciar = false))
+        assertNotNull(container.createHistoricoViewModel(carregarAoIniciar = false))
+        assertNotNull(container.createExplorarViewModel(carregarAoIniciar = false))
         assertNotNull(container.createCriarDoacaoViewModel())
-        assertNotNull(container.createPerfilViewModel())
+        assertNotNull(container.createCriarCampanhaViewModel())
+        assertNotNull(container.createEfetivarDoacaoViewModel())
+        assertNotNull(container.createDoarItensCampanhaViewModel())
+        assertNotNull(container.createDoarDinheiroViewModel())
+        assertNotNull(container.createPerfilViewModel(carregarAoIniciar = false))
+    }
+
+    @Test
+    fun persistentTokenStorage_salvaRestauraAposReaberturaELimpaNoLogout() {
+        val arquivosDisco = mutableMapOf<String, String>()
+        val storage1 =
+            PersistentTokenStorage(
+                reader = { arquivosDisco[it] },
+                writer = { nome, conteudo -> arquivosDisco[nome] = conteudo },
+            )
+        assertNull(storage1.getSession())
+
+        val sessao =
+            UserSession(
+                token = "jwt-valido-123",
+                tipo = "PESSOA_FISICA",
+                id = 7,
+                nome = "Maria Silva",
+                email = "maria@solidar.io",
+            )
+        storage1.saveSession(sessao)
+
+        // Simula fechamento e reabertura do app em modo avião (nova instância lendo do disco)
+        val storage2 =
+            PersistentTokenStorage(
+                reader = { arquivosDisco[it] },
+                writer = { nome, conteudo -> arquivosDisco[nome] = conteudo },
+            )
+        assertEquals(sessao, storage2.getSession())
+        assertEquals("jwt-valido-123", storage2.getToken())
+
+        // Logout limpa a sessão em memória e no disco
+        storage2.clear()
+        val storage3 =
+            PersistentTokenStorage(
+                reader = { arquivosDisco[it] },
+                writer = { nome, conteudo -> arquivosDisco[nome] = conteudo },
+            )
+        assertNull(storage3.getSession())
     }
 
     @Test
@@ -277,6 +324,62 @@ class RepositoryAndCacheTest {
             val offlineRes = repo.listarHistoricoDoacoes().getOrThrow()
             assertTrue(offlineRes.desatualizado)
             assertEquals(2, offlineRes.dados.size)
+        }
+
+    @Test
+    fun doacaoRepository_criarDoacao_enviaMultipartSemSobrescreverContentTypeJson() =
+        runTest {
+            var contentTypeBody: String? = null
+            var contentTypeHeader: String? = null
+            val mockEngine =
+                MockEngine { request ->
+                    contentTypeBody = request.body.contentType?.toString()
+                    contentTypeHeader = request.headers[HttpHeaders.ContentType]
+                    respond(
+                        content =
+                            """
+                            {
+                              "id": 12,
+                              "doadorId": 1,
+                              "nomeDoador": "Maria",
+                              "itens": [
+                                {
+                                  "nome": "Casaco",
+                                  "quantidade": 5,
+                                  "categoria": "ROUPAS",
+                                  "eNovo": "N"
+                                }
+                              ]
+                            }
+                            """.trimIndent(),
+                        status = HttpStatusCode.Created,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
+
+            val repo =
+                DoacaoRepositoryImpl(
+                    tokenStorage = InMemoryTokenStorage(),
+                    remoteDataSource =
+                        DoacaoRemoteDataSource(
+                            httpClient = HttpClientFactory.create(engine = mockEngine),
+                        ),
+                    localCacheStorage = InMemoryLocalCacheStorage(),
+                )
+
+            val criada =
+                repo.criarDoacao(
+                    NovaDoacaoInput(
+                        nome = "Casaco",
+                        quantidade = 5,
+                        categoria = "Roupas",
+                        eNovo = false,
+                    ),
+                ).getOrThrow()
+
+            assertEquals("12", criada.id)
+            assertTrue(contentTypeBody?.startsWith("multipart/form-data") == true)
+            assertNull(contentTypeHeader)
         }
 
     @Test

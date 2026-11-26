@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.theme.DonationTheme
 import io.solidar.donation.ui.components.AppIcons
-import io.solidar.donation.ui.home.sampleCampaigns
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,19 +89,23 @@ fun OpcoesDoacaoScreen(
                 fontWeight = FontWeight.Bold,
             )
 
-            OpcaoDoacaoCard(
-                titulo = "Contribuir com Dinheiro",
-                descricao = "Ajude a instituição a bater a meta financeira através de Pix, Boleto ou Cartão.",
-                emoji = "💰",
-                onClick = onDoarDinheiro,
-            )
+            if (campaign.aceitaDinheiro) {
+                OpcaoDoacaoCard(
+                    titulo = "Contribuir com Dinheiro",
+                    descricao = "Ajude a instituição a bater a meta financeira através de PIX.",
+                    emoji = "💰",
+                    onClick = onDoarDinheiro,
+                )
+            }
 
-            OpcaoDoacaoCard(
-                titulo = "Doar Itens Físicos",
-                descricao = "Tem os materiais solicitados? Agende a entrega ou recolha dos produtos.",
-                emoji = "📦",
-                onClick = onDoarItens,
-            )
+            if (campaign.aceitaItens) {
+                OpcaoDoacaoCard(
+                    titulo = "Doar Itens Físicos",
+                    descricao = "Tem os materiais solicitados? Escolha os itens e combine a entrega.",
+                    emoji = "📦",
+                    onClick = onDoarItens,
+                )
+            }
         }
     }
 }
@@ -165,7 +168,14 @@ private fun OpcaoDoacaoCard(
 private fun OpcoesDoacaoPreview() {
     DonationTheme {
         OpcoesDoacaoScreen(
-            campaign = sampleCampaigns.first(),
+            campaign =
+                Campaign(
+                    id = "preview-1",
+                    title = "Campanha de Exemplo",
+                    organizer = "Instituição Parceira",
+                    goalInCents = 100_000L,
+                    raisedInCents = 50_000L,
+                ),
             onBack = {},
             onDoarDinheiro = {},
             onDoarItens = {},
@@ -178,7 +188,14 @@ private fun OpcoesDoacaoPreview() {
 private fun OpcoesDoacaoDarkPreview() {
     DonationTheme(darkTheme = true) {
         OpcoesDoacaoScreen(
-            campaign = sampleCampaigns.first(),
+            campaign =
+                Campaign(
+                    id = "preview-1",
+                    title = "Campanha de Exemplo",
+                    organizer = "Instituição Parceira",
+                    goalInCents = 100_000L,
+                    raisedInCents = 50_000L,
+                ),
             onBack = {},
             onDoarDinheiro = {},
             onDoarItens = {},

@@ -42,6 +42,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -186,6 +189,8 @@ fun CriarDoacaoContent(
             }
 
             // Seção 1: Upload / Foto do Item
+            var exibiuAvisoUpload by remember { mutableStateOf(false) }
+
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors =
@@ -196,7 +201,8 @@ fun CriarDoacaoContent(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable(role = Role.Button) { /* Ação futura: abrir galeria/câmera */ },
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable(role = Role.Button) { exibiuAvisoUpload = !exibiuAvisoUpload },
             ) {
                 Column(
                     modifier =
@@ -216,7 +222,7 @@ fun CriarDoacaoContent(
                     ) {
                         Icon(
                             imageVector = AppIcons.Camera,
-                            contentDescription = "Tirar Foto",
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(32.dp),
                         )
@@ -235,9 +241,19 @@ fun CriarDoacaoContent(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Adicione fotos para ajudar os interessados a verem os detalhes do item",
+                        text =
+                            if (exibiuAvisoUpload) {
+                                "O envio de fotos pela galeria/câmera será liberado na próxima versão."
+                            } else {
+                                "Toque para adicionar uma foto da doação (opcional)."
+                            },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color =
+                            if (exibiuAvisoUpload) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                         textAlign = TextAlign.Center,
                     )
                 }

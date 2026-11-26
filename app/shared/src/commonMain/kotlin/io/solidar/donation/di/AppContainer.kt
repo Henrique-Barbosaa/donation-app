@@ -18,7 +18,12 @@ import io.solidar.donation.domain.repository.CampanhaRepository
 import io.solidar.donation.domain.repository.DoacaoRepository
 import io.solidar.donation.domain.repository.PerfilRepository
 import io.solidar.donation.ui.auth.AuthViewModel
+import io.solidar.donation.ui.campaign.CriarCampanhaViewModel
 import io.solidar.donation.ui.donation.CriarDoacaoViewModel
+import io.solidar.donation.ui.donation.DoarDinheiroViewModel
+import io.solidar.donation.ui.donation.DoarItensCampanhaViewModel
+import io.solidar.donation.ui.donation.EfetivarDoacaoViewModel
+import io.solidar.donation.ui.explore.ExplorarViewModel
 import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.home.CampanhasViewModel
 import io.solidar.donation.ui.profile.PerfilViewModel
@@ -43,6 +48,7 @@ class AppContainer(
         CampanhaRepositoryImpl(
             remoteDataSource = CampanhaRemoteDataSource(httpClient = httpClient),
             localCacheStorage = localCacheStorage,
+            tokenStorage = tokenStorage,
         ),
     val doacaoRepository: DoacaoRepository =
         DoacaoRepositoryImpl(
@@ -59,13 +65,27 @@ class AppContainer(
 ) {
     fun createAuthViewModel(): AuthViewModel = AuthViewModel(authRepository)
 
-    fun createCampanhasViewModel(): CampanhasViewModel = CampanhasViewModel(campanhaRepository)
+    fun createCampanhasViewModel(carregarAoIniciar: Boolean = true): CampanhasViewModel =
+        CampanhasViewModel(campanhaRepository, carregarAoIniciar = carregarAoIniciar)
 
-    fun createHistoricoViewModel(): HistoricoViewModel = HistoricoViewModel(doacaoRepository)
+    fun createHistoricoViewModel(carregarAoIniciar: Boolean = true): HistoricoViewModel =
+        HistoricoViewModel(doacaoRepository, campanhaRepository, carregarAoIniciar = carregarAoIniciar)
+
+    fun createExplorarViewModel(carregarAoIniciar: Boolean = true): ExplorarViewModel =
+        ExplorarViewModel(doacaoRepository, carregarAoIniciar = carregarAoIniciar)
 
     fun createCriarDoacaoViewModel(): CriarDoacaoViewModel = CriarDoacaoViewModel(doacaoRepository)
 
-    fun createPerfilViewModel(): PerfilViewModel = PerfilViewModel(perfilRepository)
+    fun createCriarCampanhaViewModel(): CriarCampanhaViewModel = CriarCampanhaViewModel(campanhaRepository)
+
+    fun createEfetivarDoacaoViewModel(): EfetivarDoacaoViewModel = EfetivarDoacaoViewModel(doacaoRepository)
+
+    fun createDoarItensCampanhaViewModel(): DoarItensCampanhaViewModel = DoarItensCampanhaViewModel(doacaoRepository)
+
+    fun createDoarDinheiroViewModel(): DoarDinheiroViewModel = DoarDinheiroViewModel(doacaoRepository)
+
+    fun createPerfilViewModel(carregarAoIniciar: Boolean = true): PerfilViewModel =
+        PerfilViewModel(perfilRepository, carregarAoIniciar = carregarAoIniciar)
 
     companion object {
         val default: AppContainer by lazy { AppContainer() }

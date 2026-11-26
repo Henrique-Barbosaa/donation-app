@@ -11,13 +11,13 @@ O código comum (`commonMain`) está organizado em três camadas com dependênci
 ```mermaid
 flowchart TD
     subgraph UI["Camada de Apresentação (ui)"]
-        Screens["Telas @Composable\n(HomeScreen, HistoricoScreen, CriarDoacaoScreen, PerfilScreen, EditarPerfilScreen, AlterarSenhaScreen, LoginScreen, SignUpScreen)"]
-        ViewModels["ViewModels Multiplataforma\n(CampanhasViewModel, HistoricoViewModel, CriarDoacaoViewModel, PerfilViewModel, AuthViewModel)"]
+        Screens["Telas @Composable\n(HomeScreen, ExplorarScreen, HistoricoScreen, CriarDoacaoScreen,\nCriarCampanhaScreen, EfetivarDoacaoScreen, DoarItensCampanhaScreen,\nDoarDinheiroScreen, CampanhaDetalheScreen, PerfilScreen,\nEditarPerfilScreen, AlterarSenhaScreen, LoginScreen, SignUpScreen)"]
+        ViewModels["ViewModels Multiplataforma\n(CampanhasViewModel, ExplorarViewModel, HistoricoViewModel,\nCriarDoacaoViewModel, CriarCampanhaViewModel, EfetivarDoacaoViewModel,\nDoarItensCampanhaViewModel, DoarDinheiroViewModel, PerfilViewModel, AuthViewModel)"]
         TelaEstado["Estados Imutáveis & Classe Selada\n(TelaEstado: Carregando | Vazio | Sucesso | Erro)"]
     end
 
     subgraph DOMAIN["Camada de Domínio (domain / model)"]
-        Entities["Entidades Puras\n(Campaign, Doacao, PerfilUsuario, UserSession, NovaDoacaoInput, AtualizarPerfilInput, AlterarSenhaInput, ResultadoCacheado)"]
+        Entities["Entidades Puras\n(Campaign, Doacao, DoacaoDisponivel, Interessado, PerfilUsuario, UserSession,\nNovaDoacaoInput, NovaCampanhaInput, EfetivarDoacaoInput,\nAtualizarPerfilInput, AlterarSenhaInput, ResultadoCacheado)"]
         RepoInterfaces["Interfaces de Repositório\n(CampanhaRepository, DoacaoRepository, PerfilRepository, AuthRepository)"]
         DomainErrors["Falhas de Domínio Nomeadas\n(FalhaDominio: SemConexao | RespostaInvalida | DadosInvalidos)"]
     end
@@ -25,8 +25,8 @@ flowchart TD
     subgraph DATA["Camada de Dados (data)"]
         RepoImpl["Implementações de Repositório\n(CampanhaRepositoryImpl, DoacaoRepositoryImpl, PerfilRepositoryImpl, AuthRepositoryImpl)"]
         RemoteDS["Fontes Remotas (Ktor Client)\n(CampanhaRemoteDataSource, DoacaoRemoteDataSource, PerfilRemoteDataSource, AuthRemoteDataSource)"]
-        DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain, PessoaFisicaResponseDto.toDomain)"]
-        LocalCache["Persistência Local em Disco\n(FileLocalCacheStorage via expect/actual filesDir)"]
+        DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain, InteressadoResponseDto.toDomain, PessoaFisicaResponseDto.toDomain)"]
+        LocalCache["Persistência Local em Disco\n(FileLocalCacheStorage + PersistentTokenStorage via expect/actual filesDir)"]
     end
 
     subgraph DI["Injeção de Dependências (di)"]
@@ -49,7 +49,7 @@ flowchart TD
 
 ### Regras de Isolamento
 1. **Domínio (`domain`):** Não importa Compose, Ktor Client, DataStore, Koin nem conhece os DTOs da camada `data`. Declara apenas entidades de negócio, interfaces de repositório e a hierarquia selada `FalhaDominio`.
-2. **Dados (`data`):** Implementa as interfaces do domínio, configura o Ktor Client com `expectSuccess = true` e `ignoreUnknownKeys = true`, realiza a conversão explícita de DTOs para entidades do domínio (`toDomain()`), traduz exceções técnicas em `FalhaDominio` (`NetworkErrorMapper`) e gerencia a cópia local em disco (`FileLocalCacheStorage`).
+2. **Dados (`data`):** Implementa as interfaces do domínio, configura o Ktor Client com `expectSuccess = true`, `ignoreUnknownKeys = true` e `coerceInputValues = true`, realiza a conversão explícita de DTOs para entidades do domínio (`toDomain()`), traduz exceções técnicas em `FalhaDominio` (`NetworkErrorMapper`) e gerencia a cópia local em disco (`FileLocalCacheStorage`), isolando preferências por conta (`userId`).
 3. **Apresentação (`ui`):** Cada tela com dados possui um `ViewModel` multiplataforma que recebe seu repositório pelo construtor via `AppContainer`, expõe um `StateFlow` imutável e é observado pela tela com `collectAsStateWithLifecycle()`.
 
 ---
@@ -109,6 +109,21 @@ sequenceDiagram
 
 * **Escolha técnica:** Optou-se pela persistência local estruturada em arquivos JSON no diretório nativo de arquivos de cada plataforma (`context.filesDir` no Android, diretório de usuário `~/.solidario_cache` no Desktop/JVM e `NSUserDefaults`/`NSDocumentDirectory` no iOS), obtido via funções `expect`/`actual` (`platformStorageDir`, `readPlatformFileText` e `writePlatformFileText`), utilizando `kotlinx.serialization`.
 * **Por que essa abordagem para o MVP:**
-  1. **Zero sobrecarga de geração de código nativo:** Como os payloads de campanhas, histórico de doações e IDs de favoritos já são coleções estruturadas consumidas via `kotlinx.serialization`, a gravação atômica em arquivos JSON na pasta `filesDir` do dispositivo persiste os dados entre fechamentos do app sem exigir schemas SQL complexos.
-  2. **Suporte completo a todos os alvos KMP (Android, Desktop JVM e iOS):** Funciona de forma uniforme nos três alvos configurados no projeto e permite injeção direta de leitores/escritores em memória nos testes automatizados (`RepositoryAndCacheTest`).
-  3. **Experiência Offline Transparente:** A cada resposta bem-sucedida do backend, a cópia local é atualizada. Quando o dispositivo abre o aplicativo sem rede, o repositório recupera imediatamente os dados persistidos com `desatualizado = true`, permitindo que a tela exiba o conteúdo acompanhado do banner de aviso de modo offline.
+  1. **Zero sobrecarga de geração de código nativo:** Como os payloads de campanhas, doações disponíveis, histórico de doações, quantidades doadas por item e IDs de favoritos/interesses (isolados por `userId`) já são coleções estruturadas consumidas via `kotlinx.serialization`, a gravação atômica em arquivos JSON na pasta `filesDir` do dispositivo persiste os dados entre fechamentos do app sem exigir schemas SQL complexos.
+  2. **Suporte completo a todos os alvos KMP (Android, Desktop JVM e iOS):** Funciona de forma uniforme nos três alvos configurados no projeto e permite injeção direta de leitores/escritores em memória nos testes automatizados (`RepositoryAndCacheTest` e `ExplorarECriarCampanhaTest`).
+  3. **Experiência Offline Transparente:** A sessão autenticada é persistida em disco (`PersistentTokenStorage` em `sessao_usuario_cache.json`) e, a cada resposta bem-sucedida do backend, a cópia local é atualizada (campanhas, minhas campanhas por instituição, doações disponíveis e histórico isolado por `userId`). Quando o dispositivo fecha e reabre o aplicativo sem rede, o `NavHost` restaura a sessão persistida, entra diretamente na tela principal e recupera imediatamente os dados locais com `desatualizado = true`, exibindo o banner de modo offline.
+
+---
+
+## 5. Principais Fluxos e Endpoints Integrados
+
+| Fluxo | Telas / ViewModels | Endpoints REST |
+| :--- | :--- | :--- |
+| **Autenticação e Sessão Persistente** | `LoginScreen`, `SignUpScreen`, `AuthViewModel` | `POST /api/auth/login`, `POST /api/auth/registro/pessoa-fisica`, `POST /api/auth/registro/instituicao`, `GET /api/auth/verify` |
+| **Feed de Campanhas & Favoritos** | `HomeScreen`, `CampanhaDetalheScreen`, `CampanhasViewModel` | `GET /api/campanhas`, `GET /api/campanhas/{id}` |
+| **Criação e Gestão de Campanhas (Itens e/ou PIX com Meta Real)** | `CriarCampanhaScreen`, `CriarCampanhaViewModel`, `HistoricoScreen` (aba `Campanhas`), `CampanhaDetalheScreen` | `POST /api/campanhas` (multipart), `GET /api/campanhas/minhas`, `PUT /api/campanhas/{id}/finalizar`, `PUT /api/campanhas/{id}/cancelar` |
+| **Doação em Campanha (Itens e PIX)** | `OpcoesDoacaoScreen`, `DoarItensCampanhaScreen`, `DoarDinheiroScreen`, `DoarItensCampanhaViewModel`, `DoarDinheiroViewModel` | `POST /api/doacoes` (multipart, atualizando `arrecadado_em_centavos` quando há contribuição PIX) |
+| **Publicação de Doações** | `CriarDoacaoScreen`, `CriarDoacaoViewModel` | `POST /api/doacoes` (multipart) |
+| **Feed de Doações Disponíveis e Interesse** | `ExplorarScreen`, `HomeScreen` (aba `Oferecem doações`), `ExplorarViewModel` | `GET /api/doacoes/disponiveis`, `POST /api/doacoes/{id}/interesse`, `DELETE /api/doacoes/{id}/interesse` |
+| **Efetivação e Histórico de Doações** | `HistoricoScreen` (`Feitas`, `Interessados`, `Recebidas`, `Campanhas`), `EfetivarDoacaoScreen`, `HistoricoViewModel`, `EfetivarDoacaoViewModel` | `GET /api/doacoes/minhas`, `GET /api/doacoes/recebidas`, `GET /api/doacoes/{id}/interessados`, `PUT /api/doacoes/{id}/efetivar`, `DELETE /api/doacoes/{id}` |
+| **Perfil, Edição de Dados e Alteração de Senha** | `PerfilScreen`, `EditarPerfilScreen`, `AlterarSenhaScreen`, `PerfilViewModel` | `GET /api/usuarios/pessoa-fisica/{id}`, `GET /api/usuarios/instituicao/{id}`, `PUT /api/usuarios/perfil`, `PUT /api/usuarios/senha` |

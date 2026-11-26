@@ -7,6 +7,7 @@ import io.solidar.donation.domain.repository.DoacaoRepository
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.ui.state.mapearMensagemDeErro
 import io.solidar.donation.util.DoacaoForm
+import io.solidar.donation.util.validarDoacao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,15 +68,21 @@ class CriarDoacaoViewModel(
         descricao: String,
         motivo: String,
     ) {
-        if (nome.isBlank()) {
+        val erros =
+            validarDoacao(
+                DoacaoForm(
+                    nome = nome,
+                    quantidade = quantidade,
+                    categoria = categoria,
+                    eNovo = eNovo,
+                    descricao = descricao,
+                    motivo = motivo,
+                ),
+            )
+        if (!erros.valido) {
+            val mensagem = erros.nome ?: erros.quantidade ?: erros.categoria ?: erros.descricao ?: "Dados inválidos."
             _uiState.update {
-                it.copy(submissionState = CriarDoacaoState.Error("O título ou nome do item é obrigatório."))
-            }
-            return
-        }
-        if (quantidade < 1) {
-            _uiState.update {
-                it.copy(submissionState = CriarDoacaoState.Error("A quantidade deve ser pelo menos 1."))
+                it.copy(submissionState = CriarDoacaoState.Error(mensagem))
             }
             return
         }

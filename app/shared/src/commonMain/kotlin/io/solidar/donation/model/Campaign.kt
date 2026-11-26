@@ -5,6 +5,12 @@ data class CampaignItem(
     val nome: String,
     val quantidadeDescricao: String,
     val iconeRef: String,
+    val quantidadeAlvo: Int? = null,
+)
+
+data class CampaignLocalColeta(
+    val nome: String,
+    val enderecoResumo: String = "",
 )
 
 data class Campaign(
@@ -16,7 +22,16 @@ data class Campaign(
     val descricao: String = "",
     val imageUrl: String? = null,
     val itensNecessarios: List<CampaignItem> = emptyList(),
+    val locaisColeta: List<CampaignLocalColeta> = emptyList(),
+    val instituicaoId: Int? = null,
+    val status: String = "ATIVA",
 ) {
+    val aceitaDinheiro: Boolean
+        get() = goalInCents > 0L
+
+    val aceitaItens: Boolean
+        get() = itensNecessarios.isNotEmpty()
+
     val progress: Float
         get() =
             if (goalInCents <= 0L) {

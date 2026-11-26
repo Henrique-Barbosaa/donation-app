@@ -25,5 +25,6 @@ public class UsuarioDTO {
     private String bairro;
     private String numero;
     private String cep;
+    private String mensagem;
 }
 

@@ -51,12 +51,19 @@ data class PerfilUiState(
  */
 class PerfilViewModel(
     private val repository: PerfilRepository,
+    carregarAoIniciar: Boolean = true,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PerfilUiState())
     val uiState: StateFlow<PerfilUiState> = _uiState.asStateFlow()
 
     init {
-        carregarPerfil()
+        if (carregarAoIniciar) {
+            carregarPerfil()
+        }
+    }
+
+    fun limparEstadoSessao() {
+        _uiState.value = PerfilUiState(estadoPerfil = TelaEstado.Carregando)
     }
 
     fun carregarPerfil() {

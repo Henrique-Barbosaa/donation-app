@@ -22,6 +22,9 @@ object MainRoute
 @Serializable
 object CriarDoacaoRoute
 
+@Serializable
+object CriarCampanhaRoute
+
 /** Detalhe de campanha; o argumento é o id, não o objeto inteiro. */
 @Serializable
 data class CampanhaDetalheRoute(
@@ -31,6 +34,22 @@ data class CampanhaDetalheRoute(
 @Serializable
 data class OpcoesDoacaoRoute(
     val id: String,
+)
+
+@Serializable
+data class DoarItensCampanhaRoute(
+    val id: String,
+)
+
+@Serializable
+data class DoarDinheiroRoute(
+    val id: String,
+)
+
+@Serializable
+data class EfetivarDoacaoRoute(
+    val id: String,
+    val itemTitle: String,
 )
 
 /** Tela de edição dos dados cadastrais e endereço do perfil do usuário (#6). */

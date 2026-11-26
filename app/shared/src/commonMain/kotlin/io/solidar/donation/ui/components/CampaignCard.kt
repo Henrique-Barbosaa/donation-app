@@ -60,34 +60,48 @@ fun CampaignCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            if (campaign.aceitaDinheiro) {
+                Spacer(modifier = Modifier.height(4.dp))
 
-            val percentual = (campaign.progress * 100).toInt()
-            LinearProgressIndicator(
-                progress = { campaign.progress },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .semantics {
-                            contentDescription = "Progresso da campanha: $percentual por cento"
-                        },
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = formatBrl(campaign.raisedInCents),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
+                val percentual = (campaign.progress * 100).toInt()
+                LinearProgressIndicator(
+                    progress = { campaign.progress },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .semantics {
+                                contentDescription = "Progresso da campanha: $percentual por cento"
+                            },
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = formatBrl(campaign.raisedInCents),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "meta ${formatBrl(campaign.goalInCents)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            if (campaign.aceitaItens) {
+                val resumoItens =
+                    campaign.itensNecessarios.take(3).joinToString(", ") { it.nome }
                 Text(
-                    text = "meta ${formatBrl(campaign.goalInCents)}",
+                    text = "Itens solicitados: $resumoItens",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -103,7 +117,7 @@ private fun CampaignCardPreview() {
                 Campaign(
                     id = "1",
                     title = "Cestas básicas para o bairro das Rocas",
-                    organizer = "Instituto Mãos Solidárias",
+                    organizer = "Instituição Parceira",
                     goalInCents = 500_000L,
                     raisedInCents = 312_500L,
                 ),
@@ -122,7 +136,7 @@ private fun CampaignCardDarkPreview() {
                 Campaign(
                     id = "1",
                     title = "Cestas básicas para o bairro das Rocas",
-                    organizer = "Instituto Mãos Solidárias",
+                    organizer = "Instituição Parceira",
                     goalInCents = 500_000L,
                     raisedInCents = 312_500L,
                 ),

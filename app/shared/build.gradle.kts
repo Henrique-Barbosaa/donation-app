@@ -116,11 +116,16 @@ abstract class GenerateBackendConfigTask : DefaultTask() {
         }
 
         val isCustom = !customUrl.isNullOrBlank()
-        val host =
+        val resolvedUrl =
             if (isCustom) {
-                customUrl!!.trim().removePrefix("http://").removePrefix("https://").removeSuffix("/")
+                val trimmed = customUrl!!.trim().removeSuffix("/")
+                if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                    trimmed
+                } else {
+                    "http://$trimmed"
+                }
             } else {
-                resolveLocalIp()
+                "http://${resolveLocalIp()}"
             }
 
         val packageDir = outputDir.get().asFile.resolve("io/solidar/donation/data/remote")
@@ -131,7 +136,7 @@ abstract class GenerateBackendConfigTask : DefaultTask() {
             |
             |// Gerado automaticamente pelo Gradle com base no IP local da maquina ou local.properties
             |internal object GeneratedBackendConfig {
-            |    const val ANDROID_DEFAULT_HOST: String = "$host"
+            |    const val DEFAULT_BASE_URL: String = "$resolvedUrl"
             |    const val IS_CUSTOM_HOST: Boolean = $isCustom
             |}
             |

@@ -24,21 +24,6 @@ object NetworkErrorMapper {
     ): FalhaDominio {
         if (throwable is FalhaDominio) return throwable
 
-        if (throwable is ApiException) {
-            return if (throwable.statusCode >= 500) {
-                FalhaDominio.RespostaInvalida(
-                    statusCode = throwable.statusCode,
-                    message = throwable.message,
-                    cause = throwable,
-                )
-            } else {
-                FalhaDominio.DadosInvalidos(
-                    message = throwable.message,
-                    cause = throwable,
-                )
-            }
-        }
-
         if (throwable is ServerResponseException) {
             val statusCode = throwable.response.status.value
             return FalhaDominio.RespostaInvalida(

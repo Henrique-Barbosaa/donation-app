@@ -25,6 +25,8 @@ public class CampanhaDTO {
     private String status;
     private String itensFoco;
     private Integer metaVoluntarios;
+    private Long metaEmCentavos;
+    private Long arrecadadoEmCentavos;
 
     private List<LocalDoacaoDTO> locais;
 }

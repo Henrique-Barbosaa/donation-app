@@ -24,4 +24,6 @@ public interface CampanhaDoacaoRepository {
 
     List<CampanhaDoacao> findByInstituicaoId(Integer instituicaoId);
 
+    void adicionarArrecadacao(Integer campanhaId, long valorEmCentavos);
+
 }

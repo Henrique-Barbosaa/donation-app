@@ -4,12 +4,10 @@ import androidx.compose.ui.graphics.Color
 
 val Emerald100 = Color(0xFFD1FAE5)
 val Emerald500 = Color(0xFF10B981)
-val Emerald600 = Color(0xFF059669)
 val Emerald900 = Color(0xFF064E3B)
 
 val Teal100 = Color(0xFFCCFBF1)
 val Teal500 = Color(0xFF14B8A6)
-val Teal600 = Color(0xFF0D9488)
 val Teal900 = Color(0xFF134E4A)
 
 val LightBackground = Color(0xFFF8FAFC)
