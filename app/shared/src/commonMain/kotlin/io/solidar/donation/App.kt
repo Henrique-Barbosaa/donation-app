@@ -17,10 +17,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import io.solidar.donation.di.AppContainer
+import io.solidar.donation.navigation.AlterarSenhaRoute
 import io.solidar.donation.navigation.AuthGraph
 import io.solidar.donation.navigation.CampanhaDetalheRoute
 import io.solidar.donation.navigation.CriarDoacaoRoute
 import io.solidar.donation.navigation.DEEP_LINK_CAMPANHA
+import io.solidar.donation.navigation.EditarPerfilRoute
 import io.solidar.donation.navigation.LoginRoute
 import io.solidar.donation.navigation.MainRoute
 import io.solidar.donation.navigation.OpcoesDoacaoRoute
@@ -33,6 +35,9 @@ import io.solidar.donation.ui.donation.CriarDoacaoScreen
 import io.solidar.donation.ui.donation.OpcoesDoacaoScreen
 import io.solidar.donation.ui.home.CampanhasViewModel
 import io.solidar.donation.ui.home.MainNavigationScaffold
+import io.solidar.donation.ui.profile.AlterarSenhaScreen
+import io.solidar.donation.ui.profile.EditarPerfilScreen
+import io.solidar.donation.ui.profile.PerfilViewModel
 
 @Composable
 @Preview
@@ -61,6 +66,7 @@ fun DonationNavHost(
     val authViewModel = viewModel { appContainer.createAuthViewModel() }
     val campanhasViewModel: CampanhasViewModel = viewModel { appContainer.createCampanhasViewModel() }
     val historicoViewModel = viewModel { appContainer.createHistoricoViewModel() }
+    val perfilViewModel: PerfilViewModel = viewModel { appContainer.createPerfilViewModel() }
 
     NavHost(navController = navController, startDestination = AuthGraph) {
         navigation<AuthGraph>(startDestination = LoginRoute) {
@@ -70,6 +76,7 @@ fun DonationNavHost(
                     onLoginSuccess = {
                         campanhasViewModel.carregarCampanhas()
                         historicoViewModel.carregarHistorico()
+                        perfilViewModel.carregarPerfil()
                         navController.irParaMain()
                     },
                     viewModel = authViewModel,
@@ -81,6 +88,7 @@ fun DonationNavHost(
                     onSignUpSuccess = {
                         campanhasViewModel.carregarCampanhas()
                         historicoViewModel.carregarHistorico()
+                        perfilViewModel.carregarPerfil()
                         navController.irParaMain()
                     },
                     viewModel = authViewModel,
@@ -92,7 +100,10 @@ fun DonationNavHost(
             MainNavigationScaffold(
                 campanhasViewModel = campanhasViewModel,
                 historicoViewModel = historicoViewModel,
+                perfilViewModel = perfilViewModel,
                 onNavigateToCreateDonation = { navController.navigate(CriarDoacaoRoute) },
+                onNavigateToEditarPerfil = { navController.navigate(EditarPerfilRoute) },
+                onNavigateToAlterarSenha = { navController.navigate(AlterarSenhaRoute) },
                 onCampaignClick = { navController.navigate(CampanhaDetalheRoute(it.id)) },
                 onLogout = {
                     authViewModel.logout()
@@ -100,6 +111,22 @@ fun DonationNavHost(
                         popUpTo<MainRoute> { inclusive = true }
                     }
                 },
+            )
+        }
+
+        composable<EditarPerfilRoute> {
+            EditarPerfilScreen(
+                viewModel = perfilViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onProfileUpdated = { navController.popBackStack() },
+            )
+        }
+
+        composable<AlterarSenhaRoute> {
+            AlterarSenhaScreen(
+                viewModel = perfilViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onPasswordChanged = { navController.popBackStack() },
             )
         }
 

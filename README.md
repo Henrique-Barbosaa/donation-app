@@ -143,6 +143,7 @@ Para validar a navegação por voz no dispositivo Android ou emulador:
    - **Feed Principal e Navegação (`MainNavigationScaffold` / `HomeScreen`):** Leitura do cabeçalho *"Campanhas abertas"*, cartões de campanha com anúncio do percentual da barra de progresso, abas inferiores/laterais e botão flutuante *"Criar nova doação, botão"*.
    - **Detalhes da Campanha e Opções de Doação (`CampanhaDetalheScreen` / `OpcoesDoacaoScreen`):** Navegação pelos cabeçalhos *"Campanha"*, *"Sobre a campanha:"* e *"Itens necessários para doar:"*, leitura agrupada dos itens solicitados, anúncio de estado do botão *"Adicionar campanha aos favoritos"* / *"Remover campanha dos favoritos"* e cartões de modalidade de doação (*"Contribuir com Dinheiro, botão"* e *"Doar Itens Físicos, botão"*).
    - **Nova Doação (`CriarDoacaoScreen`) e Histórico (`HistoricoScreen`):** Leitura dos botões *"Diminuir quantidade"* e *"Aumentar quantidade"*, anúncio de seleção dos chips de categoria e condição (*"Selecionado, Usado"* / *"Novo"*) e leitura agrupada dos cartões do histórico de doações.
+   - **Perfil, Edição de Dados e Alteração de Senha (`PerfilScreen`, `EditarPerfilScreen` e `AlterarSenhaScreen`):** Leitura dos cabeçalhos *"Meu Perfil"*, *"Meus dados e endereço"* e *"Segurança e conta"*, leitura agrupada do cartão de identidade do usuário, campos de formulário com máscara de CEP e botões de alternância de visibilidade de senha (*"Mostrar senha atual"*, *"Mostrar nova senha"*, *"Mostrar confirmação de senha"*).
 
 ## Execução dos testes
 

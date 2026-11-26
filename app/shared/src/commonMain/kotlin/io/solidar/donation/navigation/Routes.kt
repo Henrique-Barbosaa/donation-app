@@ -32,3 +32,11 @@ data class CampanhaDetalheRoute(
 data class OpcoesDoacaoRoute(
     val id: String,
 )
+
+/** Tela de edição dos dados cadastrais e endereço do perfil do usuário (#6). */
+@Serializable
+object EditarPerfilRoute
+
+/** Tela de alteração de senha do usuário autenticado (#6). */
+@Serializable
+object AlterarSenhaRoute

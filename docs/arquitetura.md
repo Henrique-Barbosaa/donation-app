@@ -11,21 +11,21 @@ O código comum (`commonMain`) está organizado em três camadas com dependênci
 ```mermaid
 flowchart TD
     subgraph UI["Camada de Apresentação (ui)"]
-        Screens["Telas @Composable\n(HomeScreen, HistoricoScreen, CriarDoacaoScreen, LoginScreen, SignUpScreen)"]
-        ViewModels["ViewModels Multiplataforma\n(CampanhasViewModel, HistoricoViewModel, CriarDoacaoViewModel, AuthViewModel)"]
+        Screens["Telas @Composable\n(HomeScreen, HistoricoScreen, CriarDoacaoScreen, PerfilScreen, EditarPerfilScreen, AlterarSenhaScreen, LoginScreen, SignUpScreen)"]
+        ViewModels["ViewModels Multiplataforma\n(CampanhasViewModel, HistoricoViewModel, CriarDoacaoViewModel, PerfilViewModel, AuthViewModel)"]
         TelaEstado["Estados Imutáveis & Classe Selada\n(TelaEstado: Carregando | Vazio | Sucesso | Erro)"]
     end
 
     subgraph DOMAIN["Camada de Domínio (domain / model)"]
-        Entities["Entidades Puras\n(Campaign, Doacao, UserSession, NovaDoacaoInput, ResultadoCacheado)"]
-        RepoInterfaces["Interfaces de Repositório\n(CampanhaRepository, DoacaoRepository, AuthRepository)"]
+        Entities["Entidades Puras\n(Campaign, Doacao, PerfilUsuario, UserSession, NovaDoacaoInput, AtualizarPerfilInput, AlterarSenhaInput, ResultadoCacheado)"]
+        RepoInterfaces["Interfaces de Repositório\n(CampanhaRepository, DoacaoRepository, PerfilRepository, AuthRepository)"]
         DomainErrors["Falhas de Domínio Nomeadas\n(FalhaDominio: SemConexao | RespostaInvalida | DadosInvalidos)"]
     end
 
     subgraph DATA["Camada de Dados (data)"]
-        RepoImpl["Implementações de Repositório\n(CampanhaRepositoryImpl, DoacaoRepositoryImpl, AuthRepositoryImpl)"]
-        RemoteDS["Fontes Remotas (Ktor Client)\n(CampanhaRemoteDataSource, DoacaoRemoteDataSource, AuthRemoteDataSource)"]
-        DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain)"]
+        RepoImpl["Implementações de Repositório\n(CampanhaRepositoryImpl, DoacaoRepositoryImpl, PerfilRepositoryImpl, AuthRepositoryImpl)"]
+        RemoteDS["Fontes Remotas (Ktor Client)\n(CampanhaRemoteDataSource, DoacaoRemoteDataSource, PerfilRemoteDataSource, AuthRemoteDataSource)"]
+        DTOs["DTOs (@Serializable) & Mappers\n(CampanhaResponseDto.toDomain, DoacaoResponse.toDomain, PessoaFisicaResponseDto.toDomain)"]
         LocalCache["Persistência Local em Disco\n(FileLocalCacheStorage via expect/actual filesDir)"]
     end
 

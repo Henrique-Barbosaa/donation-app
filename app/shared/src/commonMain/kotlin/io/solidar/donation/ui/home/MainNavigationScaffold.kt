@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import io.solidar.donation.di.AppContainer
+import io.solidar.donation.domain.model.PerfilUsuario
 import io.solidar.donation.model.Campaign
 import io.solidar.donation.model.Doacao
 import io.solidar.donation.theme.DonationTheme
@@ -38,6 +39,8 @@ import io.solidar.donation.ui.history.HistoricoAba
 import io.solidar.donation.ui.history.HistoricoScreen
 import io.solidar.donation.ui.history.HistoricoViewModel
 import io.solidar.donation.ui.history.sampleDoacoes
+import io.solidar.donation.ui.profile.PerfilScreen
+import io.solidar.donation.ui.profile.PerfilViewModel
 import io.solidar.donation.ui.state.TelaEstado
 
 enum class MainTab(
@@ -52,7 +55,7 @@ enum class MainTab(
 }
 
 /**
- * Shell principal pós-login. Lê o estado de [CampanhasViewModel] e [HistoricoViewModel]
+ * Shell principal pós-login. Lê o estado de [CampanhasViewModel], [HistoricoViewModel] e [PerfilViewModel]
  * com [collectAsStateWithLifecycle], sem manter estado de negócio em `remember`.
  */
 @Composable
@@ -61,8 +64,11 @@ fun MainNavigationScaffold(
     onLogout: () -> Unit,
     onCampaignClick: (Campaign) -> Unit,
     modifier: Modifier = Modifier,
+    onNavigateToEditarPerfil: () -> Unit = {},
+    onNavigateToAlterarSenha: () -> Unit = {},
     campanhasViewModel: CampanhasViewModel = viewModel { AppContainer.default.createCampanhasViewModel() },
     historicoViewModel: HistoricoViewModel = viewModel { AppContainer.default.createHistoricoViewModel() },
+    perfilViewModel: PerfilViewModel = viewModel { AppContainer.default.createPerfilViewModel() },
 ) {
     val wide =
         currentWindowAdaptiveInfo()
@@ -71,6 +77,7 @@ fun MainNavigationScaffold(
 
     val campanhasUiState by campanhasViewModel.uiState.collectAsStateWithLifecycle()
     val historicoUiState by historicoViewModel.uiState.collectAsStateWithLifecycle()
+    val perfilUiState by perfilViewModel.uiState.collectAsStateWithLifecycle()
 
     MainNavigationContent(
         wide = wide,
@@ -83,6 +90,19 @@ fun MainNavigationScaffold(
         onRecarregarCampanhas = campanhasViewModel::carregarCampanhas,
         estadoHistorico = historicoUiState.estadoLista,
         onRecarregarHistorico = historicoViewModel::carregarHistorico,
+        totalDoacoesFeitas = historicoUiState.totalFeitas,
+        totalDoacoesRecebidas = historicoUiState.totalRecebidas,
+        estadoPerfil = perfilUiState.estadoPerfil,
+        mensagemFeedbackPerfil = perfilUiState.mensagemFeedback,
+        onRecarregarPerfil = perfilViewModel::carregarPerfil,
+        onEditarPerfilClick = {
+            perfilViewModel.prepararEdicaoPerfil()
+            onNavigateToEditarPerfil()
+        },
+        onAlterarSenhaClick = {
+            perfilViewModel.prepararAlteracaoSenha()
+            onNavigateToAlterarSenha()
+        },
         onCampaignClick = onCampaignClick,
         onNavigateToCreateDonation = onNavigateToCreateDonation,
         onLogout = onLogout,
@@ -110,6 +130,13 @@ fun MainNavigationContent(
     onRecarregarCampanhas: () -> Unit = {},
     estadoHistorico: TelaEstado<List<Doacao>> = TelaEstado.Sucesso(sampleDoacoes),
     onRecarregarHistorico: () -> Unit = {},
+    totalDoacoesFeitas: Int = 0,
+    totalDoacoesRecebidas: Int = 0,
+    estadoPerfil: TelaEstado<PerfilUsuario> = TelaEstado.Carregando,
+    mensagemFeedbackPerfil: String? = null,
+    onRecarregarPerfil: () -> Unit = {},
+    onEditarPerfilClick: () -> Unit = {},
+    onAlterarSenhaClick: () -> Unit = {},
 ) {
     if (wide) {
         Row(modifier = modifier.fillMaxSize()) {
@@ -141,6 +168,13 @@ fun MainNavigationContent(
                     onRecarregarCampanhas = onRecarregarCampanhas,
                     estadoHistorico = estadoHistorico,
                     onRecarregarHistorico = onRecarregarHistorico,
+                    totalDoacoesFeitas = totalDoacoesFeitas,
+                    totalDoacoesRecebidas = totalDoacoesRecebidas,
+                    estadoPerfil = estadoPerfil,
+                    mensagemFeedbackPerfil = mensagemFeedbackPerfil,
+                    onRecarregarPerfil = onRecarregarPerfil,
+                    onEditarPerfilClick = onEditarPerfilClick,
+                    onAlterarSenhaClick = onAlterarSenhaClick,
                     onCampaignClick = onCampaignClick,
                     onLogout = onLogout,
                     modifier = Modifier.padding(padding),
@@ -184,6 +218,13 @@ fun MainNavigationContent(
                 onRecarregarCampanhas = onRecarregarCampanhas,
                 estadoHistorico = estadoHistorico,
                 onRecarregarHistorico = onRecarregarHistorico,
+                totalDoacoesFeitas = totalDoacoesFeitas,
+                totalDoacoesRecebidas = totalDoacoesRecebidas,
+                estadoPerfil = estadoPerfil,
+                mensagemFeedbackPerfil = mensagemFeedbackPerfil,
+                onRecarregarPerfil = onRecarregarPerfil,
+                onEditarPerfilClick = onEditarPerfilClick,
+                onAlterarSenhaClick = onAlterarSenhaClick,
                 onCampaignClick = onCampaignClick,
                 onLogout = onLogout,
                 modifier = Modifier.padding(padding),
@@ -203,6 +244,13 @@ private fun TabContent(
     onRecarregarCampanhas: () -> Unit,
     estadoHistorico: TelaEstado<List<Doacao>>,
     onRecarregarHistorico: () -> Unit,
+    totalDoacoesFeitas: Int,
+    totalDoacoesRecebidas: Int,
+    estadoPerfil: TelaEstado<PerfilUsuario>,
+    mensagemFeedbackPerfil: String?,
+    onRecarregarPerfil: () -> Unit,
+    onEditarPerfilClick: () -> Unit,
+    onAlterarSenhaClick: () -> Unit,
     onCampaignClick: (Campaign) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
@@ -250,12 +298,17 @@ private fun TabContent(
                     onTentarDeNovo = onRecarregarHistorico,
                 )
             MainTab.PROFILE ->
-                PlaceholderScreen(
-                    title = "Seu Perfil",
-                    subtitle = "Gerencie seus dados, preferências e informações de doador/ONG.",
-                    icon = AppIcons.Person,
-                    actionButtonText = "Sair da conta",
-                    onActionClick = onLogout,
+                PerfilScreen(
+                    estado = estadoPerfil,
+                    wide = wide,
+                    mensagemFeedback = mensagemFeedbackPerfil,
+                    totalDoacoesFeitas = totalDoacoesFeitas,
+                    totalDoacoesRecebidas = totalDoacoesRecebidas,
+                    totalFavoritas = favoritosIds.size,
+                    onEditarPerfilClick = onEditarPerfilClick,
+                    onAlterarSenhaClick = onAlterarSenhaClick,
+                    onTentarDeNovo = onRecarregarPerfil,
+                    onLogout = onLogout,
                 )
         }
     }
