@@ -2,7 +2,6 @@ package io.solidar.donation.ui.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -36,11 +33,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -71,12 +65,12 @@ internal val samplePerfilPf =
     )
 
 /**
- * Aba principal "Perfil" com visual moderno inspirado em redes sociais de impacto:
- * - Capa em gradiente com avatar sobreposto e anel de destaque;
- * - Handle, selo de verificação, bio de impacto e barra rápida de ações;
- * - Painel de métricas sociais (Doações feitas, Causas salvas e Recebidas);
- * - Cartão de nível de impacto na comunidade Solidar.io;
- * - Destaques de localização, credenciais e configurações de segurança.
+ * Aba principal "Perfil" com layout moderno inspirado em perfis sociais, exibindo
+ * exclusivamente os dados reais existentes no backend (`USUARIO`, `PESSOA_FISICA`, `INSTITUICAO` e `DOACAO`):
+ * - Cabeçalho com avatar de iniciais, nome, e-mail, tipo de conta e contadores reais de doações;
+ * - Barra dupla de ações rápidas ("Editar dados do perfil" e "Alterar senha");
+ * - Cartão de credenciais cadastradas no banco (CPF/CNPJ, Data de Nascimento ou Site, E-mail);
+ * - Cartão estruturado com os campos reais de endereço (Logradouro, Número, Bairro e CEP).
  *
  * Trata os quatro estados obrigatórios da classe selada [TelaEstado] em um `when` exaustivo sem `else`.
  */
@@ -90,9 +84,9 @@ fun PerfilScreen(
     modifier: Modifier = Modifier,
     wide: Boolean = false,
     mensagemFeedback: String? = null,
-    totalDoacoesFeitas: Int = 2,
-    totalDoacoesRecebidas: Int = 1,
-    totalFavoritas: Int = 3,
+    totalDoacoesFeitas: Int = 0,
+    totalDoacoesRecebidas: Int = 0,
+    totalFavoritas: Int = 0,
 ) {
     Column(
         modifier =
@@ -100,34 +94,25 @@ fun PerfilScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
     ) {
+        Text(
+            text = "Meu Perfil",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier =
+                Modifier
+                    .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
+                    .semantics { heading() },
+        )
+
         when (estado) {
             is TelaEstado.Carregando -> {
-                Text(
-                    text = "Meu Perfil",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier =
-                        Modifier
-                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
-                            .semantics { heading() },
-                )
                 EstadoCarregandoView(
                     descricao = "Carregando perfil do usuário",
                     modifier = Modifier.fillMaxSize(),
                 )
             }
             is TelaEstado.Vazio -> {
-                Text(
-                    text = "Meu Perfil",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier =
-                        Modifier
-                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
-                            .semantics { heading() },
-                )
                 EmptyPerfilView(
                     onRecarregar = onTentarDeNovo,
                     onLogout = onLogout,
@@ -135,16 +120,6 @@ fun PerfilScreen(
                 )
             }
             is TelaEstado.Erro -> {
-                Text(
-                    text = "Meu Perfil",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier =
-                        Modifier
-                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
-                            .semantics { heading() },
-                )
                 Column(
                     modifier = Modifier.fillMaxSize().padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -169,15 +144,16 @@ fun PerfilScreen(
                 }
             }
             is TelaEstado.Sucesso -> {
-                PerfilSocialContent(
+                if (estado.desatualizado) {
+                    AvisoDadosDesatualizadosBanner(onRecarregar = onTentarDeNovo)
+                }
+                PerfilSucessoContent(
                     perfil = estado.dados,
-                    desatualizado = estado.desatualizado,
                     wide = wide,
                     mensagemFeedback = mensagemFeedback,
                     totalDoacoesFeitas = totalDoacoesFeitas,
                     totalDoacoesRecebidas = totalDoacoesRecebidas,
                     totalFavoritas = totalFavoritas,
-                    onRecarregar = onTentarDeNovo,
                     onEditarPerfilClick = onEditarPerfilClick,
                     onAlterarSenhaClick = onAlterarSenhaClick,
                     onLogout = onLogout,
@@ -188,15 +164,13 @@ fun PerfilScreen(
 }
 
 @Composable
-private fun PerfilSocialContent(
+private fun PerfilSucessoContent(
     perfil: PerfilUsuario,
-    desatualizado: Boolean,
     wide: Boolean,
     mensagemFeedback: String?,
     totalDoacoesFeitas: Int,
     totalDoacoesRecebidas: Int,
     totalFavoritas: Int,
-    onRecarregar: () -> Unit,
     onEditarPerfilClick: () -> Unit,
     onAlterarSenhaClick: () -> Unit,
     onLogout: () -> Unit,
@@ -208,195 +182,143 @@ private fun PerfilSocialContent(
         Column(
             modifier =
                 Modifier
-                    .widthIn(max = 880.dp)
+                    .widthIn(max = 860.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // 1. Hero Header Social (Capa + Avatar Sobreposto + Bio + Botões Rápidos)
-            SocialProfileHeroHeader(
+            if (!mensagemFeedback.isNullOrBlank()) {
+                FeedbackSucessoBanner(mensagem = mensagemFeedback)
+            }
+
+            // 1. Cabeçalho Moderno estilo Perfil Social (Iniciais + Contadores Reais + Botões de Ação)
+            PerfilHeaderSocialCard(
                 perfil = perfil,
+                doacoesFeitas = totalDoacoesFeitas,
+                doacoesRecebidas = totalDoacoesRecebidas,
+                campanhasFavoritas = totalFavoritas,
                 onEditarPerfilClick = onEditarPerfilClick,
                 onAlterarSenhaClick = onAlterarSenhaClick,
             )
 
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                if (desatualizado) {
-                    AvisoDadosDesatualizadosBanner(
-                        onRecarregar = onRecarregar,
-                        modifier = Modifier.fillMaxWidth(),
+            // 2. Cartões de Dados Reais do Banco (Credenciais + Endereço)
+            if (wide) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    DadosCadastraisCard(
+                        perfil = perfil,
+                        modifier = Modifier.weight(1f),
                     )
-                }
-
-                if (!mensagemFeedback.isNullOrBlank()) {
-                    FeedbackSucessoBanner(mensagem = mensagemFeedback)
-                }
-
-                // 2. Barra de Métricas Sociais (Estilo Contadores de Rede Social)
-                SocialImpactStatsCard(
-                    doacoesFeitas = totalDoacoesFeitas,
-                    causasSalvas = totalFavoritas,
-                    doacoesRecebidas = totalDoacoesRecebidas,
-                )
-
-                // 3. Selo de Impacto & Reputação na Comunidade
-                NivelComunidadeCard(
-                    perfil = perfil,
-                    totalInteracoes = totalDoacoesFeitas + totalFavoritas + totalDoacoesRecebidas,
-                )
-
-                // 4. Cartões de Detalhes ("Sobre & Localização" e "Segurança e Conta")
-                if (wide) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        SobreLocalizacaoSocialCard(
-                            perfil = perfil,
-                            onEditarPerfilClick = onEditarPerfilClick,
-                            modifier = Modifier.weight(1f),
-                        )
-                        SegurancaContaSocialCard(
-                            onEditarPerfilClick = onEditarPerfilClick,
-                            onAlterarSenhaClick = onAlterarSenhaClick,
-                            onLogout = onLogout,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                } else {
-                    SobreLocalizacaoSocialCard(
+                    EnderecoCadastradoCard(
                         perfil = perfil,
                         onEditarPerfilClick = onEditarPerfilClick,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    SegurancaContaSocialCard(
-                        onEditarPerfilClick = onEditarPerfilClick,
-                        onAlterarSenhaClick = onAlterarSenhaClick,
-                        onLogout = onLogout,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                     )
                 }
-
-                Spacer(modifier = Modifier.height(88.dp))
+            } else {
+                DadosCadastraisCard(
+                    perfil = perfil,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                EnderecoCadastradoCard(
+                    perfil = perfil,
+                    onEditarPerfilClick = onEditarPerfilClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
+
+            // 3. Ação de Encerramento de Sessão
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            ) {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Segurança e conta",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.semantics { heading() },
+                        )
+                        Text(
+                            text = "Encerrar sessão atual neste dispositivo",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Button(
+                        onClick = onLogout,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
+                    ) {
+                        Text(
+                            text = "Sair da conta",
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
 
 @Composable
-private fun SocialProfileHeroHeader(
+private fun PerfilHeaderSocialCard(
     perfil: PerfilUsuario,
+    doacoesFeitas: Int,
+    doacoesRecebidas: Int,
+    campanhasFavoritas: Int,
     onEditarPerfilClick: () -> Unit,
     onAlterarSenhaClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val handle =
-        perfil.email
-            .substringBefore("@")
-            .ifBlank { perfil.nome.lowercase().replace(" ", ".") }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Capa com gradiente da paleta do tema e círculos decorativos translúcidos
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(148.dp)
-                        .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors =
-                                    listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.secondary,
-                                    ),
-                            ),
-                        ),
-            ) {
-                // Elementos circulares decorativos de fundo da capa
-                Box(
-                    modifier =
-                        Modifier
-                            .size(160.dp)
-                            .offset(x = (-40).dp, y = (-30).dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f))
-                            .clearAndSetSemantics {},
-                )
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(140.dp)
-                            .offset(x = 30.dp, y = 40.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f))
-                            .clearAndSetSemantics {},
-                )
-
-                // Barra de título sobre a capa + Selo de perfil verificado
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 18.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Meu Perfil",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.semantics { heading() },
-                    )
-
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                        contentColor = MaterialTheme.colorScheme.primary,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Icon(
-                                imageVector = AppIcons.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            Text(
-                                text = perfil.tipoExibicao,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Linha do Avatar Sobreposto + Botão Rápido estilo Rede Social
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            // Topo estilo Rede Social: Avatar à esquerda + Métricas reais à direita
             Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 98.dp, start = 20.dp, end = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                // Avatar com anel de borda da cor do fundo da tela
                 Box(
                     modifier =
                         Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(4.dp)
+                            .size(76.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer)
                             .border(
@@ -409,219 +331,120 @@ private fun SocialProfileHeroHeader(
                 ) {
                     Text(
                         text = perfil.iniciais,
-                        fontSize = 32.sp,
+                        fontSize = 26.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
 
-                // Ações rápidas ao lado do avatar (estilo perfil de rede social)
+                // Contadores reais (Doações feitas, Recebidas, Favoritas)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    OutlinedButton(
-                        onClick = onAlterarSenhaClick,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        shape = RoundedCornerShape(50),
-                        colors =
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                            ),
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Senha",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    StatColumnItem(
+                        valor = "$doacoesFeitas",
+                        rotulo = "Doações",
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatColumnItem(
+                        valor = "$doacoesRecebidas",
+                        rotulo = "Recebidas",
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatColumnItem(
+                        valor = "$campanhasFavoritas",
+                        rotulo = "Favoritas",
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
-        }
 
-        // Informações de Nome, @handle, Bio e Botão Principal de Edição
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = perfil.nome,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.semantics { heading() },
-                )
-            }
-
-            Text(
-                text = "@$handle • ${perfil.email}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            Text(
-                text =
-                    if (perfil.isInstituicao) {
-                        "Organização social conectada à rede Solidar.io para mobilizar campanhas e arrecadações."
-                    } else {
-                        "Apoiando causas sociais e compartilhando solidariedade na comunidade Solidar.io."
-                    },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp,
-            )
-
-            // Chips de localização rápida e documento na bio (estilo Twitter/Instagram)
-            Row(
-                modifier = Modifier.padding(top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            // Nome, E-mail e Badge do tipo de conta (Pessoa Física / Instituição)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Home,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text =
-                                if (perfil.bairro.isNotBlank()) {
-                                    perfil.bairro
-                                } else {
-                                    "Local não definido"
-                                },
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
+                    Text(
+                        text = perfil.nome,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false).semantics { heading() },
+                    )
 
-                if (perfil.documento.isNotBlank()) {
                     Surface(
                         shape = RoundedCornerShape(50),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     ) {
                         Text(
-                            text = perfil.documentoFormatado,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            text = perfil.tipoExibicao,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Button(
-                onClick = onEditarPerfilClick,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
-            ) {
                 Text(
-                    text = "Editar dados do perfil",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    text = perfil.email,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-    }
-}
 
-@Composable
-private fun SocialImpactStatsCard(
-    doacoesFeitas: Int,
-    causasSalvas: Int,
-    doacoesRecebidas: Int,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 18.dp, horizontal = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            StatColumnItem(
-                valor = "$doacoesFeitas",
-                rotulo = "Doações feitas",
-                destaquePrimario = true,
-                modifier = Modifier.weight(1f),
-            )
+            // Barra de botões de ação rápida lado a lado (estilo "Edit Profile / Security" de apps sociais)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Button(
+                    onClick = onEditarPerfilClick,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                ) {
+                    Text(
+                        text = "Editar dados do perfil",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
-            Box(
-                modifier =
-                    Modifier
-                        .width(1.dp)
-                        .height(36.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-            )
-
-            StatColumnItem(
-                valor = "$causasSalvas",
-                rotulo = "Causas salvas",
-                destaquePrimario = false,
-                modifier = Modifier.weight(1f),
-            )
-
-            Box(
-                modifier =
-                    Modifier
-                        .width(1.dp)
-                        .height(36.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-            )
-
-            StatColumnItem(
-                valor = "$doacoesRecebidas",
-                rotulo = "Recebidas",
-                destaquePrimario = true,
-                modifier = Modifier.weight(1f),
-            )
+                OutlinedButton(
+                    onClick = onAlterarSenhaClick,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                ) {
+                    Icon(
+                        imageVector = AppIcons.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Alterar senha",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
         }
     }
 }
@@ -630,7 +453,6 @@ private fun SocialImpactStatsCard(
 private fun StatColumnItem(
     valor: String,
     rotulo: String,
-    destaquePrimario: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -640,19 +462,14 @@ private fun StatColumnItem(
     ) {
         Text(
             text = valor,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.ExtraBold,
-            color =
-                if (destaquePrimario) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.secondary
-                },
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = rotulo,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
@@ -660,107 +477,8 @@ private fun StatColumnItem(
 }
 
 @Composable
-private fun NivelComunidadeCard(
+private fun DadosCadastraisCard(
     perfil: PerfilUsuario,
-    totalInteracoes: Int,
-    modifier: Modifier = Modifier,
-) {
-    val progressoNivel = ((totalInteracoes.coerceAtLeast(1) % 10) / 10f).coerceIn(0.25f, 1f)
-    val percentualNivel = (progressoNivel * 100).toInt()
-    val tituloNivel =
-        when {
-            perfil.isInstituicao -> "Instituição Verificada na Rede"
-            totalInteracoes >= 5 -> "Embaixador Solidário"
-            else -> "Membro Solidário Ativo"
-        }
-
-    Card(
-        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-        shape = RoundedCornerShape(22.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Favorite,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = tituloNivel,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                        Text(
-                            text = "Nível de engajamento na comunidade",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ) {
-                    Text(
-                        text = "$percentualNivel%",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    )
-                }
-            }
-
-            LinearProgressIndicator(
-                progress = { progressoNivel },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .semantics {
-                            contentDescription = "Progresso de engajamento: $percentualNivel por cento"
-                        },
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surface,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SobreLocalizacaoSocialCard(
-    perfil: PerfilUsuario,
-    onEditarPerfilClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -777,7 +495,7 @@ private fun SobreLocalizacaoSocialCard(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                text = "Meus dados e endereço",
+                text = "Informações da conta",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -785,42 +503,192 @@ private fun SobreLocalizacaoSocialCard(
             )
 
             InfoDetailRow(
-                icon = AppIcons.Home,
-                titulo = "Ponto de entrega / endereço",
-                valor = perfil.enderecoFormatado,
+                icon = AppIcons.Person,
+                titulo = if (perfil.isInstituicao) "CNPJ" else "CPF",
+                valor =
+                    perfil.documentoFormatado.ifBlank {
+                        "Não informado"
+                    },
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
             InfoDetailRow(
                 icon = AppIcons.Email,
-                titulo = "E-mail vinculado",
-                valor = perfil.email,
+                titulo = "E-mail",
+                valor = perfil.email.ifBlank { "Não informado" },
             )
 
-            if (perfil.documento.isNotBlank()) {
+            if (perfil.isInstituicao && !perfil.site.isNullOrBlank()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-
+                InfoDetailRow(
+                    icon = AppIcons.Search,
+                    titulo = "Site da instituição",
+                    valor = perfil.site,
+                )
+            } else if (!perfil.isInstituicao && !perfil.dataNascimento.isNullOrBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                 InfoDetailRow(
                     icon = AppIcons.Person,
-                    titulo = if (perfil.isInstituicao) "CNPJ cadastrado" else "CPF cadastrado",
-                    valor = perfil.documentoFormatado,
+                    titulo = "Data de nascimento",
+                    valor = perfil.dataNascimento,
                 )
             }
+        }
+    }
+}
 
-            OutlinedButton(
-                onClick = onEditarPerfilClick,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors =
-                    ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary,
-                    ),
+@Composable
+private fun EnderecoCadastradoCard(
+    perfil: PerfilUsuario,
+    onEditarPerfilClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val cepDigitos = perfil.cep.filter { it.isDigit() }
+    val cepFormatado =
+        if (cepDigitos.length == 8) {
+            "${cepDigitos.substring(0, 5)}-${cepDigitos.substring(5, 8)}"
+        } else {
+            perfil.cep
+        }
+
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Atualizar endereço e nome",
-                    fontWeight = FontWeight.Bold,
+                    text = "Meus dados e endereço",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.semantics { heading() },
                 )
+
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color =
+                        if (perfil.possuiEndereco) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                    contentColor =
+                        if (perfil.possuiEndereco) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                ) {
+                    Text(
+                        text = if (perfil.possuiEndereco) "Cadastrado" else "Pendente",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
+
+            if (perfil.possuiEndereco) {
+                InfoDetailRow(
+                    icon = AppIcons.Home,
+                    titulo = "Logradouro e número",
+                    valor =
+                        listOfNotNull(
+                            perfil.logradouro.takeIf { it.isNotBlank() },
+                            perfil.numero.takeIf { it.isNotBlank() }?.let { "nº $it" },
+                        ).joinToString(", ").ifBlank { "Não informado" },
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {},
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Bairro",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = perfil.bairro.ifBlank { "—" },
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.weight(1f).semantics(mergeDescendants = true) {},
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "CEP",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = cepFormatado.ifBlank { "—" },
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+            } else {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = "Nenhum endereço cadastrado ainda.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "Adicione seu CEP, rua e bairro para facilitar a entrega e coleta de doações.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedButton(
+                            onClick = onEditarPerfilClick,
+                            modifier = Modifier.heightIn(min = 48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text("Cadastrar endereço", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
     }
@@ -834,7 +702,7 @@ private fun InfoDetailRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
@@ -865,139 +733,6 @@ private fun InfoDetailRow(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-        }
-    }
-}
-
-@Composable
-private fun SegurancaContaSocialCard(
-    onEditarPerfilClick: () -> Unit,
-    onAlterarSenhaClick: () -> Unit,
-    onLogout: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(22.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = "Segurança e conta",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.semantics { heading() },
-            )
-
-            // Item de ação estilo menu social para Editar Perfil
-            SocialMenuActionRow(
-                icon = AppIcons.Person,
-                titulo = "Dados cadastrais",
-                subtitulo = "Alterar nome de exibição, CEP e endereço",
-                onClick = onEditarPerfilClick,
-            )
-
-            // Item de ação para Alterar Senha
-            OutlinedButton(
-                onClick = onAlterarSenhaClick,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors =
-                    ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary,
-                    ),
-            ) {
-                Icon(
-                    imageVector = AppIcons.Lock,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Alterar senha",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                )
-            }
-
-            Button(
-                onClick = onLogout,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
-            ) {
-                Text(
-                    text = "Sair da conta",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SocialMenuActionRow(
-    icon: ImageVector,
-    titulo: String,
-    subtitulo: String,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .clickable(role = Role.Button, onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = subtitulo,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 }
@@ -1082,6 +817,9 @@ private fun PerfilScreenFilledPreview() {
             onTentarDeNovo = {},
             onLogout = {},
             mensagemFeedback = "Dados do perfil atualizados com sucesso!",
+            totalDoacoesFeitas = 2,
+            totalDoacoesRecebidas = 1,
+            totalFavoritas = 3,
         )
     }
 }
