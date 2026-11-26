@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 data class HistoricoUiState(
     val abaSelecionada: HistoricoAba = HistoricoAba.FEITAS,
     val estadoLista: TelaEstado<List<Doacao>> = TelaEstado.Carregando,
+    val totalFeitas: Int = 0,
+    val totalRecebidas: Int = 0,
 )
 
 /**
@@ -72,6 +74,8 @@ class HistoricoViewModel(
                 HistoricoAba.RECEBIDAS -> DoacaoDirecao.RECEBIDA
             }
         val filtradas = todas.filter { it.direction == direcao }
+        val qtdFeitas = todas.count { it.direction == DoacaoDirecao.FEITA }
+        val qtdRecebidas = todas.count { it.direction == DoacaoDirecao.RECEBIDA }
         val novoEstado =
             if (filtradas.isEmpty()) {
                 TelaEstado.Vazio
@@ -81,6 +85,12 @@ class HistoricoViewModel(
                     desatualizado = dadosDesatualizados,
                 )
             }
-        _uiState.update { it.copy(estadoLista = novoEstado) }
+        _uiState.update {
+            it.copy(
+                estadoLista = novoEstado,
+                totalFeitas = qtdFeitas,
+                totalRecebidas = qtdRecebidas,
+            )
+        }
     }
 }

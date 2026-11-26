@@ -1,6 +1,8 @@
 package io.solidar.donation.ui.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,7 +25,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -30,11 +36,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,8 +71,12 @@ internal val samplePerfilPf =
     )
 
 /**
- * Aba principal "Perfil" da barra de navegação, exibindo os dados reais do usuário autenticado,
- * resumo de endereço e atalhos para editar dados cadastrais, alterar senha ou encerrar sessão.
+ * Aba principal "Perfil" com visual moderno inspirado em redes sociais de impacto:
+ * - Capa em gradiente com avatar sobreposto e anel de destaque;
+ * - Handle, selo de verificação, bio de impacto e barra rápida de ações;
+ * - Painel de métricas sociais (Doações feitas, Causas salvas e Recebidas);
+ * - Cartão de nível de impacto na comunidade Solidar.io;
+ * - Destaques de localização, credenciais e configurações de segurança.
  *
  * Trata os quatro estados obrigatórios da classe selada [TelaEstado] em um `when` exaustivo sem `else`.
  */
@@ -75,6 +90,9 @@ fun PerfilScreen(
     modifier: Modifier = Modifier,
     wide: Boolean = false,
     mensagemFeedback: String? = null,
+    totalDoacoesFeitas: Int = 2,
+    totalDoacoesRecebidas: Int = 1,
+    totalFavoritas: Int = 3,
 ) {
     Column(
         modifier =
@@ -82,25 +100,34 @@ fun PerfilScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
     ) {
-        Text(
-            text = "Meu Perfil",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier =
-                Modifier
-                    .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
-                    .semantics { heading() },
-        )
-
         when (estado) {
             is TelaEstado.Carregando -> {
+                Text(
+                    text = "Meu Perfil",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier =
+                        Modifier
+                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
+                            .semantics { heading() },
+                )
                 EstadoCarregandoView(
                     descricao = "Carregando perfil do usuário",
                     modifier = Modifier.fillMaxSize(),
                 )
             }
             is TelaEstado.Vazio -> {
+                Text(
+                    text = "Meu Perfil",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier =
+                        Modifier
+                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
+                            .semantics { heading() },
+                )
                 EmptyPerfilView(
                     onRecarregar = onTentarDeNovo,
                     onLogout = onLogout,
@@ -108,6 +135,16 @@ fun PerfilScreen(
                 )
             }
             is TelaEstado.Erro -> {
+                Text(
+                    text = "Meu Perfil",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier =
+                        Modifier
+                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp)
+                            .semantics { heading() },
+                )
                 Column(
                     modifier = Modifier.fillMaxSize().padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -132,13 +169,15 @@ fun PerfilScreen(
                 }
             }
             is TelaEstado.Sucesso -> {
-                if (estado.desatualizado) {
-                    AvisoDadosDesatualizadosBanner(onRecarregar = onTentarDeNovo)
-                }
-                PerfilSucessoContent(
+                PerfilSocialContent(
                     perfil = estado.dados,
+                    desatualizado = estado.desatualizado,
                     wide = wide,
                     mensagemFeedback = mensagemFeedback,
+                    totalDoacoesFeitas = totalDoacoesFeitas,
+                    totalDoacoesRecebidas = totalDoacoesRecebidas,
+                    totalFavoritas = totalFavoritas,
+                    onRecarregar = onTentarDeNovo,
                     onEditarPerfilClick = onEditarPerfilClick,
                     onAlterarSenhaClick = onAlterarSenhaClick,
                     onLogout = onLogout,
@@ -149,10 +188,15 @@ fun PerfilScreen(
 }
 
 @Composable
-private fun PerfilSucessoContent(
+private fun PerfilSocialContent(
     perfil: PerfilUsuario,
+    desatualizado: Boolean,
     wide: Boolean,
     mensagemFeedback: String?,
+    totalDoacoesFeitas: Int,
+    totalDoacoesRecebidas: Int,
+    totalFavoritas: Int,
+    onRecarregar: () -> Unit,
     onEditarPerfilClick: () -> Unit,
     onAlterarSenhaClick: () -> Unit,
     onLogout: () -> Unit,
@@ -164,145 +208,320 @@ private fun PerfilSucessoContent(
         Column(
             modifier =
                 Modifier
-                    .widthIn(max = 840.dp)
+                    .widthIn(max = 880.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .verticalScroll(rememberScrollState()),
         ) {
-            if (!mensagemFeedback.isNullOrBlank()) {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+            // 1. Hero Header Social (Capa + Avatar Sobreposto + Bio + Botões Rápidos)
+            SocialProfileHeroHeader(
+                perfil = perfil,
+                onEditarPerfilClick = onEditarPerfilClick,
+                onAlterarSenhaClick = onAlterarSenhaClick,
+            )
+
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (desatualizado) {
+                    AvisoDadosDesatualizadosBanner(
+                        onRecarregar = onRecarregar,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                if (!mensagemFeedback.isNullOrBlank()) {
+                    FeedbackSucessoBanner(mensagem = mensagemFeedback)
+                }
+
+                // 2. Barra de Métricas Sociais (Estilo Contadores de Rede Social)
+                SocialImpactStatsCard(
+                    doacoesFeitas = totalDoacoesFeitas,
+                    causasSalvas = totalFavoritas,
+                    doacoesRecebidas = totalDoacoesRecebidas,
+                )
+
+                // 3. Selo de Impacto & Reputação na Comunidade
+                NivelComunidadeCard(
+                    perfil = perfil,
+                    totalInteracoes = totalDoacoesFeitas + totalFavoritas + totalDoacoesRecebidas,
+                )
+
+                // 4. Cartões de Detalhes ("Sobre & Localização" e "Segurança e Conta")
+                if (wide) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        Icon(
-                            imageVector = AppIcons.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp),
+                        SobreLocalizacaoSocialCard(
+                            perfil = perfil,
+                            onEditarPerfilClick = onEditarPerfilClick,
+                            modifier = Modifier.weight(1f),
                         )
-                        Text(
-                            text = mensagemFeedback,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        SegurancaContaSocialCard(
+                            onEditarPerfilClick = onEditarPerfilClick,
+                            onAlterarSenhaClick = onAlterarSenhaClick,
+                            onLogout = onLogout,
+                            modifier = Modifier.weight(1f),
                         )
                     }
-                }
-            }
-
-            // Card 1: Cabeçalho de Identidade
-            PerfilIdentidadeCard(perfil = perfil)
-
-            if (wide) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    PerfilEnderecoCard(
+                } else {
+                    SobreLocalizacaoSocialCard(
                         perfil = perfil,
                         onEditarPerfilClick = onEditarPerfilClick,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    PerfilSegurancaCard(
+                    SegurancaContaSocialCard(
+                        onEditarPerfilClick = onEditarPerfilClick,
                         onAlterarSenhaClick = onAlterarSenhaClick,
                         onLogout = onLogout,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            } else {
-                PerfilEnderecoCard(
-                    perfil = perfil,
-                    onEditarPerfilClick = onEditarPerfilClick,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                PerfilSegurancaCard(
-                    onAlterarSenhaClick = onAlterarSenhaClick,
-                    onLogout = onLogout,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
 
-            Spacer(modifier = Modifier.height(72.dp))
+                Spacer(modifier = Modifier.height(88.dp))
+            }
         }
     }
 }
 
 @Composable
-private fun PerfilIdentidadeCard(
+private fun SocialProfileHeroHeader(
     perfil: PerfilUsuario,
-    modifier: Modifier = Modifier,
+    onEditarPerfilClick: () -> Unit,
+    onAlterarSenhaClick: () -> Unit,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-        shape = RoundedCornerShape(24.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+    val handle =
+        perfil.email
+            .substringBefore("@")
+            .ifBlank { perfil.nome.lowercase().replace(" ", ".") }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Capa com gradiente da paleta do tema e círculos decorativos translúcidos
             Box(
                 modifier =
                     Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .clearAndSetSemantics {},
-                contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .height(148.dp)
+                        .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                        .background(
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.secondary,
+                                    ),
+                            ),
+                        ),
+            ) {
+                // Elementos circulares decorativos de fundo da capa
+                Box(
+                    modifier =
+                        Modifier
+                            .size(160.dp)
+                            .offset(x = (-40).dp, y = (-30).dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f))
+                            .clearAndSetSemantics {},
+                )
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(140.dp)
+                            .offset(x = 30.dp, y = 40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f))
+                            .clearAndSetSemantics {},
+                )
+
+                // Barra de título sobre a capa + Selo de perfil verificado
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Meu Perfil",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.semantics { heading() },
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Text(
+                                text = perfil.tipoExibicao,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Linha do Avatar Sobreposto + Botão Rápido estilo Rede Social
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 98.dp, start = 20.dp, end = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                // Avatar com anel de borda da cor do fundo da tela
+                Box(
+                    modifier =
+                        Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape,
+                            )
+                            .clearAndSetSemantics {},
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = perfil.iniciais,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+
+                // Ações rápidas ao lado do avatar (estilo perfil de rede social)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedButton(
+                        onClick = onAlterarSenhaClick,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        shape = RoundedCornerShape(50),
+                        colors =
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Senha",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+
+        // Informações de Nome, @handle, Bio e Botão Principal de Edição
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = perfil.iniciais,
-                    fontSize = 28.sp,
+                    text = perfil.nome,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics { heading() },
                 )
             }
 
             Text(
-                text = perfil.nome,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.semantics { heading() },
+                text = "@$handle • ${perfil.email}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
             )
 
             Text(
-                text = perfil.email,
+                text =
+                    if (perfil.isInstituicao) {
+                        "Organização social conectada à rede Solidar.io para mobilizar campanhas e arrecadações."
+                    } else {
+                        "Apoiando causas sociais e compartilhando solidariedade na comunidade Solidar.io."
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
             )
 
+            // Chips de localização rápida e documento na bio (estilo Twitter/Instagram)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Surface(
                     shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ) {
-                    Text(
-                        text = perfil.tipoExibicao,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Home,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Text(
+                            text =
+                                if (perfil.bairro.isNotBlank()) {
+                                    perfil.bairro
+                                } else {
+                                    "Local não definido"
+                                },
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
 
                 if (perfil.documento.isNotBlank()) {
@@ -315,87 +534,13 @@ private fun PerfilIdentidadeCard(
                             text = perfil.documentoFormatado,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         )
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun PerfilEnderecoCard(
-    perfil: PerfilUsuario,
-    onEditarPerfilClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon(
-                    imageVector = AppIcons.Home,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
-                )
-                Text(
-                    text = "Meus dados e endereço",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.semantics { heading() },
-                )
-            }
-
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = "Endereço de referência",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = perfil.enderecoFormatado,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight =
-                            if (perfil.possuiEndereco) {
-                                FontWeight.Medium
-                            } else {
-                                FontWeight.Normal
-                            },
-                        color =
-                            if (perfil.possuiEndereco) {
-                                MaterialTheme.colorScheme.onSurface
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(6.dp))
 
             Button(
                 onClick = onEditarPerfilClick,
@@ -418,14 +563,322 @@ private fun PerfilEnderecoCard(
 }
 
 @Composable
-private fun PerfilSegurancaCard(
+private fun SocialImpactStatsCard(
+    doacoesFeitas: Int,
+    causasSalvas: Int,
+    doacoesRecebidas: Int,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StatColumnItem(
+                valor = "$doacoesFeitas",
+                rotulo = "Doações feitas",
+                destaquePrimario = true,
+                modifier = Modifier.weight(1f),
+            )
+
+            Box(
+                modifier =
+                    Modifier
+                        .width(1.dp)
+                        .height(36.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+            )
+
+            StatColumnItem(
+                valor = "$causasSalvas",
+                rotulo = "Causas salvas",
+                destaquePrimario = false,
+                modifier = Modifier.weight(1f),
+            )
+
+            Box(
+                modifier =
+                    Modifier
+                        .width(1.dp)
+                        .height(36.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+            )
+
+            StatColumnItem(
+                valor = "$doacoesRecebidas",
+                rotulo = "Recebidas",
+                destaquePrimario = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatColumnItem(
+    valor: String,
+    rotulo: String,
+    destaquePrimario: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.semantics(mergeDescendants = true) {},
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = valor,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color =
+                if (destaquePrimario) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.secondary
+                },
+        )
+        Text(
+            text = rotulo,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun NivelComunidadeCard(
+    perfil: PerfilUsuario,
+    totalInteracoes: Int,
+    modifier: Modifier = Modifier,
+) {
+    val progressoNivel = ((totalInteracoes.coerceAtLeast(1) % 10) / 10f).coerceIn(0.25f, 1f)
+    val percentualNivel = (progressoNivel * 100).toInt()
+    val tituloNivel =
+        when {
+            perfil.isInstituicao -> "Instituição Verificada na Rede"
+            totalInteracoes >= 5 -> "Embaixador Solidário"
+            else -> "Membro Solidário Ativo"
+        }
+
+    Card(
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Favorite,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = tituloNivel,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                        Text(
+                            text = "Nível de engajamento na comunidade",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ) {
+                    Text(
+                        text = "$percentualNivel%",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
+
+            LinearProgressIndicator(
+                progress = { progressoNivel },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .semantics {
+                            contentDescription = "Progresso de engajamento: $percentualNivel por cento"
+                        },
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SobreLocalizacaoSocialCard(
+    perfil: PerfilUsuario,
+    onEditarPerfilClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                text = "Meus dados e endereço",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() },
+            )
+
+            InfoDetailRow(
+                icon = AppIcons.Home,
+                titulo = "Ponto de entrega / endereço",
+                valor = perfil.enderecoFormatado,
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+
+            InfoDetailRow(
+                icon = AppIcons.Email,
+                titulo = "E-mail vinculado",
+                valor = perfil.email,
+            )
+
+            if (perfil.documento.isNotBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+
+                InfoDetailRow(
+                    icon = AppIcons.Person,
+                    titulo = if (perfil.isInstituicao) "CNPJ cadastrado" else "CPF cadastrado",
+                    valor = perfil.documentoFormatado,
+                )
+            }
+
+            OutlinedButton(
+                onClick = onEditarPerfilClick,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors =
+                    ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ),
+            ) {
+                Text(
+                    text = "Atualizar endereço e nome",
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoDetailRow(
+    icon: ImageVector,
+    titulo: String,
+    valor: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = valor,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SegurancaContaSocialCard(
+    onEditarPerfilClick: () -> Unit,
     onAlterarSenhaClick: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -436,31 +889,23 @@ private fun PerfilSegurancaCard(
             modifier = Modifier.fillMaxWidth().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon(
-                    imageVector = AppIcons.Lock,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
-                )
-                Text(
-                    text = "Segurança e conta",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.semantics { heading() },
-                )
-            }
-
             Text(
-                text = "Mantenha sua senha atualizada ou encerre a sessão atual neste dispositivo.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "Segurança e conta",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics { heading() },
             )
 
+            // Item de ação estilo menu social para Editar Perfil
+            SocialMenuActionRow(
+                icon = AppIcons.Person,
+                titulo = "Dados cadastrais",
+                subtitulo = "Alterar nome de exibição, CEP e endereço",
+                onClick = onEditarPerfilClick,
+            )
+
+            // Item de ação para Alterar Senha
             OutlinedButton(
                 onClick = onAlterarSenhaClick,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
@@ -470,6 +915,12 @@ private fun PerfilSegurancaCard(
                         contentColor = MaterialTheme.colorScheme.primary,
                     ),
             ) {
+                Icon(
+                    imageVector = AppIcons.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Alterar senha",
                     fontWeight = FontWeight.Bold,
@@ -493,6 +944,89 @@ private fun PerfilSegurancaCard(
                     fontSize = 15.sp,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SocialMenuActionRow(
+    icon: ImageVector,
+    titulo: String,
+    subtitulo: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .clickable(role = Role.Button, onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = subtitulo,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedbackSucessoBanner(mensagem: String) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                imageVector = AppIcons.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = mensagem,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
         }
     }
 }
