@@ -70,6 +70,8 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.navigation.compose)
                 implementation(libs.material3.adaptive)
+                implementation(libs.coil.compose)
+                implementation(libs.coil.network.ktor3)
             }
         }
         iosMain.dependencies {
