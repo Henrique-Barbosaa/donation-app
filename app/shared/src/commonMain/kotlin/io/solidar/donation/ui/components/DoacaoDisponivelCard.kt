@@ -57,8 +57,10 @@ fun DoacaoDisponivelCard(
     onAlternarInteresse: (String) -> Unit,
     modifier: Modifier = Modifier,
     ehCriador: Boolean = false,
+    onClick: () -> Unit = {},
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

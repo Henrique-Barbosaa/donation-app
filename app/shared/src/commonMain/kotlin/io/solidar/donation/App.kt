@@ -25,6 +25,7 @@ import io.solidar.donation.navigation.CampanhaDetalheRoute
 import io.solidar.donation.navigation.CriarCampanhaRoute
 import io.solidar.donation.navigation.CriarDoacaoRoute
 import io.solidar.donation.navigation.DEEP_LINK_CAMPANHA
+import io.solidar.donation.navigation.DoacaoDetalheRoute
 import io.solidar.donation.navigation.DoarDinheiroRoute
 import io.solidar.donation.navigation.DoarItensCampanhaRoute
 import io.solidar.donation.navigation.EditarPerfilRoute
@@ -43,11 +44,13 @@ import io.solidar.donation.ui.donation.DoarDinheiroScreen
 import io.solidar.donation.ui.donation.DoarItensCampanhaScreen
 import io.solidar.donation.ui.donation.EfetivarDoacaoScreen
 import io.solidar.donation.ui.donation.OpcoesDoacaoScreen
+import io.solidar.donation.ui.explore.DoacaoDetalheScreen
 import io.solidar.donation.ui.home.CampanhasViewModel
 import io.solidar.donation.ui.home.MainNavigationScaffold
 import io.solidar.donation.ui.profile.AlterarSenhaScreen
 import io.solidar.donation.ui.profile.EditarPerfilScreen
 import io.solidar.donation.ui.profile.PerfilViewModel
+import io.solidar.donation.ui.state.TelaEstado
 
 @Composable
 @Preview
@@ -129,6 +132,7 @@ fun DonationNavHost(
                 onNavigateToEditarPerfil = { navController.navigate(EditarPerfilRoute) },
                 onNavigateToAlterarSenha = { navController.navigate(AlterarSenhaRoute) },
                 onCampaignClick = { navController.navigate(CampanhaDetalheRoute(it.id)) },
+                onDoacaoClick = { navController.navigate(DoacaoDetalheRoute(it)) },
                 onLogout = {
                     authViewModel.logout()
                     campanhasViewModel.limparEstadoSessao()
@@ -184,7 +188,31 @@ fun DonationNavHost(
                 },
             )
         }
+        composable<DoacaoDetalheRoute> { entry ->
+            val route = entry.toRoute<DoacaoDetalheRoute>()
+            val explorarUiState by explorarViewModel.uiState.collectAsStateWithLifecycle()
+            val doacao =
+                when (val estado = explorarUiState.estadoLista) {
+                    is TelaEstado.Sucesso -> estado.dados.firstOrNull { it.id == route.id }
+                    else -> null
+                }
+            val activeSession = appContainer.authRepository.getActiveSession()
 
+            DoacaoDetalheScreen(
+                doacao = doacao,
+                carregando = explorarUiState.estadoLista is TelaEstado.Carregando,
+                interessado = explorarUiState.interessesIds.contains(route.id),
+                processando = explorarUiState.processandoInteresseId == route.id,
+                ehCriador = activeSession?.id != null && doacao?.doadorId == activeSession.id,
+                aviso = explorarUiState.avisoInteresse,
+                onBack = {
+                    explorarViewModel.limparAviso()
+                    navController.popBackStack()
+                },
+                onAlternarInteresse = explorarViewModel::alternarInteresse,
+                onRegistrarInteresseComMensagem = explorarViewModel::registrarInteresseComMensagem,
+            )
+        }
         composable<CampanhaDetalheRoute>(
             deepLinks = listOf(navDeepLink<CampanhaDetalheRoute>(basePath = DEEP_LINK_CAMPANHA)),
         ) { entry ->

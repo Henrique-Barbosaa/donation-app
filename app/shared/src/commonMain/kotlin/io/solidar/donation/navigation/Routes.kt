@@ -36,6 +36,12 @@ data class OpcoesDoacaoRoute(
     val id: String,
 )
 
+/** Detalhe de uma doação disponível (aba Explorar); o argumento é o id. */
+@Serializable
+data class DoacaoDetalheRoute(
+    val id: String,
+)
+
 @Serializable
 data class DoarItensCampanhaRoute(
     val id: String,

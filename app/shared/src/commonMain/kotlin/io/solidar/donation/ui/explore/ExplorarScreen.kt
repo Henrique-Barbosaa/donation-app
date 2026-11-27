@@ -76,6 +76,7 @@ fun ExplorarScreen(
     wide: Boolean = false,
     onRegistrarInteresseComMensagem: ((String, String) -> Unit)? = null,
     usuarioLogadoId: Int? = null,
+    onDoacaoClick: (String) -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Text(
@@ -196,6 +197,7 @@ fun ExplorarScreen(
                     onAlternarInteresse = onAlternarInteresse,
                     onRegistrarInteresseComMensagem = onRegistrarInteresseComMensagem,
                     usuarioLogadoId = usuarioLogadoId,
+                    onDoacaoClick = onDoacaoClick,
                     wide = wide,
                 )
             }
@@ -291,6 +293,7 @@ private fun DoacoesDisponiveisList(
     onAlternarInteresse: (String) -> Unit,
     onRegistrarInteresseComMensagem: ((String, String) -> Unit)?,
     usuarioLogadoId: Int?,
+    onDoacaoClick: (String) -> Unit,
     wide: Boolean,
 ) {
     var doacaoParaMensagem by remember { mutableStateOf<DoacaoDisponivel?>(null) }
@@ -330,6 +333,7 @@ private fun DoacoesDisponiveisList(
                     processando = processandoId == doacao.id,
                     onAlternarInteresse = { handleCliqueInteresse(doacao) },
                     ehCriador = usuarioLogadoId != null && doacao.doadorId == usuarioLogadoId,
+                    onClick = { onDoacaoClick(doacao.id) },
                 )
             }
         }
@@ -346,6 +350,7 @@ private fun DoacoesDisponiveisList(
                     processando = processandoId == doacao.id,
                     onAlternarInteresse = { handleCliqueInteresse(doacao) },
                     ehCriador = usuarioLogadoId != null && doacao.doadorId == usuarioLogadoId,
+                    onClick = { onDoacaoClick(doacao.id) },
                 )
             }
         }
